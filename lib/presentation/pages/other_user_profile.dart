@@ -1,3 +1,4 @@
+import 'package:dating_app/core/utils/other_user_profile_skeleton.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
 import 'package:dating_app/core/utils/theme.dart';
 import 'package:dating_app/data/datasources/image_remote_data_source.dart';
@@ -69,7 +70,7 @@ class OtherUserProfilePage extends StatelessWidget {
           body: BlocBuilder<OtherUserBloc, OtherUserState>(
             builder: (context, state) {
               if (state is OtherUserLoading) {
-                return const Center(child: CircularProgressIndicator());
+                return OtherProfileSkeleton();
               }
 
               if (state is OtherUserError) {
@@ -78,7 +79,9 @@ class OtherUserProfilePage extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text('Error: ${state.message}'),
+
                       const SizedBox(height: 16),
+
                       ElevatedButton(
                         onPressed: () {
                           context.read<OtherUserBloc>().add(
@@ -260,10 +263,8 @@ class OtherUserProfilePage extends StatelessWidget {
                                   builder: (context, imageState) {
                                     if (imageState is ImagesLoading ||
                                         imageState is ImagesInitial) {
-                                      return const Center(
+                                      return const Center(child: CupertinoActivityIndicator());
 
-                                        child: CircularProgressIndicator(),
-                                      );
                                     }
 
                                     final images = imageState is ImagesLoaded

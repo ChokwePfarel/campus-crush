@@ -49,7 +49,7 @@ class _InstaStyleNavState extends State<InstaStyleNav> {
 
     _pages = [
       DiscoverPage(onScrollDirectionChanged: _handleScroll),
-      const FeedScreen(),
+      FeedScreen(currentUserId: currentUserId),
       const RadarPage(),
       DirectPostsPage(recipientId: currentUserId,),
       InboxPage(currentUserId: currentUserId),

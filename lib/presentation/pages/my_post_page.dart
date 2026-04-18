@@ -1,8 +1,11 @@
 import 'package:dating_app/core/utils/date_utils.dart';
+import 'package:dating_app/core/utils/posts_skeleton.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
 import 'package:dating_app/core/widgets/bottom_sheet.dart';
 import 'package:dating_app/data/models/post_model.dart';
 import 'package:dating_app/domain/repositories/current_user_post_repository.dart';
+import 'package:dating_app/presentation/bloc/comments/commenst_event.dart';
+import 'package:dating_app/presentation/bloc/comments/comments_bloc.dart';
 import 'package:dating_app/presentation/bloc/current_user/user_post_bloc.dart';
 import 'package:dating_app/presentation/bloc/current_user/user_post_event.dart';
 import 'package:dating_app/presentation/bloc/current_user/user_post_state.dart';
@@ -14,6 +17,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MyPostsPage extends StatefulWidget {
   const MyPostsPage({super.key});
@@ -30,6 +34,19 @@ class _MyPostsPageState extends State<MyPostsPage> {
 
   int _totalComments(List<PostModel> posts) =>
       posts.fold(0, (sum, p) => sum + p.commentCount);
+
+
+  void initState(){
+    super.initState();
+
+    final String currentUserId = Supabase.instance.client.auth.currentUser?.id ?? '';
+
+    Future.microtask(() {
+
+      context.read<CommentsBloc>().add(LoadComments(currentUserId));
+      context.read<LikesBloc>().add(LoadLikes(currentUserId));
+    });
+  }
 
   Future<void> _confirmDelete(PostModel post) async {
     HapticFeedback.mediumImpact();
@@ -107,7 +124,7 @@ class _MyPostsPageState extends State<MyPostsPage> {
                 BlocBuilder<LikesBloc, LikesState>(
                   builder: (context, state) {
                     if (state is LikesLoading) {
-                      return const Center(child: CircularProgressIndicator());
+                      return const Center(child: CupertinoActivityIndicator());
                     }
                     if (state is LikesError) {
                       return Center(child: Text('Error: ${state.message}'));
@@ -158,12 +175,14 @@ class _MyPostsPageState extends State<MyPostsPage> {
           // Dispatch fetch once Bloc is available
           context.read<CurrentUserPostBloc>().add(LoadUserPosts());
 
+
+
           return Scaffold(
             backgroundColor: const Color(0xFFF4F4F8),
             body: BlocBuilder<CurrentUserPostBloc, UserPostState>(
               builder: (context, state) {
                 if (state is UserPostLoading) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const Center(child: PostListSkeleton());
                 }
 
                 if (state is UserPostError) {

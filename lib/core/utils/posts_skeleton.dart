@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer_animation/shimmer_animation.dart';
 
-class UserListSkeleton extends StatelessWidget {
-  const UserListSkeleton({super.key});
+class PostListSkeleton extends StatelessWidget {
+  const PostListSkeleton({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Search bar skeleton
 
-
-        // Vertical list of card skeletons
         Expanded(
           child: ListView.builder(
             itemCount: 6, // number of skeleton cards
@@ -25,7 +22,7 @@ class UserListSkeleton extends StatelessWidget {
                   colorOpacity: 0.3,
                   enabled: true,
                   child: Container(
-                    height: 200,
+                    height: 150,
                     decoration: BoxDecoration(
                       color: Colors.grey.shade200,
                       borderRadius: BorderRadius.circular(20),

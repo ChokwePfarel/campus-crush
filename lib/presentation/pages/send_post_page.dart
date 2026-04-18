@@ -49,10 +49,10 @@ extension DirectPostTypeExt on DirectPostType {
 
   Color get color {
     switch (this) {
-      case DirectPostType.crush:       return const Color(0xFFFF4D6D);
-      case DirectPostType.compliment:  return const Color(0xFF6C63FF);
-      case DirectPostType.confession:  return const Color(0xFFFF9F1C);
-      case DirectPostType.question:    return const Color(0xFF2EC4B6);
+      case DirectPostType.crush:       return const Color(0xFFB5193A);
+      case DirectPostType.compliment:  return const Color(0xFF3730A3);
+      case DirectPostType.confession:  return const Color(0xFFB45309);
+      case DirectPostType.question:    return const Color(0xFF0F766E);
     }
   }
 

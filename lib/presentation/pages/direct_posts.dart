@@ -1,6 +1,7 @@
 import 'package:dating_app/core/utils/date_utils.dart';
 import 'package:dating_app/core/utils/feed_skeleton.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
+import 'package:dating_app/core/widgets/bottom_sheet.dart';
 import 'package:dating_app/data/models/post_model.dart';
 import 'package:dating_app/data/models/user_model.dart';
 import 'package:dating_app/domain/entities/coins_entity.dart';
@@ -43,81 +44,94 @@ class _DirectPostsPageState extends State<DirectPostsPage>
   void initState() {
     super.initState();
     _scrollCtrl.addListener(_onScroll);
-    
-    Future.microtask(() {
+
+    // Initial load after mount
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      context.read<DirectPostsBloc>().add(
-        LoadDirectPosts(widget.recipientId),
-      );
-      context.read<CoinsBloc>().add(
-        LoadCoins(widget.recipientId),
-      );
+      _loadData();
     });
+  }
+
+  void _loadData() {
+    context.read<DirectPostsBloc>().add(
+          LoadDirectPosts(widget.recipientId),
+        );
+    context.read<CoinsBloc>().add(
+          LoadCoins(widget.recipientId),
+        );
   }
 
   @override
   void dispose() {
+    _scrollCtrl.removeListener(_onScroll);
     _scrollCtrl.dispose();
     _fadeCtrl.dispose();
     super.dispose();
   }
 
   void _onScroll() {
-    if (_scrollCtrl.position.pixels >= _scrollCtrl.position.maxScrollExtent * 0.9) {
+    if (!_scrollCtrl.hasClients || !mounted) return;
+    
+    if (_scrollCtrl.position.pixels >=
+        _scrollCtrl.position.maxScrollExtent * 0.9) {
       context.read<DirectPostsBloc>().add(
-        LoadMoreDirectPosts(widget.recipientId),
-      );
+            LoadMoreDirectPosts(widget.recipientId),
+          );
     }
   }
 
   Future<void> _onRefresh() async {
+    if (!mounted) return;
     context.read<DirectPostsBloc>().add(
-      RefreshDirectPosts(widget.recipientId),
-    );
+          RefreshDirectPosts(widget.recipientId),
+        );
   }
 
-  void _handlePostTap(BuildContext context, PostModel post, String currentUserId) {
+  void _handlePostTap(PostModel post, String currentUserId) {
+    if (!mounted) return;
+
     if (!post.isAnonymous) {
-      _navigateToProfile(context, post.userId);
+      _navigateToProfile(post.userId);
       return;
     }
 
-    // It's anonymous. First check if we've already revealed it.
     _pendingPostId = post.id;
     _pendingProfileUserId = post.userId;
     _isCheckingReveal = true;
 
     HapticFeedback.selectionClick();
     context.read<CoinsBloc>().add(
-      CheckHasRevealed(userId: currentUserId, postId: post.id),
-    );
+          CheckHasRevealed(userId: currentUserId, postId: post.id),
+        );
   }
 
-  void _showRevealDialog(
-    BuildContext context,
-    PostModel post,
-    String currentUserId,
-  ) {
+  void _showRevealDialog(PostModel post, String currentUserId) {
+    if (!mounted) return;
+
     final coinsState = context.read<CoinsBloc>().state;
     final coins = coinsState is CoinsLoaded ? coinsState.coins : null;
     final hasEnough = (coins?.balance ?? 0) >= CoinsEntity.anonymousRevealCost;
 
     showCupertinoDialog(
       context: context,
-      builder: (_) => _RevealDialog(
+      builder: (dialogCtx) => _RevealDialog(
         post: post,
         hasEnoughCoins: hasEnough,
         coinBalance: coins?.balance ?? 0,
         onReveal: () {
-          Navigator.pop(context);
-          _pendingProfileUserId = post.userId;
-          _pendingPostId = post.id;
-          context.read<CoinsBloc>().add(
-                SpendCoinsOnReveal(userId: currentUserId, postId: post.id),
-              );
+          Navigator.pop(dialogCtx);
+          if (post.isAnonymous) {
+            _pendingProfileUserId = post.userId;
+            _pendingPostId = post.id;
+            context.read<CoinsBloc>().add(
+                  SpendCoinsOnReveal(userId: currentUserId, postId: post.id),
+                );
+          } else {
+            _navigateToProfile(post.userId);
+          }
         },
         onWatchAd: () {
-          Navigator.pop(context);
+          Navigator.pop(dialogCtx);
           _pendingProfileUserId = post.userId;
           _pendingPostId = post.id;
           context.read<CoinsBloc>().add(WatchAdRequested(currentUserId));
@@ -126,7 +140,8 @@ class _DirectPostsPageState extends State<DirectPostsPage>
     );
   }
 
-  void _navigateToProfile(BuildContext context, String userId) {
+  void _navigateToProfile(String userId) {
+    if (!mounted) return;
     Navigator.push(
       context,
       CupertinoPageRoute(builder: (_) => OtherUserProfilePage(userId: userId)),
@@ -140,37 +155,37 @@ class _DirectPostsPageState extends State<DirectPostsPage>
 
     return BlocListener<CoinsBloc, CoinsState>(
       listener: (context, state) {
+        if (!mounted) return;
+
         if (state is CoinsLoaded && _isCheckingReveal) {
           _isCheckingReveal = false;
-
           if (state.hasRevealed == true) {
-            // Already revealed! Navigate directly.
-            _navigateToProfile(context, _pendingProfileUserId!);
-
+            _navigateToProfile(_pendingProfileUserId!);
             _pendingProfileUserId = null;
             _pendingPostId = null;
           } else {
-            // Not revealed yet. Show dialog.
-            // We need to find the post data to pass to the dialog.
             final directPostsState = context.read<DirectPostsBloc>().state;
             if (directPostsState is DirectPostsLoaded) {
-              final post = directPostsState.posts.firstWhere((p) => p.id == _pendingPostId);
-              _showRevealDialog(context, post, currentUserId!);
+              final post = directPostsState.posts
+                  .firstWhere((p) => p.id == _pendingPostId);
+              _showRevealDialog(post, currentUserId!);
             }
           }
         }
 
         if (state is CoinsEarned && _pendingPostId != null) {
           context.read<CoinsBloc>().add(
-            SpendCoinsOnReveal(userId: currentUserId!, postId: _pendingPostId!),
-          );
+                SpendCoinsOnReveal(userId: currentUserId!, postId: _pendingPostId!),
+              );
         }
+        
         if (state is CoinsSpent && _pendingProfileUserId != null) {
           HapticFeedback.mediumImpact();
-          _navigateToProfile(context, _pendingProfileUserId!);
+          _navigateToProfile(_pendingProfileUserId!);
           _pendingProfileUserId = null;
           _pendingPostId = null;
         }
+
         if (state is CoinsError) {
           _pendingProfileUserId = null;
           _pendingPostId = null;
@@ -232,9 +247,7 @@ class _DirectPostsPageState extends State<DirectPostsPage>
         builder: (context, state) {
           final balance = state is CoinsLoaded ? state.coins.balance : 0;
           final freeLeft = state is CoinsLoaded
-              ? (CoinsEntity.freeDirectPosts -
-                        state.coins.dailyDirectPostsCount)
-                    .clamp(0, 2)
+              ? (CoinsEntity.freeDirectPosts - state.coins.dailyDirectPostsCount).clamp(0, 2)
               : 0;
 
           return Container(
@@ -266,10 +279,7 @@ class _DirectPostsPageState extends State<DirectPostsPage>
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: Colors.orange.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
@@ -327,22 +337,12 @@ class _DirectPostsPageState extends State<DirectPostsPage>
                   final post = state.posts[i];
                   return _DirectPostCard(
                     post: post,
-                    onTap: () => _handlePostTap(context, post, currentUserId),
-                    onReplyTap: () {
-                      /*Navigator.push(
-                        context,
-                        CupertinoPageRoute(
-                          builder: (_) => SendPostPage(
-                            recipient: UserModel(
-                              id: post.userId,
-                              name: post.isAnonymous ? 'Someone' : post.authorName,
-                              age: 0, sex: '', university: post.university, residence: '', status: '', major: '', bio: '', profileImageUrl: '', imageUrls: [], interests: [],
-                              privacySettings: null, coins: 0, dailyAdsWatched: 0, dailyDirectPostsCount: 0,
-                            ),
-                          ),
-                        ),
-                      );*/
-                    },
+                    onTap: () => _handlePostTap(post, currentUserId),
+                    onReplyTap: () => showCommentsSheet(
+                      context: context,
+                      postId: post.id,
+                      commentCount: post.commentCount,
+                    ),
                   );
                 },
                 childCount: state.hasMore ? state.posts.length + 1 : state.posts.length,
@@ -437,11 +437,9 @@ class _DirectPostCard extends StatelessWidget {
                 ),
                 Container(width: 1, height: 20, color: Colors.grey[200]),
                 Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      // Prevent parent onTap from triggering
-                      onReplyTap();
-                    },
+                  child: CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: onReplyTap,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [

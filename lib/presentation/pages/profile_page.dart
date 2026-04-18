@@ -11,6 +11,7 @@ import 'package:dating_app/presentation/bloc/image/image_sate.dart';
 import 'package:dating_app/presentation/bloc/user/user_bloc.dart';
 import 'package:dating_app/presentation/bloc/user/user_state.dart';
 import 'package:dating_app/presentation/pages/full_screen.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -326,7 +327,7 @@ class ProfilePage extends StatelessWidget {
                         // Still uploading — show loading indicator
                         if (imageState is ImagesUploading) {
 
-                          return const Center(child: CircularProgressIndicator());
+                          return const Center(child: CupertinoActivityIndicator());
                         }
 
                         final images = imageState is ImagesLoaded
