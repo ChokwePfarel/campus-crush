@@ -1,0 +1,236 @@
+
+import 'dart:async';
+
+import 'package:dating_app/data/models/conversation_model.dart';
+import 'package:dating_app/data/models/message_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+abstract class ChatRemoteDataSource {
+  Future<List<ConversationModel>> getConversations(String currentUserId);
+  Future<ConversationModel> getOrCreateConversation({
+    required String currentUserId,
+    required String otherUserId,
+  });
+  Future<List<MessageModel>> getMessages(String conversationId);
+  Future<MessageModel> sendMessage({
+    required String conversationId,
+    required String senderId,
+    required String text,
+  });
+  Future<void> markAsRead(String conversationId, String currentUserId);
+  Stream<MessageModel> subscribeToMessages(String conversationId);
+  Stream<ConversationModel> subscribeToConversations(String currentUserId);
+
+  Future<int> getUnreadCount(String currentUserId);
+
+  void dispose();
+}
+
+class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
+  final SupabaseClient client;
+  RealtimeChannel? _messagesChannel;
+  RealtimeChannel? _conversationsChannel;
+
+  ChatRemoteDataSourceImpl(this.client);
+
+  @override
+  Future<List<ConversationModel>> getConversations(
+      String currentUserId) async {
+    final response = await client
+        .from('conversations')
+        .select('''
+        *,
+        user_one:profiles!conversations_user_one_id_fkey (
+          id, name, profile_image_url, is_verified
+        ),
+        user_two:profiles!conversations_user_two_id_fkey (
+          id, name, profile_image_url, is_verified
+        ),
+        messages (
+          id,
+          is_read,
+          sender_id
+        )
+      ''')
+        .or('user_one_id.eq.$currentUserId,user_two_id.eq.$currentUserId')
+        .order('last_message_at', ascending: false);
+
+    return (response as List).map((e) {
+      // Count unread messages not sent by current user
+      final messages = (e['messages'] as List? ?? []);
+      final unreadCount = messages.where((m) =>
+      m['is_read'] == false &&
+          m['sender_id'] != currentUserId
+      ).length;
+
+      return ConversationModel.fromJson(e, currentUserId, unreadCount);
+    }).toList();
+  }
+
+  @override
+  Future<ConversationModel> getOrCreateConversation({
+    required String currentUserId,
+    required String otherUserId,
+  }) async {
+    // Check if conversation already exists
+    final existing = await client
+        .from('conversations')
+        .select('''
+          *,
+          user_one:profiles!conversations_user_one_id_fkey (
+            id, name, profile_image_url, is_verified
+          ),
+          user_two:profiles!conversations_user_two_id_fkey (
+            id, name, profile_image_url, is_verified
+          )
+        ''')
+        .or(
+      'and(user_one_id.eq.$currentUserId,user_two_id.eq.$otherUserId),'
+          'and(user_one_id.eq.$otherUserId,user_two_id.eq.$currentUserId)',
+    )
+        .maybeSingle();
+
+    if (existing != null) {
+      return ConversationModel.fromJson(existing, currentUserId);
+    }
+
+    // Create new conversation
+    final created = await client
+        .from('conversations')
+        .insert({
+      'user_one_id': currentUserId,
+      'user_two_id': otherUserId,
+    })
+        .select('''
+          *,
+          user_one:profiles!conversations_user_one_id_fkey (
+            id, name, profile_image_url, is_verified
+          ),
+          user_two:profiles!conversations_user_two_id_fkey (
+            id, name, profile_image_url, is_verified
+          )
+        ''')
+        .single();
+
+    return ConversationModel.fromJson(created, currentUserId);
+  }
+
+  @override
+  Future<List<MessageModel>> getMessages(String conversationId) async {
+    final response = await client
+        .from('messages')
+        .select()
+        .eq('conversation_id', conversationId)
+        .order('created_at', ascending: true);
+
+    return (response as List)
+        .map((e) => MessageModel.fromJson(e))
+        .toList();
+  }
+
+  @override
+  Future<MessageModel> sendMessage({
+    required String conversationId,
+    required String senderId,
+    required String text,
+  }) async {
+    final response = await client
+        .from('messages')
+        .insert({
+      'conversation_id': conversationId,
+      'sender_id':       senderId,
+      'text':            text,
+    })
+        .select()
+        .single();
+
+    return MessageModel.fromJson(response);
+  }
+
+  @override
+  Future<void> markAsRead(
+      String conversationId, String currentUserId) async {
+    await client
+        .from('messages')
+        .update({'is_read': true})
+        .eq('conversation_id', conversationId)
+        .neq('sender_id', currentUserId)
+        .eq('is_read', false);
+  }
+
+  @override
+  Stream<MessageModel> subscribeToMessages(String conversationId) {
+    final controller = StreamController<MessageModel>.broadcast();
+
+    _messagesChannel = client
+        .channel('messages:$conversationId')
+        .onPostgresChanges(
+      event: PostgresChangeEvent.insert,
+      schema: 'public',
+      table: 'messages',
+      filter: PostgresChangeFilter(
+        type: PostgresChangeFilterType.eq,
+        column: 'conversation_id',
+        value: conversationId,
+      ),
+      callback: (payload) {
+        final message = MessageModel.fromJson(payload.newRecord);
+        controller.add(message);
+      },
+    )
+        .subscribe();
+
+    return controller.stream;
+  }
+
+  @override
+  Stream<ConversationModel> subscribeToConversations(
+      String currentUserId) {
+    final controller = StreamController<ConversationModel>.broadcast();
+
+    _conversationsChannel = client
+        .channel('conversations:$currentUserId')
+        .onPostgresChanges(
+      event: PostgresChangeEvent.update,
+      schema: 'public',
+      table: 'conversations',
+      callback: (payload) async {
+        // Fetch full conversation with joined profiles
+        final updated = await client
+            .from('conversations')
+            .select('''
+                  *,
+                  user_one:profiles!conversations_user_one_id_fkey (
+                    id, name, profile_image_url, is_verified
+                  ),
+                  user_two:profiles!conversations_user_two_id_fkey (
+                    id, name, profile_image_url, is_verified
+                  )
+                ''')
+            .eq('id', payload.newRecord['id'])
+            .single();
+
+        controller.add(
+            ConversationModel.fromJson(updated, currentUserId));
+      },
+    )
+        .subscribe();
+
+    return controller.stream;
+  }
+
+
+  Future<int> getUnreadCount(String currentUserId) async {
+    final response = await client.rpc(
+      'get_unread_count',
+      params: {'current_user_id': currentUserId},
+    );
+    return response as int;
+  }
+
+  @override
+  void dispose() {
+    _messagesChannel?.unsubscribe();
+    _conversationsChannel?.unsubscribe();
+  }
+}

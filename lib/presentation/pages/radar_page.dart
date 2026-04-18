@@ -1,0 +1,591 @@
+import 'dart:math';
+import 'package:dating_app/core/constants/post_constants.dart';
+import 'package:dating_app/core/utils/screen_size.dart';
+import 'package:dating_app/data/models/post_model.dart';
+import 'package:dating_app/domain/repositories/posts_repository.dart';
+import 'package:dating_app/presentation/bloc/posts/posts_bloc.dart';
+import 'package:dating_app/presentation/bloc/posts/posts_event.dart';
+import 'package:dating_app/presentation/bloc/posts/posts_state.dart';
+import 'package:dating_app/presentation/bloc/user/user_bloc.dart';
+import 'package:dating_app/presentation/bloc/user/user_state.dart' as user_st;
+import 'package:dating_app/presentation/pages/other_user_profile.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+// ─── Bubble position model ────────────────────────────────────────────────────
+
+class _BubbleData {
+  final PostModel post;
+  final Offset position; // fractional 0..1
+  final double size;
+  final Color color;
+  final Duration animDelay;
+
+  const _BubbleData({
+    required this.post,
+    required this.position,
+    required this.size,
+    required this.color,
+    required this.animDelay,
+  });
+}
+
+const _bubbleColors = [
+  Color(0xFF2EC4B6),
+  Color(0xFFFF4D6D),
+  Color(0xFF6C63FF),
+  Color(0xFFFF9F1C),
+  Color(0xFF43C59E),
+  Color(0xFFE040FB),
+];
+
+// ─── Radar Page ───────────────────────────────────────────────────────────────
+
+class RadarPage extends StatefulWidget {
+  final void Function(String userId)? onProfileTap;
+  final VoidCallback? onCreateSpotted;
+
+  const RadarPage({super.key, this.onProfileTap, this.onCreateSpotted});
+
+  @override
+  State<RadarPage> createState() => _RadarPageState();
+}
+
+class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
+  String? _selectedLocation;
+
+  late final _radarCtrl = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 3),
+  )..repeat();
+
+  late final _pulseCtrl = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 2),
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _radarCtrl.dispose();
+    _pulseCtrl.dispose();
+    super.dispose();
+  }
+
+  void _fetchSpottedPosts(String location) {
+    final userState = context.read<UserBloc>().state;
+    if (userState is user_st.UserLoaded) {
+      context.read<PostBloc>().add(LoadPosts(
+            university: userState.user.university,
+            isInitial: true,
+          ));
+    }
+  }
+
+  void _selectLocation(String location) {
+    HapticFeedback.mediumImpact();
+    setState(() {
+      _selectedLocation = location;
+    });
+    _fetchSpottedPosts(location);
+  }
+
+  List<_BubbleData> _buildBubbles(List<PostModel> posts, String location) {
+    final rng = Random(location.hashCode);
+    final spottedPosts = posts.where((p) => p.postType == 'spotted' && p.locationTag == location).toList();
+
+    final positions = <Offset>[];
+    final bubbles = <_BubbleData>[];
+
+    for (var i = 0; i < spottedPosts.length; i++) {
+      Offset pos;
+      int attempts = 0;
+      do {
+        final x = 0.1 + rng.nextDouble() * 0.8;
+        final y = 0.12 + rng.nextDouble() * 0.72;
+        pos = Offset(x, y);
+        attempts++;
+      } while (attempts < 30 && positions.any((p) => (p - pos).distance < 0.18));
+
+      positions.add(pos);
+      bubbles.add(_BubbleData(
+        post: spottedPosts[i],
+        position: pos,
+        size: 88 + rng.nextDouble() * 28,
+        color: _bubbleColors[i % _bubbleColors.length],
+        animDelay: Duration(milliseconds: i * 180),
+      ));
+    }
+    return bubbles;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    SizeConfig.init(context);
+    return BlocProvider(
+      create: (context) => PostBloc(context.read<PostRepository>()),
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: Stack(
+          children: [
+            Positioned.fill(child: _RadarBackground(ctrl: _radarCtrl)),
+            SafeArea(
+              child: Column(
+                children: [
+                  _buildHeader(),
+                  Expanded(
+                    child: _selectedLocation == null ? _buildLocationPicker() : _buildRadarContent(),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRadarContent() {
+    return BlocBuilder<PostBloc, PostState>(
+      builder: (context, state) {
+        if (state is LoadingPosts) {
+          return const Center(child: CircularProgressIndicator(color: Color(0xFF2EC4B6)));
+        }
+        if (state is PostsLoaded) {
+          final bubbles = _buildBubbles(state.post, _selectedLocation!);
+          if (bubbles.isEmpty) return _buildEmptyRadar();
+
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              return Stack(
+                children: [
+                  Center(child: _RadarRings(ctrl: _radarCtrl, pulse: _pulseCtrl)),
+                  ...bubbles.map((b) => _SpottedBubble(
+                        data: b,
+                        canvasSize: Size(constraints.maxWidth, constraints.maxHeight),
+                        onTap: () {
+                          HapticFeedback.mediumImpact();
+                          _showBubbleDetail(b.post);
+                        },
+                      )),
+                  _buildCountBadge(bubbles.length),
+                ],
+              );
+            },
+          );
+        }
+        return _buildEmptyRadar();
+      },
+    );
+  }
+
+  Widget _buildCountBadge(int count) {
+    return Positioned(
+      top: 12,
+      left: 0,
+      right: 0,
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          decoration: BoxDecoration(
+            color: const Color(0xFF2EC4B6).withOpacity(0.15),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFF2EC4B6).withOpacity(0.3)),
+          ),
+          child: Text(
+            '$count ${count == 1 ? 'person' : 'people'} spotted at $_selectedLocation',
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF2EC4B6)),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+      child: Row(
+        children: [
+          if (_selectedLocation != null)
+            GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                setState(() {
+                  _selectedLocation = null;
+                });
+              },
+              child: Container(
+                width: 38,
+                height: 38,
+                margin: const EdgeInsets.only(right: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white.withOpacity(0.12)),
+                ),
+                child: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 16),
+              ),
+            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Radar',
+                style: TextStyle(
+                  fontSize: SizeConfig.widthPercent(6),
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              Text(
+                _selectedLocation ?? 'Who\'s around you right now?',
+                style: TextStyle(fontSize: 13, color: Colors.white.withOpacity(0.5), fontWeight: FontWeight.w500),
+              ),
+            ],
+          ),
+          const Spacer(),
+          _buildLiveIndicator(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLiveIndicator() {
+    return AnimatedBuilder(
+      animation: _pulseCtrl,
+      builder: (_, __) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: Color.lerp(const Color(0xFF2EC4B6).withOpacity(0.15), const Color(0xFF2EC4B6).withOpacity(0.3), _pulseCtrl.value),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFF2EC4B6).withOpacity(0.4)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Color.lerp(const Color(0xFF2EC4B6), Colors.white, _pulseCtrl.value * 0.4),
+              ),
+            ),
+            const SizedBox(width: 5),
+            const Text('LIVE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF2EC4B6), letterSpacing: 1)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLocationPicker() {
+    final grouped = LocationTags.grouped;
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      children: grouped.entries.map((entry) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(4, 16, 4, 8),
+              child: Text(
+                entry.key.toUpperCase(),
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white.withOpacity(0.35), letterSpacing: 1.2),
+              ),
+            ),
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: 2.6,
+              children: entry.value.map((tag) {
+                return GestureDetector(
+                  onTap: () => _selectLocation(tag['label']!),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.07),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.white.withOpacity(0.1)),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(tag['icon']!, style: const TextStyle(fontSize: 18)),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            tag['label']!,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white.withOpacity(0.85)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildEmptyRadar() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _RadarRings(ctrl: _radarCtrl, pulse: _pulseCtrl),
+          const SizedBox(height: 32),
+          Text('No one spotted here yet', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white.withOpacity(0.7))),
+          const SizedBox(height: 8),
+          Text('Be the first to post your outfit!', style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.4))),
+        ],
+      ),
+    );
+  }
+
+  void _showBubbleDetail(PostModel post) {
+    final userId = post.userId;
+    print('USER ID $userId');
+    
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: const BoxDecoration(
+          color: Color(0xFF1A1A2E),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 24, 
+                  backgroundColor: Colors.white10, 
+                  child: Text(post.isAnonymous ? '🎭' : '👤', style: const TextStyle(fontSize: 24)),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        post.isAnonymous ? 'Anonymous Student' : 'Student',
+                        style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      Text('at $_selectedLocation', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 14)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            Text(post.content, style: const TextStyle(color: Colors.white, fontSize: 16, height: 1.5)),
+            const SizedBox(height: 32),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context); // Close sheet
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => OtherUserProfilePage(userId: userId),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2EC4B6),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                    child: Text(
+                      'Say Hi',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Animation Components ───────────────────────────────────────────────────
+
+class _RadarBackground extends StatelessWidget {
+  final Animation<double> ctrl;
+  const _RadarBackground({required this.ctrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: ctrl,
+      builder: (context, child) {
+        return CustomPaint(painter: _RadarBackgroundPainter(progress: ctrl.value));
+      },
+    );
+  }
+}
+
+class _RadarBackgroundPainter extends CustomPainter {
+  final double progress;
+  _RadarBackgroundPainter({required this.progress});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withOpacity(0.03)
+      ..strokeWidth = 1;
+
+    for (double i = 0; i < size.width; i += 40) {
+      canvas.drawLine(Offset(i, 0), Offset(i, size.height), paint);
+    }
+    for (double i = 0; i < size.height; i += 40) {
+      canvas.drawLine(Offset(0, i), Offset(size.width, i), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+class _RadarRings extends StatelessWidget {
+  final Animation<double> ctrl;
+  final Animation<double> pulse;
+  const _RadarRings({required this.ctrl, required this.pulse});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: Listenable.merge([ctrl, pulse]),
+      builder: (context, child) {
+        return CustomPaint(painter: _RadarRingsPainter(progress: ctrl.value, pulse: pulse.value), size: const Size(300, 300));
+      },
+    );
+  }
+}
+
+class _RadarRingsPainter extends CustomPainter {
+  final double progress;
+  final double pulse;
+  _RadarRingsPainter({required this.progress, required this.pulse});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+
+    for (int i = 1; i <= 3; i++) {
+      paint.color = const Color(0xFF2EC4B6).withOpacity(0.1 - (i * 0.02) + (pulse * 0.05));
+      canvas.drawCircle(center, (size.width / 2) * (i / 3), paint);
+    }
+
+    final sweepPaint = Paint()
+      ..shader = SweepGradient(
+        colors: [Colors.transparent, const Color(0xFF2EC4B6).withOpacity(0.3), Colors.transparent],
+        stops: const [0.0, 0.5, 1.0],
+        transform: GradientRotation(progress * 2 * pi),
+      ).createShader(Rect.fromCircle(center: center, radius: size.width / 2));
+
+    canvas.drawCircle(center, size.width / 2, sweepPaint..style = PaintingStyle.fill);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+class _SpottedBubble extends StatefulWidget {
+  final _BubbleData data;
+  final Size canvasSize;
+  final VoidCallback onTap;
+
+  const _SpottedBubble({required this.data, required this.canvasSize, required this.onTap});
+
+  @override
+  State<_SpottedBubble> createState() => _SpottedBubbleState();
+}
+
+class _SpottedBubbleState extends State<_SpottedBubble> with SingleTickerProviderStateMixin {
+  late final _animCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 800));
+  late final _scaleAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.elasticOut);
+
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(widget.data.animDelay, () {
+      if (mounted) _animCtrl.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _animCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final x = widget.data.position.dx * widget.canvasSize.width;
+    final y = widget.data.position.dy * widget.canvasSize.height;
+
+    return Positioned(
+      left: x - widget.data.size / 2,
+      top: y - widget.data.size / 2,
+      child: ScaleTransition(
+        scale: _scaleAnim,
+        child: GestureDetector(
+          onTap: widget.onTap,
+          child: Container(
+            width: widget.data.size,
+            height: widget.data.size,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: widget.data.color.withOpacity(0.2),
+              border: Border.all(color: widget.data.color.withOpacity(0.5), width: 2),
+              boxShadow: [BoxShadow(color: widget.data.color.withOpacity(0.2), blurRadius: 12)],
+            ),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircleAvatar(
+                    radius: widget.data.size * 0.25,
+                    backgroundColor: Colors.white10,
+                    child: Text(widget.data.post.isAnonymous ? '🎭' : '👤', style: TextStyle(fontSize: widget.data.size * 0.3)),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    widget.data.post.isAnonymous ? '???' : 'Student',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: widget.data.size * 0.12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
