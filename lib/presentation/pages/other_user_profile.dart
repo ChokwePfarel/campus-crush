@@ -2,7 +2,7 @@ import 'package:dating_app/core/utils/screen_size.dart';
 import 'package:dating_app/core/utils/theme.dart';
 import 'package:dating_app/data/datasources/image_remote_data_source.dart';
 import 'package:dating_app/data/repositories/image_repository_impl.dart';
-import 'package:dating_app/domain/entities/conversation_entity.dart';
+
 import 'package:dating_app/domain/repositories/users_repository.dart';
 import 'package:dating_app/presentation/bloc/image/image_bloc.dart';
 import 'package:dating_app/presentation/bloc/image/image_event.dart';
@@ -377,7 +377,7 @@ class OtherUserProfilePage extends StatelessWidget {
                               Navigator.push(
                                 context,
                                 CupertinoPageRoute(
-                                  builder: (_) => SendPostPage(recipient: user),
+                                  builder: (_) => SendPostPage(recipient: user, recipientId: currentUserId),
                                 ),
                               );
                             },

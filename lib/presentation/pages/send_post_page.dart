@@ -94,10 +94,13 @@ extension DirectPostTypeExt on DirectPostType {
 
 class SendPostPage extends StatefulWidget {
   final UserModel recipient;
+  final String recipientId;
+
 
   const SendPostPage({
     super.key,
     required this.recipient,
+    required this.recipientId,
   });
 
   @override
@@ -125,6 +128,20 @@ class _SendPostPageState extends State<SendPostPage>
   late final _pulseCtrl = AnimationController(
     vsync: this, duration: const Duration(seconds: 2),
   )..repeat(reverse: true);
+
+
+  @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(() {
+      if (!mounted) return;
+
+      context.read<CoinsBloc>().add(
+        LoadCoins(widget.recipientId),
+      );
+    });
+  }
 
   @override
   void dispose() {
