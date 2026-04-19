@@ -13,6 +13,8 @@ class LikesBloc extends Bloc<LikesEvent, LikesState> {
     on<InitializeLikes>(_onInitialize);
     on<LikePost>(_onLikePost);
     on<UnlikePost>(_onUnlikePost);
+    on<LoadLikes>(_onLoadLikes);
+
   }
 
   Future<void> _onInitialize(
@@ -78,6 +80,19 @@ class LikesBloc extends Bloc<LikesEvent, LikesState> {
     } catch (e) {
       // Revert
       emit(current.copyWith(hasLiked: true, likeCount: current.likeCount));
+    }
+  }
+
+  Future<void> _onLoadLikes(
+      LoadLikes event,
+      Emitter<LikesState> emit,
+      ) async {
+    emit(LikesLoading());
+    try {
+      final likes = await _likesRepository.getLikes(event.postId);
+      emit(LikesListLoaded(likes));
+    } catch (e) {
+      emit(LikesError(e.toString()));
     }
   }
 }

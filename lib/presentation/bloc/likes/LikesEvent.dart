@@ -2,6 +2,11 @@
 
 abstract class LikesEvent {}
 
+class LoadLikes extends LikesEvent {
+  final String postId;
+  LoadLikes(this.postId);
+}
+
 /// Called once per card on mount — loads count + hasLiked in one go
 class InitializeLikes extends LikesEvent {
   final String postId;

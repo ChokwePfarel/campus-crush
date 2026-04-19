@@ -57,6 +57,7 @@ extension PostTypeExt on PostType {
   }
 }
 
+
 class LocationTags {
   static const List<Map<String, String>> all = [
     {'label': 'Main Library', 'icon': '📚', 'category': 'Libraries & Study'},
@@ -98,17 +99,15 @@ class LocationTags {
 
 const List<Color?> postBgColors = [
   null, // no background (default)
-  Color(0xFFFFE0E6),
-  Color(0xFFFFEDD5),
-  Color(0xFFFFF9C4),
-  Color(0xFFDCF8E0),
-  Color(0xFFD6EAFF),
-  Color(0xFFEDE0FF),
-  Color(0xFFFFD6F5),
-  Color(0xFFD0F4F4),
+
   Color(0xFF1A1A2E),
-  Color(0xFF2D1B1B),
-  Color(0xFF1B2D1B),
+  Color(0xFF1A1A2E), // deep navy
+  Color(0xFF2D1B1B), // dark maroon
+  Color(0xFF1B2D1B), // dark forest green
+  Color(0xFF0D1B2A), // midnight blue
+  Color(0xFF2C2C54), // indigo
+  Color(0xFF263238), // charcoal grey
+  Color(0xFF00695C), // teal green
 ];
 
 class MockCoins {

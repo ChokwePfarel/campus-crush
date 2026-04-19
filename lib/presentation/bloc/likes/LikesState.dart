@@ -1,4 +1,4 @@
-// lib/presentation/bloc/likes/likes_state.dart
+import 'package:dating_app/domain/entities/like_entity.dart';
 
 abstract class LikesState {}
 
@@ -11,6 +11,7 @@ class LikesError extends LikesState {
   LikesError(this.message);
 }
 
+/// Used by each post card — tracks count and whether current user liked it
 class LikesLoaded extends LikesState {
   final bool hasLiked;
   final int likeCount;
@@ -21,4 +22,10 @@ class LikesLoaded extends LikesState {
     hasLiked: hasLiked ?? this.hasLiked,
     likeCount: likeCount ?? this.likeCount,
   );
+}
+
+/// Used only by the "Liked by" bottom sheet
+class LikesListLoaded extends LikesState {
+  final List<LikeEntity> likes;
+  LikesListLoaded(this.likes);
 }

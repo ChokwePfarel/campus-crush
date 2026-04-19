@@ -1,17 +1,21 @@
+import 'package:dating_app/core/features/my_posts/chip.dart';
+import 'package:dating_app/core/features/my_posts/my_post_item.dart';
 import 'package:dating_app/core/utils/date_utils.dart';
 import 'package:dating_app/core/utils/posts_skeleton.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
 import 'package:dating_app/core/widgets/bottom_sheet.dart';
+import 'package:dating_app/core/widgets/common/empty_state.dart';
 import 'package:dating_app/data/models/post_model.dart';
 import 'package:dating_app/domain/repositories/current_user_post_repository.dart';
-import 'package:dating_app/presentation/bloc/comments/commenst_event.dart';
-import 'package:dating_app/presentation/bloc/comments/comments_bloc.dart';
+import 'package:dating_app/domain/repositories/likes_repository.dart';
 import 'package:dating_app/presentation/bloc/current_user/user_post_bloc.dart';
 import 'package:dating_app/presentation/bloc/current_user/user_post_event.dart';
 import 'package:dating_app/presentation/bloc/current_user/user_post_state.dart';
 import 'package:dating_app/presentation/bloc/likes/LikesEvent.dart';
 import 'package:dating_app/presentation/bloc/likes/LikesState.dart';
 import 'package:dating_app/presentation/bloc/likes/likes_bloc.dart';
+import 'package:dating_app/presentation/bloc/posts/posts_bloc.dart';
+import 'package:dating_app/presentation/bloc/posts/posts_event.dart';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -28,26 +32,23 @@ class MyPostsPage extends StatefulWidget {
 
 class _MyPostsPageState extends State<MyPostsPage> {
   final Set<String> _deletingIds = {};
+  final Map<String, int> _liveLikeCounts = {};
 
-  int _totalLikes(List<PostModel> posts) =>
-      posts.fold(0, (sum, p) => sum + p.likeCount);
+  void _onLikeCountChanged(String postId, int count) {
+    if (_liveLikeCounts[postId] != count) {
+      setState(() => _liveLikeCounts[postId] = count);
+    }
+  }
+
+  int _totalLikes(List<PostModel> posts) => posts.fold(
+        0,
+        (sum, p) => sum + (_liveLikeCounts[p.id] ?? p.likeCount),
+      );
 
   int _totalComments(List<PostModel> posts) =>
       posts.fold(0, (sum, p) => sum + p.commentCount);
 
-
-  void initState(){
-    super.initState();
-
-    final String currentUserId = Supabase.instance.client.auth.currentUser?.id ?? '';
-
-    Future.microtask(() {
-
-      context.read<CommentsBloc>().add(LoadComments(currentUserId));
-    });
-  }
-
-  Future<void> _confirmDelete(PostModel post) async {
+  Future<void> _confirmDelete(BuildContext context, PostModel post) async {
     HapticFeedback.mediumImpact();
 
     final confirmed = await showCupertinoDialog<bool>(
@@ -72,29 +73,31 @@ class _MyPostsPageState extends State<MyPostsPage> {
       ),
     );
 
-    if (confirmed != true || !mounted) return;
+    if (confirmed == true && mounted) {
+      // OPTIMISTIC UPDATE: Add to deleting set to hide from UI immediately
+      setState(() => _deletingIds.add(post.id));
 
-    setState(() => _deletingIds.add(post.id));
-    // TODO: Dispatch Delete event to Bloc
-    await Future.delayed(const Duration(milliseconds: 600));
-    setState(() => _deletingIds.remove(post.id));
+      // Dispatch background deletion
+      context.read<PostBloc>().add(DeletePostRequested(postId: post.id));
+    }
   }
 
-  void _showLikesList(BuildContext context, PostModel post) {
-    if (post.likeCount == 0) return;
+  void _showLikesList(BuildContext pageContext, PostModel post) {
+    final liveCount = _liveLikeCounts[post.id] ?? post.likeCount;
+    if (liveCount == 0) return;
 
     HapticFeedback.lightImpact();
-    context.read<LikesBloc>().add(LoadLikes(post.id));
 
     showModalBottomSheet(
-      context: context,
+      context: pageContext,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (sheetContext) {
-        return BlocProvider.value(
-          value: context.read<LikesBloc>(),
+        return BlocProvider(
+          create: (_) => LikesBloc(pageContext.read<LikesRepository>())
+            ..add(LoadLikes(post.id)),
           child: Container(
             padding: EdgeInsets.all(SizeConfig.widthPercent(5)),
             child: Column(
@@ -112,12 +115,9 @@ class _MyPostsPageState extends State<MyPostsPage> {
                   ),
                 ),
                 SizedBox(height: SizeConfig.heightPercent(2)),
-                Text(
+                const Text(
                   'Liked by',
-                  style: TextStyle(
-                    fontSize: SizeConfig.widthPercent(5),
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 SizedBox(height: SizeConfig.heightPercent(2)),
                 BlocBuilder<LikesBloc, LikesState>(
@@ -128,7 +128,10 @@ class _MyPostsPageState extends State<MyPostsPage> {
                     if (state is LikesError) {
                       return Center(child: Text('Error: ${state.message}'));
                     }
-                    if (state is LikesLoaded) {
+                    if (state is LikesListLoaded) {
+                      if (state.likes.isEmpty) {
+                        return const Center(child: Text('No likes yet'));
+                      }
                       return Flexible(
                         child: ListView.builder(
                           shrinkWrap: true,
@@ -138,13 +141,14 @@ class _MyPostsPageState extends State<MyPostsPage> {
                             return ListTile(
                               contentPadding: EdgeInsets.zero,
                               leading: CircleAvatar(
-                                backgroundColor: Colors.pinkAccent.withOpacity(0.1),
-                                child: const Icon(Icons.favorite, color: Colors.pinkAccent, size: 16),
+                                backgroundColor:
+                                    Colors.pinkAccent.withOpacity(0.1),
+                                child: const Icon(Icons.favorite,
+                                    color: Colors.pinkAccent, size: 16),
                               ),
-                              title: Text(
-                                like.likedByName,
-                                style: const TextStyle(fontWeight: FontWeight.w600),
-                              ),
+                              title: Text(like.likedByName,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w600)),
                               subtitle: const Text('Student'),
                             );
                           },
@@ -163,52 +167,43 @@ class _MyPostsPageState extends State<MyPostsPage> {
     );
   }
 
+
   @override
   Widget build(BuildContext context) {
     SizeConfig.init(context);
+    final String currentUserId =
+        Supabase.instance.client.auth.currentUser?.id ?? '';
 
     return BlocProvider(
-      create: (context) => CurrentUserPostBloc(context.read<CurrentUserPostRepository>()),
-      child: Builder(
-        builder: (context) {
-          // Dispatch fetch once Bloc is available
-          context.read<CurrentUserPostBloc>().add(LoadUserPosts());
-
-
-
-          return Scaffold(
+        create: (context) =>
+        CurrentUserPostBloc(context.read<CurrentUserPostRepository>())
+          ..add(LoadUserPosts()),
+        child: Scaffold(
             backgroundColor: const Color(0xFFF4F4F8),
             body: BlocBuilder<CurrentUserPostBloc, UserPostState>(
-              builder: (context, state) {
-                if (state is UserPostLoading) {
-                  return const Center(child: PostListSkeleton());
-                }
-
-                if (state is UserPostError) {
-                  return Center(child: Text('Error: ${state.message}'));
-                }
-
-                if (state is UserPostLoaded) {
-                  final myPosts = state.posts;
-
+                builder: (context, state) {
+                  // Filter posts here to exclude those being deleted
+                  List<PostModel> visiblePosts = [];
+                  if (state is UserPostLoaded) {
+                    visiblePosts = state.posts.where((p) => !_deletingIds.contains(p.id)).toList();
+                  }
                   return CustomScrollView(
                     slivers: [
                       _buildAppBar(),
-                      if (myPosts.isNotEmpty) ...[
-                        _buildStatsBar(myPosts),
-                        _buildPostList(myPosts),
-                      ] else
-                        _buildEmpty(),
+                      if (state is UserPostLoaded) ...[
+                        _buildStatsBar(visiblePosts),
+                        _buildPostList(visiblePosts, currentUserId),
+                      ] else if (state is UserPostLoading)
+                        const SliverFillRemaining(child: Center(child: CupertinoActivityIndicator()))
+                      else if (state is UserPostError)
+                          SliverFillRemaining(child: Center(child: Text(state.message)))
+                        else
+                          const SliverFillRemaining(child: Center(child: Text("No posts found"))),
                     ],
                   );
-                }
-
-                return const Center(child: Text('Connecting to history...'));
-              },
+                },
             ),
-          );
-        }
-      ),
+        ),
     );
   }
 
@@ -220,10 +215,7 @@ class _MyPostsPageState extends State<MyPostsPage> {
       leading: CupertinoButton(
         padding: EdgeInsets.zero,
         onPressed: () => Navigator.of(context).pop(),
-        child: const Icon(
-          CupertinoIcons.chevron_left,
-          color: Color(0xFF1A1A2E),
-        ),
+        child: const Icon(CupertinoIcons.chevron_left, color: Color(0xFF1A1A2E)),
       ),
       title: const Text(
         'My History',
@@ -245,25 +237,25 @@ class _MyPostsPageState extends State<MyPostsPage> {
           SizeConfig.widthPercent(5),
           SizeConfig.heightPercent(2),
           SizeConfig.widthPercent(5),
-          SizeConfig.heightPercent(2.5)
+          SizeConfig.heightPercent(2.5),
         ),
         child: Row(
           children: [
-            _StatChip(
+            StatChip(
               emoji: '📝',
               value: '${posts.length}',
               label: posts.length == 1 ? 'Post' : 'Posts',
               color: const Color(0xFF6C63FF),
             ),
             SizedBox(width: SizeConfig.widthPercent(2.5)),
-            _StatChip(
+            StatChip(
               emoji: '❤️',
               value: '${_totalLikes(posts)}',
               label: 'Likes',
               color: const Color(0xFFFF4D6D),
             ),
             SizedBox(width: SizeConfig.widthPercent(2.5)),
-            _StatChip(
+            StatChip(
               emoji: '💬',
               value: '${_totalComments(posts)}',
               label: 'Comments',
@@ -275,216 +267,42 @@ class _MyPostsPageState extends State<MyPostsPage> {
     );
   }
 
-  SliverPadding _buildPostList(List<PostModel> posts) {
+  SliverPadding _buildPostList(List<PostModel> posts, String currentUserId) {
     return SliverPadding(
       padding: EdgeInsets.fromLTRB(
         SizeConfig.widthPercent(4),
         SizeConfig.heightPercent(2),
         SizeConfig.widthPercent(4),
-        SizeConfig.heightPercent(12)
+        SizeConfig.heightPercent(12),
       ),
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate(
-          (_, i) => _MyPostItem(
-            post: posts[i],
-            isDeleting: _deletingIds.contains(posts[i].id),
-            onDelete: () => _confirmDelete(posts[i]),
-            onShowLikes: () => _showLikesList(context, posts[i]),
-            onComment: () => showCommentsSheet(context: context, postId: posts[i].id, commentCount: posts[i].commentCount),
-          ),
+          (context, i) {
+            final post = posts[i];
+            return BlocProvider(
+              key: ValueKey(post.id),
+              create: (cardCtx) => LikesBloc(cardCtx.read<LikesRepository>()),
+              child: MyPostItem(
+                post: post,
+                currentUserId: currentUserId,
+                isDeleting: _deletingIds.contains(post.id),
+                onDelete: () => _confirmDelete(context, post),
+                onShowLikes: () => _showLikesList(context, post),
+                onComment: () => showCommentsSheet(
+                  context: context,
+                  postId: post.id,
+                  commentCount: post.commentCount,
+                ),
+                onLikeCountChanged: (count) =>
+                    _onLikeCountChanged(post.id, count),
+              ),
+            );
+          },
           childCount: posts.length,
         ),
       ),
     );
   }
-
-  SliverFillRemaining _buildEmpty() {
-    return SliverFillRemaining(
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('📭', style: TextStyle(fontSize: SizeConfig.widthPercent(12))),
-            SizedBox(height: SizeConfig.heightPercent(2)),
-            const Text(
-              'No posts yet',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
-class _StatChip extends StatelessWidget {
-  final String emoji;
-  final String value;
-  final String label;
-  final Color color;
 
-  const _StatChip({
-    required this.emoji,
-    required this.value,
-    required this.label,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: SizeConfig.heightPercent(1.5)),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.07),
-          borderRadius: BorderRadius.circular(SizeConfig.widthPercent(3.5)),
-          border: Border.all(color: color.withOpacity(0.15)),
-        ),
-        child: Column(
-          children: [
-            Text(emoji, style: TextStyle(fontSize: SizeConfig.widthPercent(5))),
-            SizedBox(height: SizeConfig.heightPercent(0.5)),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: SizeConfig.widthPercent(4.5),
-                fontWeight: FontWeight.w800,
-                color: color,
-              ),
-            ),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: SizeConfig.widthPercent(2.8),
-                fontWeight: FontWeight.w600,
-                color: color.withOpacity(0.7),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MyPostItem extends StatelessWidget {
-  final PostModel post;
-  final bool isDeleting;
-  final VoidCallback onDelete;
-  final VoidCallback onShowLikes;
-  final VoidCallback onComment;
-
-  const _MyPostItem({
-    required this.post,
-    required this.isDeleting,
-    required this.onDelete,
-    required this.onShowLikes,
-    required this.onComment,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final accent = post.postType.accentColor;
-    return Container(
-      margin: EdgeInsets.only(bottom: SizeConfig.heightPercent(1.5)),
-      padding: EdgeInsets.all(SizeConfig.widthPercent(4)),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(SizeConfig.widthPercent(4)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: SizeConfig.widthPercent(2),
-                  vertical: SizeConfig.heightPercent(0.4)
-                ),
-                decoration: BoxDecoration(
-                  color: accent.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  post.postType.label,
-                  style: TextStyle(
-                    color: accent,
-                    fontWeight: FontWeight.bold,
-                    fontSize: SizeConfig.widthPercent(2.8),
-                  ),
-                ),
-              ),
-              Text(
-                DateUtilsHelper.timeAgo(post.createdAt),
-                style: TextStyle(color: Colors.grey, fontSize: SizeConfig.widthPercent(3)),
-              ),
-            ],
-          ),
-          SizedBox(height: SizeConfig.heightPercent(1.5)),
-          Text(
-            post.content,
-            style: TextStyle(fontSize: SizeConfig.widthPercent(3.8), height: 1.4),
-          ),
-          SizedBox(height: SizeConfig.heightPercent(2)),
-          Row(
-            children: [
-              GestureDetector(
-                onTap: onShowLikes,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.pink.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.favorite, size: 16, color: Colors.pink.withOpacity(0.5)),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${post.likeCount}',
-                        style: TextStyle(
-                          color: Colors.grey[700],
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        )
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              GestureDetector(
-                onTap: onComment,
-                child: Row(
-                  children: [
-                    Icon(Icons.chat_bubble, size: 16, color: Colors.blue.withOpacity(0.5)),
-                    const SizedBox(width: 4),
-                    Text('${post.commentCount}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                  ],
-                ),
-              ),
-              const Spacer(),
-              IconButton(
-                onPressed: isDeleting ? null : onDelete,
-                icon: Icon(
-                  CupertinoIcons.trash,
-                  size: 18,
-                  color: isDeleting ? Colors.grey : Colors.redAccent.withOpacity(0.7),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}

@@ -1,4 +1,3 @@
-/*
 import 'package:dating_app/core/constants/post_constants.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
 import 'package:dating_app/presentation/bloc/posts/posts_bloc.dart';
@@ -21,16 +20,17 @@ class CreatePostScreen extends StatefulWidget {
 class _CreatePostScreenState extends State<CreatePostScreen>
     with TickerProviderStateMixin {
   // ── state ──────────────────────────────────────────────────────────────────
-  PostType _postType      = PostType.general;
-  bool     _isAnonymous   = false;
-  bool     _isPosting     = false;
-  Color?   _bgColor;
-  String?  _locationTag;
+  PostType _postType = PostType.general;
+  bool _isAnonymous = false;
+  bool _isPosting = false;
+  Color? _bgColor;
+  String? _locationTag;
 
   final _contentCtrl = TextEditingController();
-  final _focusNode   = FocusNode();
+  final _focusNode = FocusNode();
   late final _animCtrl = AnimationController(
-    vsync: this, duration: const Duration(milliseconds: 300),
+    vsync: this,
+    duration: const Duration(milliseconds: 300),
   );
   late final _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut);
 
@@ -58,8 +58,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 
   Color get _accentColor => _postType.color;
 
-  bool get _darkBg =>
-      _bgColor != null && _bgColor!.computeLuminance() < 0.3;
+  bool get _darkBg => _bgColor != null && _bgColor!.computeLuminance() < 0.3;
 
   Color get _textColor => _darkBg ? Colors.white : const Color(0xFF1A1A2E);
 
@@ -86,28 +85,28 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   Future<void> _handlePost() async {
     if (!_canPost || _isPosting) return;
     HapticFeedback.mediumImpact();
-    
+
     final userState = context.read<UserBloc>().state;
     if (userState is! user_st.UserLoaded) return;
 
     setState(() => _isPosting = true);
 
     // Spotted posts usually expire after 24 hours
-    final DateTime? expiresAt = _postType == PostType.spotted 
-        ? DateTime.now().add(const Duration(hours: 24)) 
+    final DateTime? expiresAt = _postType == PostType.spotted
+        ? DateTime.now().add(const Duration(hours: 24))
         : null;
 
     context.read<PostBloc>().add(CreatePostRequested(
-      content: _contentCtrl.text.trim(),
-      university: userState.user.university,
-      backgroundColor: _bgColor ?? _postType.color,
-      authorName: userState.user.name,
-      isAnonymous: _isAnonymous,
-      postType: _postType.name,
-      locationTag: _locationTag,
-      expiresAt: expiresAt,
-      isNormalPost: true,
-    ));
+          content: _contentCtrl.text.trim(),
+          university: userState.user.university,
+          backgroundColor: _bgColor ?? _postType.color,
+          authorName: userState.user.name,
+          isAnonymous: _isAnonymous,
+          postType: _postType.name,
+          locationTag: _locationTag,
+          expiresAt: expiresAt,
+          isNormalPost: true,
+        ));
 
     // Assume success or handle state in listener
     await Future.delayed(const Duration(milliseconds: 500));
@@ -157,12 +156,8 @@ class _CreatePostScreenState extends State<CreatePostScreen>
             _buildAppBar(),
             Expanded(
               child: SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(
-                  SizeConfig.widthPercent(5), 
-                  0, 
-                  SizeConfig.widthPercent(5), 
-                  SizeConfig.heightPercent(3)
-                ),
+                padding: EdgeInsets.fromLTRB(SizeConfig.widthPercent(5), 0,
+                    SizeConfig.widthPercent(5), SizeConfig.heightPercent(3)),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -227,30 +222,29 @@ class _CreatePostScreenState extends State<CreatePostScreen>
               onPressed: _canPost ? _handlePost : null,
               style: TextButton.styleFrom(
                 padding: EdgeInsets.symmetric(
-                  horizontal: SizeConfig.widthPercent(5), 
-                  vertical: SizeConfig.heightPercent(1)
-                ),
+                    horizontal: SizeConfig.widthPercent(5),
+                    vertical: SizeConfig.heightPercent(1)),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(SizeConfig.widthPercent(5)),
                 ),
               ),
               child: _isPosting
                   ? SizedBox(
-                width: SizeConfig.widthPercent(4),
-                height: SizeConfig.widthPercent(4),
-                child: const CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
-              )
+                      width: SizeConfig.widthPercent(4),
+                      height: SizeConfig.widthPercent(4),
+                      child: const CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
                   : Text(
-                'Post',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: SizeConfig.widthPercent(3.8),
-                ),
-              ),
+                      'Post',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: SizeConfig.widthPercent(3.8),
+                      ),
+                    ),
             ),
           ),
         ],
@@ -283,7 +277,8 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   margin: EdgeInsets.only(right: SizeConfig.widthPercent(2)),
-                  padding: EdgeInsets.symmetric(vertical: SizeConfig.heightPercent(1.2)),
+                  padding: EdgeInsets.symmetric(
+                      vertical: SizeConfig.heightPercent(1.2)),
                   decoration: BoxDecoration(
                     color: selected ? type.color : Colors.white,
                     borderRadius: BorderRadius.circular(SizeConfig.widthPercent(3)),
@@ -293,17 +288,19 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                     ),
                     boxShadow: selected
                         ? [
-                      BoxShadow(
-                        color: type.color.withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      )
-                    ]
+                            BoxShadow(
+                              color: type.color.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            )
+                          ]
                         : [],
                   ),
                   child: Column(
                     children: [
-                      Text(type.emoji, style: TextStyle(fontSize: SizeConfig.widthPercent(4.5))),
+                      Text(type.emoji,
+                          style:
+                              TextStyle(fontSize: SizeConfig.widthPercent(4.5))),
                       SizedBox(height: SizeConfig.heightPercent(0.5)),
                       Text(
                         type.label,
@@ -333,9 +330,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
         color: _bgColor ?? Colors.white,
         borderRadius: BorderRadius.circular(SizeConfig.widthPercent(5)),
         border: Border.all(
-          color: _bgColor != null
-              ? Colors.transparent
-              : const Color(0xFFE8E8F0),
+          color: _bgColor != null ? Colors.transparent : const Color(0xFFE8E8F0),
           width: 1.5,
         ),
         boxShadow: [
@@ -349,12 +344,8 @@ class _CreatePostScreenState extends State<CreatePostScreen>
       child: Column(
         children: [
           Padding(
-            padding: EdgeInsets.fromLTRB(
-              SizeConfig.widthPercent(4), 
-              SizeConfig.heightPercent(2), 
-              SizeConfig.widthPercent(4), 
-              0
-            ),
+            padding: EdgeInsets.fromLTRB(SizeConfig.widthPercent(4),
+                SizeConfig.heightPercent(2), SizeConfig.widthPercent(4), 0),
             child: Row(
               children: [
                 AnimatedContainer(
@@ -396,9 +387,8 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                       children: [
                         Container(
                           padding: EdgeInsets.symmetric(
-                              horizontal: SizeConfig.widthPercent(2), 
-                              vertical: SizeConfig.heightPercent(0.3)
-                          ),
+                              horizontal: SizeConfig.widthPercent(2),
+                              vertical: SizeConfig.heightPercent(0.3)),
                           decoration: BoxDecoration(
                             color: _accentColor.withOpacity(0.12),
                             borderRadius: BorderRadius.circular(6),
@@ -420,12 +410,8 @@ class _CreatePostScreenState extends State<CreatePostScreen>
             ),
           ),
           Padding(
-            padding: EdgeInsets.fromLTRB(
-              SizeConfig.widthPercent(4), 
-              SizeConfig.heightPercent(1.5), 
-              SizeConfig.widthPercent(4), 
-              SizeConfig.heightPercent(2)
-            ),
+            padding: EdgeInsets.fromLTRB(SizeConfig.widthPercent(4),
+                SizeConfig.heightPercent(1.5), SizeConfig.widthPercent(4), SizeConfig.heightPercent(2)),
             child: TextField(
               controller: _contentCtrl,
               focusNode: _focusNode,
@@ -441,16 +427,12 @@ class _CreatePostScreenState extends State<CreatePostScreen>
               decoration: InputDecoration(
                 hintText: _postType.hint,
                 hintStyle: TextStyle(
-                  color: _darkBg
-                      ? Colors.white54
-                      : const Color(0xFFB0B0C0),
+                  color: _darkBg ? Colors.white54 : const Color(0xFFB0B0C0),
                   fontSize: SizeConfig.widthPercent(4),
                 ),
                 border: InputBorder.none,
                 counterStyle: TextStyle(
-                  color: _darkBg
-                      ? Colors.white54
-                      : const Color(0xFFB0B0C0),
+                  color: _darkBg ? Colors.white54 : const Color(0xFFB0B0C0),
                   fontSize: SizeConfig.widthPercent(3),
                 ),
               ),
@@ -469,9 +451,8 @@ class _CreatePostScreenState extends State<CreatePostScreen>
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: EdgeInsets.symmetric(
-          horizontal: SizeConfig.widthPercent(4), 
-          vertical: SizeConfig.heightPercent(1.8)
-        ),
+            horizontal: SizeConfig.widthPercent(4),
+            vertical: SizeConfig.heightPercent(1.8)),
         decoration: BoxDecoration(
           color: _locationTag != null
               ? const Color(0xFF2EC4B6).withOpacity(0.08)
@@ -492,7 +473,8 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                 color: const Color(0xFF2EC4B6).withOpacity(0.12),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Text('📍', style: TextStyle(fontSize: SizeConfig.widthPercent(4.5))),
+              child: Text('📍',
+                  style: TextStyle(fontSize: SizeConfig.widthPercent(4.5))),
             ),
             SizedBox(width: SizeConfig.widthPercent(3)),
             Expanded(
@@ -544,14 +526,12 @@ class _CreatePostScreenState extends State<CreatePostScreen>
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               padding: EdgeInsets.symmetric(
-                horizontal: SizeConfig.widthPercent(3.5), 
-                vertical: SizeConfig.heightPercent(1.5)
-              ),
+                  horizontal: SizeConfig.widthPercent(3.5),
+                  vertical: SizeConfig.heightPercent(1.5)),
               decoration: BoxDecoration(
-                color: _isAnonymous
-                    ? const Color(0xFF1A1A2E)
-                    : Colors.white,
-                borderRadius: BorderRadius.circular(SizeConfig.widthPercent(3.5)),
+                color: _isAnonymous ? const Color(0xFF1A1A2E) : Colors.white,
+                borderRadius:
+                    BorderRadius.circular(SizeConfig.widthPercent(3.5)),
                 border: Border.all(
                   color: _isAnonymous
                       ? const Color(0xFF1A1A2E)
@@ -572,9 +552,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                     style: TextStyle(
                       fontSize: SizeConfig.widthPercent(3.2),
                       fontWeight: FontWeight.w700,
-                      color: _isAnonymous
-                          ? Colors.white
-                          : const Color(0xFF1A1A2E),
+                      color: _isAnonymous ? Colors.white : const Color(0xFF1A1A2E),
                     ),
                   ),
                 ],
@@ -587,16 +565,14 @@ class _CreatePostScreenState extends State<CreatePostScreen>
           onTap: _showBgColorPicker,
           child: Container(
             padding: EdgeInsets.symmetric(
-              horizontal: SizeConfig.widthPercent(3.5), 
-              vertical: SizeConfig.heightPercent(1.5)
-            ),
+                horizontal: SizeConfig.widthPercent(3.5),
+                vertical: SizeConfig.heightPercent(1.5)),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(SizeConfig.widthPercent(3.5)),
+              borderRadius:
+                  BorderRadius.circular(SizeConfig.widthPercent(3.5)),
               border: Border.all(
-                color: _bgColor != null
-                    ? _bgColor!
-                    : const Color(0xFFE8E8F0),
+                color: _bgColor != null ? _bgColor! : const Color(0xFFE8E8F0),
                 width: _bgColor != null ? 2 : 1.5,
               ),
             ),
@@ -641,21 +617,21 @@ class _CreatePostScreenState extends State<CreatePostScreen>
       decoration: BoxDecoration(
         gradient: _canPost
             ? LinearGradient(
-          colors: [_accentColor, _accentColor.withOpacity(0.8)],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        )
+                colors: [_accentColor, _accentColor.withOpacity(0.8)],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              )
             : null,
         color: _canPost ? null : const Color(0xFFE8E8F0),
         borderRadius: BorderRadius.circular(SizeConfig.widthPercent(4)),
         boxShadow: _canPost
             ? [
-          BoxShadow(
-            color: _accentColor.withOpacity(0.35),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          )
-        ]
+                BoxShadow(
+                  color: _accentColor.withOpacity(0.35),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                )
+              ]
             : [],
       ),
       child: TextButton(
@@ -667,36 +643,36 @@ class _CreatePostScreenState extends State<CreatePostScreen>
         ),
         child: _isPosting
             ? SizedBox(
-          width: SizeConfig.widthPercent(5.5),
-          height: SizeConfig.widthPercent(5.5),
-          child: const CircularProgressIndicator(
-            strokeWidth: 2.5,
-            color: Colors.white,
-          ),
-        )
+                width: SizeConfig.widthPercent(5.5),
+                height: SizeConfig.widthPercent(5.5),
+                child: const CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: Colors.white,
+                ),
+              )
             : Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              _postType.emoji,
-              style: TextStyle(fontSize: SizeConfig.widthPercent(4.5)),
-            ),
-            SizedBox(width: SizeConfig.widthPercent(2.5)),
-            Text(
-              _canPost
-                  ? 'Post ${_postType.label}'
-                  : _postType == PostType.spotted && _locationTag == null
-                  ? 'Select a location to post'
-                  : 'Write something to post',
-              style: TextStyle(
-                fontSize: SizeConfig.widthPercent(4),
-                fontWeight: FontWeight.w700,
-                color: _canSend ? Colors.white : const Color(0xFFB0B0C0),
-                letterSpacing: -0.2,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    _postType.emoji,
+                    style: TextStyle(fontSize: SizeConfig.widthPercent(4.5)),
+                  ),
+                  SizedBox(width: SizeConfig.widthPercent(2.5)),
+                  Text(
+                    _canPost
+                        ? 'Post ${_postType.label}'
+                        : _postType == PostType.spotted && _locationTag == null
+                            ? 'Select a location to post'
+                            : 'Write something to post',
+                    style: TextStyle(
+                      fontSize: SizeConfig.widthPercent(4),
+                      fontWeight: FontWeight.w700,
+                      color: _canPost ? Colors.white : const Color(0xFFB0B0C0),
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -719,7 +695,8 @@ class _LocationPickerSheet extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFFF7F7FB),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(SizeConfig.widthPercent(6))),
+        borderRadius: BorderRadius.vertical(
+            top: Radius.circular(SizeConfig.widthPercent(6))),
       ),
       constraints: BoxConstraints(
         maxHeight: SizeConfig.heightPercent(75),
@@ -729,7 +706,9 @@ class _LocationPickerSheet extends StatelessWidget {
           // Handle
           Center(
             child: Container(
-              margin: EdgeInsets.only(top: SizeConfig.heightPercent(1.5), bottom: SizeConfig.heightPercent(1)),
+              margin: EdgeInsets.only(
+                  top: SizeConfig.heightPercent(1.5),
+                  bottom: SizeConfig.heightPercent(1)),
               width: SizeConfig.widthPercent(9),
               height: 4,
               decoration: BoxDecoration(
@@ -740,14 +719,14 @@ class _LocationPickerSheet extends StatelessWidget {
           ),
           Padding(
             padding: EdgeInsets.fromLTRB(
-              SizeConfig.widthPercent(5), 
-              SizeConfig.heightPercent(0.5), 
-              SizeConfig.widthPercent(5), 
-              SizeConfig.heightPercent(1.5)
-            ),
+                SizeConfig.widthPercent(5),
+                SizeConfig.heightPercent(0.5),
+                SizeConfig.widthPercent(5),
+                SizeConfig.heightPercent(1.5)),
             child: Row(
               children: [
-                Text('📍', style: TextStyle(fontSize: SizeConfig.widthPercent(5.5))),
+                Text('📍',
+                    style: TextStyle(fontSize: SizeConfig.widthPercent(5.5))),
                 SizedBox(width: SizeConfig.widthPercent(2.5)),
                 Text(
                   'Where are you right now?',
@@ -770,11 +749,10 @@ class _LocationPickerSheet extends StatelessWidget {
                   children: [
                     Padding(
                       padding: EdgeInsets.fromLTRB(
-                        SizeConfig.widthPercent(5), 
-                        SizeConfig.heightPercent(2.5), 
-                        SizeConfig.widthPercent(5), 
-                        SizeConfig.heightPercent(1)
-                      ),
+                          SizeConfig.widthPercent(5),
+                          SizeConfig.heightPercent(2.5),
+                          SizeConfig.widthPercent(5),
+                          SizeConfig.heightPercent(1)),
                       child: Text(
                         entry.key,
                         style: TextStyle(
@@ -792,18 +770,17 @@ class _LocationPickerSheet extends StatelessWidget {
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 150),
                           margin: EdgeInsets.symmetric(
-                              horizontal: SizeConfig.widthPercent(4), 
-                              vertical: SizeConfig.heightPercent(0.4)
-                          ),
+                              horizontal: SizeConfig.widthPercent(4),
+                              vertical: SizeConfig.heightPercent(0.4)),
                           padding: EdgeInsets.symmetric(
-                              horizontal: SizeConfig.widthPercent(4), 
-                              vertical: SizeConfig.heightPercent(1.5)
-                          ),
+                              horizontal: SizeConfig.widthPercent(4),
+                              vertical: SizeConfig.heightPercent(1.5)),
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? const Color(0xFF2EC4B6).withOpacity(0.1)
                                 : Colors.white,
-                            borderRadius: BorderRadius.circular(SizeConfig.widthPercent(3.5)),
+                            borderRadius: BorderRadius.circular(
+                                SizeConfig.widthPercent(3.5)),
                             border: Border.all(
                               color: isSelected
                                   ? const Color(0xFF2EC4B6)
@@ -814,7 +791,8 @@ class _LocationPickerSheet extends StatelessWidget {
                           child: Row(
                             children: [
                               Text(tag['icon']!,
-                                  style: TextStyle(fontSize: SizeConfig.widthPercent(5))),
+                                  style: TextStyle(
+                                      fontSize: SizeConfig.widthPercent(5))),
                               SizedBox(width: SizeConfig.widthPercent(3)),
                               Text(
                                 tag['label']!,
@@ -866,11 +844,10 @@ class _BgColorPickerSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.fromLTRB(
-        SizeConfig.widthPercent(5), 
-        SizeConfig.heightPercent(2), 
-        SizeConfig.widthPercent(5), 
-        SizeConfig.heightPercent(4)
-      ),
+          SizeConfig.widthPercent(5),
+          SizeConfig.heightPercent(2),
+          SizeConfig.widthPercent(5),
+          SizeConfig.heightPercent(4)),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -923,21 +900,21 @@ class _BgColorPickerSheet extends StatelessWidget {
                   ),
                   child: isNone
                       ? Center(
-                    child: Icon(
-                      Icons.block_rounded,
-                      size: SizeConfig.widthPercent(5),
-                      color: const Color(0xFFB0B0C0),
-                    ),
-                  )
+                          child: Icon(
+                            Icons.block_rounded,
+                            size: SizeConfig.widthPercent(5),
+                            color: const Color(0xFFB0B0C0),
+                          ),
+                        )
                       : isSelected
-                      ? Center(
-                    child: Icon(
-                      Icons.check_rounded,
-                      size: SizeConfig.widthPercent(5),
-                      color: Colors.black54,
-                    ),
-                  )
-                      : null,
+                          ? Center(
+                              child: Icon(
+                                Icons.check_rounded,
+                                size: SizeConfig.widthPercent(5),
+                                color: Colors.black54,
+                              ),
+                            )
+                          : null,
                 ),
               );
             }).toList(),
@@ -947,4 +924,3 @@ class _BgColorPickerSheet extends StatelessWidget {
     );
   }
 }
-*/
