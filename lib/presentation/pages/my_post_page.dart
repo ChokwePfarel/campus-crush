@@ -44,7 +44,6 @@ class _MyPostsPageState extends State<MyPostsPage> {
     Future.microtask(() {
 
       context.read<CommentsBloc>().add(LoadComments(currentUserId));
-      context.read<LikesBloc>().add(LoadLikes(currentUserId));
     });
   }
 
@@ -83,10 +82,10 @@ class _MyPostsPageState extends State<MyPostsPage> {
 
   void _showLikesList(BuildContext context, PostModel post) {
     if (post.likeCount == 0) return;
-    
+
     HapticFeedback.lightImpact();
     context.read<LikesBloc>().add(LoadLikes(post.id));
-    
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -243,9 +242,9 @@ class _MyPostsPageState extends State<MyPostsPage> {
       child: Container(
         color: Colors.white,
         padding: EdgeInsets.fromLTRB(
-          SizeConfig.widthPercent(5), 
-          SizeConfig.heightPercent(2), 
-          SizeConfig.widthPercent(5), 
+          SizeConfig.widthPercent(5),
+          SizeConfig.heightPercent(2),
+          SizeConfig.widthPercent(5),
           SizeConfig.heightPercent(2.5)
         ),
         child: Row(
@@ -279,9 +278,9 @@ class _MyPostsPageState extends State<MyPostsPage> {
   SliverPadding _buildPostList(List<PostModel> posts) {
     return SliverPadding(
       padding: EdgeInsets.fromLTRB(
-        SizeConfig.widthPercent(4), 
-        SizeConfig.heightPercent(2), 
-        SizeConfig.widthPercent(4), 
+        SizeConfig.widthPercent(4),
+        SizeConfig.heightPercent(2),
+        SizeConfig.widthPercent(4),
         SizeConfig.heightPercent(12)
       ),
       sliver: SliverList(
@@ -408,7 +407,7 @@ class _MyPostItem extends StatelessWidget {
             children: [
               Container(
                 padding: EdgeInsets.symmetric(
-                  horizontal: SizeConfig.widthPercent(2), 
+                  horizontal: SizeConfig.widthPercent(2),
                   vertical: SizeConfig.heightPercent(0.4)
                 ),
                 decoration: BoxDecoration(
@@ -451,9 +450,9 @@ class _MyPostItem extends StatelessWidget {
                       Icon(Icons.favorite, size: 16, color: Colors.pink.withOpacity(0.5)),
                       const SizedBox(width: 4),
                       Text(
-                        '${post.likeCount}', 
+                        '${post.likeCount}',
                         style: TextStyle(
-                          color: Colors.grey[700], 
+                          color: Colors.grey[700],
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         )

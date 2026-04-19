@@ -4,6 +4,7 @@ import 'package:dating_app/core/utils/posts_skeleton.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
 import 'package:dating_app/core/widgets/bottom_sheet.dart';
 import 'package:dating_app/data/models/post_model.dart';
+import 'package:dating_app/domain/repositories/likes_repository.dart';
 import 'package:dating_app/domain/repositories/posts_repository.dart';
 import 'package:dating_app/presentation/bloc/comments/commenst_event.dart';
 import 'package:dating_app/presentation/bloc/comments/comments_bloc.dart';
@@ -27,16 +28,17 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 // ─── Filter bar data ──────────────────────────────────────────────────────────
 
 const _filters = [
-  {'type': null,         'emoji': '✨', 'label': 'All'},
-  {'type': 'crush',      'emoji': '💘', 'label': 'Crush'},
+  {'type': null, 'emoji': '✨', 'label': 'All'},
+  {'type': 'crush', 'emoji': '💘', 'label': 'Crush'},
   {'type': 'confession', 'emoji': '🤫', 'label': 'Confession'},
-  {'type': 'spotted',    'emoji': '📡', 'label': 'Spotted'},
+  {'type': 'spotted', 'emoji': '📡', 'label': 'Spotted'},
 ];
 
 // ─── Feed Screen ──────────────────────────────────────────────────────────────
 
 class FeedScreen extends StatefulWidget {
   final String currentUserId;
+
   const FeedScreen({super.key, required this.currentUserId});
 
   @override
@@ -53,27 +55,24 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
 
     Future.microtask(() {
       context.read<CommentsBloc>().add(LoadComments(widget.currentUserId));
-      context.read<LikesBloc>().add(LoadLikes(widget.currentUserId));
     });
 
     _scrollCtrl.addListener(_onScroll);
   }
 
   void _fetchPosts(BuildContext context, {bool isInitial = true}) {
-
-
     final userState = context.read<UserBloc>().state;
 
     if (userState is user_st.UserLoaded) {
-      context.read<PostBloc>().add(LoadPosts(
-        university: userState.user.university,
-        isInitial: isInitial,
-      ));
+      context.read<PostBloc>().add(
+        LoadPosts(university: userState.user.university, isInitial: isInitial),
+      );
     }
   }
 
   void _onScroll() {
-    if (_scrollCtrl.position.pixels >= _scrollCtrl.position.maxScrollExtent * 0.9) {
+    if (_scrollCtrl.position.pixels >=
+        _scrollCtrl.position.maxScrollExtent * 0.9) {
       _fetchPosts(context, isInitial: false);
     }
   }
@@ -122,13 +121,17 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                           }
 
                           if (state is PostError) {
-                            return Center(child: Text('Error: ${state.message}'));
+                            return Center(
+                              child: Text('Error: ${state.message}'),
+                            );
                           }
 
                           if (state is PostsLoaded) {
                             final posts = _activeFilter == null
                                 ? state.post
-                                : state.post.where((p) => p.postType == _activeFilter).toList();
+                                : state.post
+                                      .where((p) => p.postType == _activeFilter)
+                                      .toList();
 
                             if (posts.isEmpty) return _buildEmpty();
 
@@ -139,22 +142,37 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                                   SizeConfig.widthPercent(4),
                                   SizeConfig.heightPercent(1),
                                   SizeConfig.widthPercent(4),
-                                  SizeConfig.heightPercent(12)
+                                  SizeConfig.heightPercent(12),
                                 ),
-                                itemCount: state.hasReachedMax ? posts.length : posts.length + 1,
+                                itemCount: state.hasReachedMax
+                                    ? posts.length
+                                    : posts.length + 1,
                                 itemBuilder: (_, i) {
                                   if (i >= posts.length) {
-                                    return const Center(child: Padding(
-                                      padding: EdgeInsets.all(8.0),
-                                      child: CircularProgressIndicator(),
-                                    ));
+                                    return const Center(
+                                      child: Padding(
+                                        padding: EdgeInsets.all(8.0),
+                                        child: CircularProgressIndicator(),
+                                      ),
+                                    );
                                   }
                                   final post = posts[i];
-                                  return _PostCard(
+
+                                  return BlocProvider(
                                     key: ValueKey(post.id),
-                                    post: post,
-                                    onComment: () => showCommentsSheet(context: context, postId: post.id, commentCount: post.commentCount),
-                                    onAuthorTap: (uid) {},
+                                    create: (_) => LikesBloc(
+                                      context.read<LikesRepository>(),
+                                    ),
+                                    child: _PostCard(
+                                      post: post,
+                                      currentUserId: widget.currentUserId,  // pass this down
+                                      onComment: () => showCommentsSheet(
+                                        context: context,
+                                        postId: post.id,
+                                        commentCount: post.commentCount,
+                                      ),
+                                      onAuthorTap: (uid) {},
+                                    ),
                                   );
                                 },
                               ),
@@ -170,7 +188,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
             ),
             floatingActionButton: _buildFAB(context),
           );
-        }
+        },
       ),
     );
   }
@@ -193,9 +211,10 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
       actions: [
         IconButton(
           onPressed: () {
-
-            Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const MyPostsPage()));
+           /* Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const MyPostsPage()),
+            );*/
           },
           icon: const Icon(Icons.history_rounded),
           color: const Color(0xFF1A1A2E),
@@ -211,13 +230,15 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
         SizeConfig.widthPercent(4),
         0,
         SizeConfig.widthPercent(4),
-        SizeConfig.heightPercent(1.5)
+        SizeConfig.heightPercent(1.5),
       ),
       child: Row(
         children: _filters.map((f) {
           final type = f['type'];
           final isActive = _activeFilter == type;
-          final color = type != null ? type.accentColor : const Color(0xFF6C63FF);
+          final color = type != null
+              ? type.accentColor
+              : const Color(0xFF6C63FF);
 
           return Expanded(
             child: GestureDetector(
@@ -225,10 +246,14 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 margin: EdgeInsets.only(right: SizeConfig.widthPercent(1.5)),
-                padding: EdgeInsets.symmetric(vertical: SizeConfig.heightPercent(1)),
+                padding: EdgeInsets.symmetric(
+                  vertical: SizeConfig.heightPercent(1),
+                ),
                 decoration: BoxDecoration(
                   color: isActive ? color : const Color(0xFFF4F4F8),
-                  borderRadius: BorderRadius.circular(SizeConfig.widthPercent(3)),
+                  borderRadius: BorderRadius.circular(
+                    SizeConfig.widthPercent(3),
+                  ),
                 ),
                 child: Column(
                   children: [
@@ -242,7 +267,9 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                       style: TextStyle(
                         fontSize: SizeConfig.widthPercent(2.5),
                         fontWeight: FontWeight.w700,
-                        color: isActive ? Colors.white : const Color(0xFF8E8E9A),
+                        color: isActive
+                            ? Colors.white
+                            : const Color(0xFF8E8E9A),
                       ),
                     ),
                   ],
@@ -312,7 +339,11 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.add_rounded, color: Colors.white, size: SizeConfig.widthPercent(5.5)),
+            Icon(
+              Icons.add_rounded,
+              color: Colors.white,
+              size: SizeConfig.widthPercent(5.5),
+            ),
             SizedBox(width: SizeConfig.widthPercent(2)),
 
             Text(
@@ -323,7 +354,6 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                 fontSize: SizeConfig.widthPercent(3.8),
               ),
             ),
-
           ],
         ),
       ),
@@ -333,12 +363,14 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
 
 class _PostCard extends StatefulWidget {
   final PostModel post;
+  final String currentUserId; // ← add this
   final VoidCallback onComment;
   final Function(String) onAuthorTap;
 
   const _PostCard({
     super.key,
     required this.post,
+    required this.currentUserId,
     required this.onComment,
     required this.onAuthorTap,
   });
@@ -348,6 +380,7 @@ class _PostCard extends StatefulWidget {
 }
 
 class _PostCardState extends State<_PostCard> with SingleTickerProviderStateMixin {
+
   late final _animCtrl = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 400),
@@ -356,7 +389,10 @@ class _PostCardState extends State<_PostCard> with SingleTickerProviderStateMixi
     begin: const Offset(0, 0.06),
     end: Offset.zero,
   ).animate(CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut));
-  late final _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut);
+  late final _fadeAnim = CurvedAnimation(
+    parent: _animCtrl,
+    curve: Curves.easeOut,
+  );
 
   // ── Local like state ───────────────────────────────────────────────────────
   late bool _hasLiked;
@@ -365,23 +401,19 @@ class _PostCardState extends State<_PostCard> with SingleTickerProviderStateMixi
   @override
   void initState() {
     super.initState();
-    _hasLiked = false;
-    _likeCount = widget.post.likeCount;
 
     Future.delayed(const Duration(milliseconds: 50), () {
       if (mounted) _animCtrl.forward();
     });
 
-    // Check if the current user has already liked this post
+    // Fire InitializeLikes — this card's own LikesBloc handles it
     Future.microtask(() {
       if (!mounted) return;
-      final userState = context.read<UserBloc>().state;
-      if (userState is user_st.UserLoaded) {
-        context.read<LikesBloc>().add(CheckHasLiked(
-          postId: widget.post.id,
-          userId: userState.user.id,
-        ));
-      }
+      context.read<LikesBloc>().add(InitializeLikes(
+        postId: widget.post.id,
+        userId: widget.currentUserId,
+        initialCount: widget.post.likeCount,
+      ));
     });
   }
 
@@ -390,6 +422,7 @@ class _PostCardState extends State<_PostCard> with SingleTickerProviderStateMixi
     _animCtrl.dispose();
     super.dispose();
   }
+/*
 
   void _onLikeTap(BuildContext context) {
     HapticFeedback.lightImpact();
@@ -401,25 +434,29 @@ class _PostCardState extends State<_PostCard> with SingleTickerProviderStateMixi
         _hasLiked = false;
         _likeCount = (_likeCount - 1).clamp(0, double.maxFinite.toInt());
       });
-      context.read<LikesBloc>().add(UnlikePost(
-        postId: widget.post.id,
-        userId: userState.user.id,
-      ));
+      context.read<LikesBloc>().add(
+        UnlikePost(postId: widget.post.id, userId: userState.user.id),
+      );
     } else {
       setState(() {
         _hasLiked = true;
         _likeCount += 1;
       });
-      context.read<LikesBloc>().add(LikePost(
-        postId: widget.post.id,
-        userId: userState.user.id,
-        likedByName: userState.user.name,
-      ));
+      context.read<LikesBloc>().add(
+        LikePost(
+          postId: widget.post.id,
+          userId: userState.user.id,
+          likedByName: userState.user.name,
+        ),
+      );
     }
   }
+*/
 
   bool get _isDark => widget.post.backgroundColor != null;
+
   Color get _textColor => _isDark ? Colors.white : const Color(0xFF1A1A2E);
+
   Color get _subtextColor => _isDark ? Colors.white60 : const Color(0xFF8E8E9A);
 
   @override
@@ -427,163 +464,199 @@ class _PostCardState extends State<_PostCard> with SingleTickerProviderStateMixi
     final post = widget.post;
     final accent = post.postType.accentColor;
 
-    return BlocListener<LikesBloc, LikesState>(
-      // Only respond to CheckHasLiked results for THIS post
-        listenWhen: (_, current) => current is LikesLoaded,
-        listener: (context, state) {
-          if (state is LikesLoaded) {
-            setState(() => _hasLiked = state.hasLiked);
-          }
-        },
-        child: FadeTransition(
-          opacity: _fadeAnim,
-          child: SlideTransition(
-            position: _slideAnim,
-            child: Container(
-              margin: EdgeInsets.only(bottom: SizeConfig.heightPercent(1.8)),
-              decoration: BoxDecoration(
-                color: post.backgroundColor ?? Colors.white,
-                borderRadius: BorderRadius.circular(SizeConfig.widthPercent(5)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(_isDark ? 0.18 : 0.06),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-              Padding(
-                padding: EdgeInsets.all(SizeConfig.widthPercent(4)),
-                child: GestureDetector(
-                  onTap: (){
-                    post.isAnonymous ? null : Navigator.push(
-                    context,MaterialPageRoute(builder: (_) => OtherUserProfilePage(userId: post.userId)));
-                  },
-                  child: Row(
-                    children: [
-                      Container(
-                        width: SizeConfig.widthPercent(10),
-                        height: SizeConfig.widthPercent(10),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: post.isAnonymous
-                              ? const Color(0xFF8E8E9A).withOpacity(0.15)
-                              : accent.withOpacity(0.12),
-                          border: Border.all(
-                            color: post.isAnonymous ? Colors.transparent : accent.withOpacity(0.3),
-                            width: 1.5,
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            post.isAnonymous ? '🎭' : '👤',
-                            style: TextStyle(fontSize: SizeConfig.widthPercent(5)),
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: SizeConfig.widthPercent(2.5)),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              post.isAnonymous ? 'Anonymous' : post.authorName,
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: SizeConfig.widthPercent(3.8),
-                                color: _textColor,
-                              ),
-                            ),
-                            Text(
-                              DateUtilsHelper.timeAgo(post.createdAt),
-                              style: TextStyle(
-                                fontSize: SizeConfig.widthPercent(2.8),
-                                color: _subtextColor,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: SizeConfig.widthPercent(2),
-                          vertical: SizeConfig.heightPercent(0.4)
-                        ),
-                        decoration: BoxDecoration(
-                          color: accent.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(SizeConfig.widthPercent(1.5)),
-                        ),
-                        child: Text(
-                          post.postType.label,
-                          style: TextStyle(
-                            fontSize: SizeConfig.widthPercent(2.5),
-                            fontWeight: FontWeight.w700,
-                            color: accent,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+    return FadeTransition(
+      opacity: _fadeAnim,
+      child: SlideTransition(
+        position: _slideAnim,
+        child: Container(
+            margin: EdgeInsets.only(bottom: SizeConfig.heightPercent(1.8)),
+            decoration: BoxDecoration(
+              color: post.backgroundColor ?? Colors.white,
+              borderRadius: BorderRadius.circular(SizeConfig.widthPercent(5)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(_isDark ? 0.18 : 0.06),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
                 ),
-              ),
-              Padding(
-                padding: EdgeInsets.fromLTRB(
-                  SizeConfig.widthPercent(4),
-                  0,
-                  SizeConfig.widthPercent(4),
-                  SizeConfig.heightPercent(2)
-                ),
-                child: Text(
-                  post.content,
-                  style: TextStyle(
-                    fontSize: SizeConfig.widthPercent(4),
-                    height: 1.5,
-                    color: _textColor,
-                  ),
-                ),
-              ),
-              if (post.imageUrl != null)
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Padding(
-                  padding: EdgeInsets.only(bottom: SizeConfig.heightPercent(2)),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(SizeConfig.widthPercent(2)),
-                    child: Image.network(post.imageUrl!, fit: BoxFit.cover),
-                  ),
-                ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: SizeConfig.widthPercent(2),
-                      vertical: SizeConfig.heightPercent(1),
-                    ),
+                  padding: EdgeInsets.all(SizeConfig.widthPercent(4)),
+                  child: GestureDetector(
+                    onTap: () {
+                      post.isAnonymous
+                          ? null
+                          : Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    OtherUserProfilePage(userId: post.userId),
+                              ),
+                            );
+                    },
                     child: Row(
                       children: [
-                        _ActionButton(
-                          icon: _hasLiked ? Icons.favorite : Icons.favorite_border,
-                          label: _likeCount.toString(),
-                          color: _hasLiked ? Colors.pink : _subtextColor,
-                          onTap: () => _onLikeTap(context),
+                        Container(
+                          width: SizeConfig.widthPercent(10),
+                          height: SizeConfig.widthPercent(10),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: post.isAnonymous
+                                ? const Color(0xFF8E8E9A).withOpacity(0.15)
+                                : accent.withOpacity(0.12),
+                            border: Border.all(
+                              color: post.isAnonymous
+                                  ? Colors.transparent
+                                  : accent.withOpacity(0.3),
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              post.isAnonymous ? '🎭' : '👤',
+                              style: TextStyle(
+                                fontSize: SizeConfig.widthPercent(5),
+                              ),
+                            ),
+                          ),
                         ),
-                        _ActionButton(
-                          icon: Icons.chat_bubble_outline,
-                          label: post.commentCount.toString(),
-                          color: _subtextColor,
-                          onTap: widget.onComment,
+                        SizedBox(width: SizeConfig.widthPercent(2.5)),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                post.isAnonymous
+                                    ? 'Anonymous'
+                                    : post.authorName,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: SizeConfig.widthPercent(3.8),
+                                  color: _textColor,
+                                ),
+                              ),
+                              Text(
+                                DateUtilsHelper.timeAgo(post.createdAt),
+                                style: TextStyle(
+                                  fontSize: SizeConfig.widthPercent(2.8),
+                                  color: _subtextColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: SizeConfig.widthPercent(2),
+                            vertical: SizeConfig.heightPercent(0.4),
+                          ),
+                          decoration: BoxDecoration(
+                            color: accent.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(
+                              SizeConfig.widthPercent(1.5),
+                            ),
+                          ),
+                          child: Text(
+                            post.postType.label,
+                            style: TextStyle(
+                              fontSize: SizeConfig.widthPercent(2.5),
+                              fontWeight: FontWeight.w700,
+                              color: accent,
+                            ),
+                          ),
                         ),
                       ],
                     ),
                   ),
-                ],
-              ),
+                ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    SizeConfig.widthPercent(4),
+                    0,
+                    SizeConfig.widthPercent(4),
+                    SizeConfig.heightPercent(2),
+                  ),
+                  child: Text(
+                    post.content,
+                    style: TextStyle(
+                      fontSize: SizeConfig.widthPercent(4),
+                      height: 1.5,
+                      color: _textColor,
+                    ),
+                  ),
+                ),
+                if (post.imageUrl != null)
+                  Padding(
+                    padding: EdgeInsets.only(
+                      bottom: SizeConfig.heightPercent(2),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(
+                        SizeConfig.widthPercent(2),
+                      ),
+                      child: Image.network(post.imageUrl!, fit: BoxFit.cover),
+                    ),
+                  ),
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: SizeConfig.widthPercent(2),
+                    vertical: SizeConfig.heightPercent(1),
+                  ),
+                  child: Row(
+                    children: [
+                      BlocBuilder<LikesBloc, LikesState>(
+                        builder: (context, state) {
+                          final hasLiked = state is LikesLoaded && state.hasLiked;
+                          final count = state is LikesLoaded
+                              ? state.likeCount
+                              : post.likeCount;
+
+                          return _ActionButton(
+                            icon: hasLiked ? Icons.favorite : Icons.favorite_border,
+                            label: count.toString(),
+                            color: hasLiked ? Colors.pink : _subtextColor,
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              final userState = context.read<UserBloc>().state;
+                              if (userState is! user_st.UserLoaded) return;
+
+                              if (hasLiked) {
+                                context.read<LikesBloc>().add(UnlikePost(
+                                  postId: post.id,
+                                  userId: userState.user.id,
+                                ));
+                              } else {
+                                context.read<LikesBloc>().add(LikePost(
+                                  postId: post.id,
+                                  userId: userState.user.id,
+                                  likedByName: userState.user.name,
+                                ));
+                              }
+                            },
+                          );
+                        },
+                      ),
+                      _ActionButton(
+                        icon: Icons.chat_bubble_outline,
+                        label: post.commentCount.toString(),
+                        color: _subtextColor,
+                        onTap: widget.onComment,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ),
+
     );
   }
 }
-
 
 class _ActionButton extends StatelessWidget {
   final IconData icon;
@@ -606,7 +679,7 @@ class _ActionButton extends StatelessWidget {
       child: Padding(
         padding: EdgeInsets.symmetric(
           horizontal: SizeConfig.widthPercent(3),
-          vertical: SizeConfig.heightPercent(1)
+          vertical: SizeConfig.heightPercent(1),
         ),
         child: Row(
           children: [
