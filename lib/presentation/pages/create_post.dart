@@ -490,6 +490,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                     ),
                   ),
                   const SizedBox(height: 2),
+
                   Text(
                     _locationTag ?? 'Select a location  (required)',
                     style: TextStyle(

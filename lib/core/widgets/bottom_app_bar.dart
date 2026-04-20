@@ -9,6 +9,7 @@ import 'package:dating_app/presentation/pages/feed.dart';
 import 'package:dating_app/presentation/pages/inbox_page.dart';
 import 'package:dating_app/presentation/pages/profile_page.dart';
 import 'package:dating_app/presentation/pages/radar_page.dart';
+import 'package:dating_app/presentation/pages/spotted_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter/cupertino.dart';
@@ -51,6 +52,10 @@ class _InstaStyleNavState extends State<InstaStyleNav> {
       DiscoverPage(onScrollDirectionChanged: _handleScroll),
       FeedScreen(currentUserId: currentUserId),
       const RadarPage(),
+      /*SpottedPage(
+        location: 'The Barn',
+        university: 'University of the Western Cape (UWC)',
+      ),*/
       DirectPostsPage(recipientId: currentUserId,),
       InboxPage(currentUserId: currentUserId),
     ];

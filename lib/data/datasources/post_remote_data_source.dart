@@ -54,7 +54,12 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
     required int offset,
     required int limit,
   }) async {
-    var query = client.from('posts').select('''
+
+    try{
+
+      print( 'Getting posts with university: $university, postType: $postType, locationTag: $locationTag, offset: $offset, limit: $limit');
+
+      var query = client.from('posts').select('''
     *,
     profiles:user_id (
       id,
@@ -65,30 +70,50 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
     )
   ''');
 
-    if (university != null && university.isNotEmpty) {
-      query = query.eq('university', university);
+      if (university != null && university.isNotEmpty) {
+        query = query.eq('university', university);
+      }
+
+      if (postType != null && postType.isNotEmpty) {
+        query = query.eq('post_type', postType);
+      }
+
+      if (locationTag != null && locationTag.isNotEmpty) {
+        query = query.eq('location_tag', locationTag);
+      }
+
+      // Only fetch normal posts for the general feed
+      query = query
+          .eq('is_normal_post', true);
+
+      /* query = query
+        .eq('is_normal_post', true)
+        .neq('post_type', 'spotted');*/
+
+      query = query.or(
+        'expires_at.is.null,expires_at.gt.${DateTime.now().toUtc().toIso8601String()}',
+      );
+
+      final response = await query
+          .range(offset, offset + limit - 1)
+          .order('created_at', ascending: false);
+
+
+      print('Posts fetched: $response');
+      print('Posts fetched legth: ${response.length.toString()}');
+
+      return (response as List).map((e) => PostModel.fromJson(e)).toList();
+
+    } catch(e){
+      print(e.toString());
     }
 
-    if (postType != null && postType.isNotEmpty) {
-      query = query.eq('post_type', postType);
-    }
 
-    if (locationTag != null && locationTag.isNotEmpty) {
-      query = query.eq('location_tag', locationTag);
-    }
+    return [];
 
-    // Only fetch normal posts for the general feed
-    query = query.eq('is_normal_post', true);
 
-    query = query.or(
-      'expires_at.is.null,expires_at.gt.${DateTime.now().toUtc().toIso8601String()}',
-    );
 
-    final response = await query
-        .range(offset, offset + limit - 1)
-        .order('created_at', ascending: false);
 
-    return (response as List).map((e) => PostModel.fromJson(e)).toList();
   }
 
   @override
@@ -168,11 +193,11 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
     return client
         .from('posts')
         .stream(primaryKey: ['id'])
-        .eq('recipient_id', recipientId)   // ✅ only one .eq() allowed
+        .eq('recipient_id', recipientId)   // only one .eq() allowed
         .order('created_at', ascending: false)
         .limit(1)
         .map((data) => data
-        .where((e) => e['is_normal_post'] == false) // ✅ second filter client-side
+        .where((e) => e['is_normal_post'] == false) // second filter client-side
         .map((e) => PostModel.fromJson(e))
         .toList());
   }

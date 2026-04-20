@@ -20,7 +20,9 @@ class PostBloc extends Bloc<PostEvent, PostState> {
   ) async {
     final currentState = state;
 
-    if (currentState is PostsLoaded && currentState.hasReachedMax && !event.isInitial) {
+    if (currentState is PostsLoaded &&
+        currentState.hasReachedMax &&
+        !event.isInitial) {
       return;
     }
 
@@ -30,6 +32,8 @@ class PostBloc extends Bloc<PostEvent, PostState> {
 
         final posts = await _postRepository.getPosts(
           university: event.university,
+          postType: event.postType,
+          locationTag: event.locationTag,
           offset: 0,
           limit: _limit,
         );
@@ -41,6 +45,8 @@ class PostBloc extends Bloc<PostEvent, PostState> {
       } else {
         final posts = await _postRepository.getPosts(
           university: event.university,
+          postType: event.postType,
+          locationTag: event.locationTag,
           offset: currentState.post.length,
           limit: _limit,
         );
@@ -71,14 +77,19 @@ class PostBloc extends Bloc<PostEvent, PostState> {
         authorName: event.authorName,
         recipientId: event.recipientId,
         isNormalPost: event.isNormalPost,
+        locationTag: event.locationTag,
+        expiresAt: event.expiresAt,
       );
-      // Refresh posts after creation
-      add(LoadPosts(university: event.university, isInitial: true));
+      add(LoadPosts(
+        university: event.university,
+        postType: event.postType,
+        locationTag: event.locationTag,
+        isInitial: true,
+      ));
     } catch (e) {
       emit(PostError(e.toString()));
     }
   }
-
 
   Future<void> _onDeletePost(
     DeletePostRequested event,
@@ -86,10 +97,10 @@ class PostBloc extends Bloc<PostEvent, PostState> {
   ) async {
     try {
       await _postRepository.deletePost(event.postId);
-      // If we are in loaded state, we could also remove it optimistically
       if (state is PostsLoaded) {
         final currentPosts = (state as PostsLoaded).post;
-        final updatedPosts = currentPosts.where((p) => p.id != event.postId).toList();
+        final updatedPosts =
+            currentPosts.where((p) => p.id != event.postId).toList();
         emit((state as PostsLoaded).copyWith(post: updatedPosts));
       }
     } catch (e) {

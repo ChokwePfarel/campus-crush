@@ -4,9 +4,16 @@ abstract class PostEvent {}
 
 class LoadPosts extends PostEvent {
   final String? university;
+  final String? postType;
+  final String? locationTag;
   final bool isInitial;
   
-  LoadPosts({this.university, this.isInitial = false});
+  LoadPosts({
+    this.university, 
+    this.postType,
+    this.locationTag,
+    this.isInitial = false,
+  });
 }
 
 class CreatePostRequested extends PostEvent {
