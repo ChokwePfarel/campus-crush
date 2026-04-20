@@ -160,6 +160,7 @@ class _ProfileEditState extends State<ProfileEdit> {
                           setState(() {
                             _interests.add(interest);
                           });
+                          _markAsDirty();
                           Navigator.pop(context);
                         },
                       );
@@ -316,7 +317,7 @@ class _ProfileEditState extends State<ProfileEdit> {
               ),
               SizedBox(height: SizeConfig.heightPercent(2)),
 
-              _buildTextField("Full Name", _nameController),
+              _buildTextField("Full Name", _nameController, onChangedCallback: _markAsDirty),
 
               SizedBox(height: SizeConfig.heightPercent(2)),
               Row(
@@ -326,6 +327,8 @@ class _ProfileEditState extends State<ProfileEdit> {
                       "Age",
                       _ageController,
                       keyboardType: TextInputType.number,
+                      onChangedCallback: _markAsDirty,
+
                     ),
                   ),
 
@@ -364,44 +367,12 @@ class _ProfileEditState extends State<ProfileEdit> {
                     ),
                   ),
 
-                  /*SizedBox(width: SizeConfig.widthPercent(4)),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "Gender",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w500, color: Colors.grey),
-                        ),
-
-                        const SizedBox(height: 5),
-
-                        CustomDropdown<String>(
-                          labelText: '',
-                          items: DropDownOptions.sexOptions,
-                          value: DropDownOptions.sexOptions.contains(
-                            widget.user.status,
-                          )
-                              ? widget.user.status
-                              : DropDownOptions.sexOptions.first,
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedSex = value!;
-                              _markAsDirty();
-
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                  ),*/
                 ],
               ),
               SizedBox(height: SizeConfig.heightPercent(2)),
-              _buildTextField("Residence", _residenceController),
+              _buildTextField("Residence", _residenceController,onChangedCallback: _markAsDirty),
               SizedBox(height: SizeConfig.heightPercent(2)),
-              _buildTextField("About Me", _bioController, maxLines: 3),
+              _buildTextField("About Me", _bioController, onChangedCallback: _markAsDirty, maxLines: 3),
               SizedBox(height: SizeConfig.heightPercent(3)),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -501,11 +472,12 @@ class _ProfileEditState extends State<ProfileEdit> {
   }
 
   Widget _buildTextField(
-    String label,
-    TextEditingController controller, {
-    int maxLines = 1,
-    TextInputType keyboardType = TextInputType.text,
-  }) {
+      String label,
+      TextEditingController controller, {
+        int maxLines = 1,
+        TextInputType keyboardType = TextInputType.text,
+        VoidCallback? onChangedCallback, // new parameter
+      }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -524,10 +496,17 @@ class _ProfileEditState extends State<ProfileEdit> {
           maxLines: maxLines,
           keyboardType: keyboardType,
           decoration: _inputDecoration(label),
+          onChanged: (_) {
+            // call the callback if provided
+            if (onChangedCallback != null) {
+              onChangedCallback();
+            }
+          },
         ),
       ],
     );
   }
+
 
   Widget _buildPrivateAccountSwitch(BuildContext context, bool isPrivate) {
     return Container(
