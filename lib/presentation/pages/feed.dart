@@ -29,10 +29,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 // ─── Filter bar data ──────────────────────────────────────────────────────────
 
 const _filters = [
-  {'type': null, 'emoji': '✨', 'label': 'All'},
-  {'type': 'crush', 'emoji': '💘', 'label': 'Crush'},
-  {'type': 'confession', 'emoji': '🤫', 'label': 'Confession'},
-  {'type': 'spotted', 'emoji': '📡', 'label': 'Spotted'},
+  {'type': null, 'emoji': '', 'label': 'All'},
+  {'type': 'crush', 'emoji': '', 'label': 'Crush'},
+  {'type': 'confession', 'emoji': '', 'label': 'Confession'},
 ];
 
 // ─── Feed Screen ──────────────────────────────────────────────────────────────
@@ -284,15 +283,10 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                 child: Column(
                   children: [
                     Text(
-                      f['emoji'] as String,
-                      style: TextStyle(fontSize: SizeConfig.widthPercent(4)),
-                    ),
-                    SizedBox(height: SizeConfig.heightPercent(0.3)),
-                    Text(
                       f['label'] as String,
                       style: TextStyle(
-                        fontSize: SizeConfig.widthPercent(2.5),
-                        fontWeight: FontWeight.w700,
+                        fontSize: SizeConfig.widthPercent(3),
+                        fontWeight: FontWeight.bold,
                         color: isActive
                             ? Colors.white
                             : const Color(0xFF8E8E9A),

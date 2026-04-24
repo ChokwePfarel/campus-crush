@@ -31,40 +31,29 @@ class ProfilePage extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
+            ),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              context.read<ImagesBloc>().add(DeleteImage(imageId: image.id, path: image.path));
+              context.read<ImagesBloc>().add(
+                DeleteImage(imageId: image.id, path: image.path),
+              );
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
     );
   }
 
-  void _showLogoutDialog(BuildContext context) {
-    showCupertinoDialog(
-      context: context,
-      builder: (ctx) => CupertinoAlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to sign out?'),
-        actions: [
-          CupertinoDialogAction(child: const Text('Cancel'), onPressed: () => Navigator.pop(ctx)),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            child: const Text('Logout'),
-            onPressed: () {
-              Navigator.pop(ctx);
-              context.read<AuthBloc>().add(LogoutRequested());
-            },
-          ),
-        ],
-      ),
-    );
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -74,7 +63,9 @@ class ProfilePage extends StatelessWidget {
     return BlocBuilder<UserBloc, UserState>(
       builder: (context, state) {
         if (state is UserLoading) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator.adaptive()),
+          );
         }
 
         if (state is UserError) {
@@ -90,24 +81,45 @@ class ProfilePage extends StatelessWidget {
             backgroundColor: Colors.white,
             appBar: AppBar(
               backgroundColor: Colors.white,
+              leading: CupertinoButton(
+                padding: EdgeInsets.zero,
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Icon(
+                  CupertinoIcons.chevron_left,
+                  color: Color(0xFF1A1A2E),
+                ),
+              ),
               elevation: 0,
-              title: const Text('My Profile', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+              foregroundColor: Colors.black,
+              title: const Text(
+                'My Profile',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               centerTitle: true,
               actions: [
                 PopupMenuButton<String>(
                   icon: const Icon(Icons.expand_more, color: Colors.black),
                   color: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(SizeConfig.widthPercent(3))),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(
+                      SizeConfig.widthPercent(3),
+                    ),
+                  ),
                   onSelected: (value) {
                     if (value == 'edit') {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => ProfileEdit(user: user)));
-                    } else if (value == 'logout') {
-                      _showLogoutDialog(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ProfileEdit(user: user),
+                        ),
+                      );
                     }
                   },
                   itemBuilder: (context) => [
-                    const PopupMenuItem(value: 'edit', child: Text('Edit Profile')),
-                    const PopupMenuItem(value: 'logout', child: Text('Logout')),
+                    const PopupMenuItem(
+                      value: 'edit',
+                      child: Text('Edit Profile'),
+                    ),
                   ],
                 ),
               ],
@@ -118,16 +130,38 @@ class ProfilePage extends StatelessWidget {
               },
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.symmetric(horizontal: SizeConfig.widthPercent(5)),
+                padding: EdgeInsets.symmetric(
+                  horizontal: SizeConfig.widthPercent(5),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SizedBox(height: SizeConfig.heightPercent(2)),
                     _buildProfileHeader(user, color),
                     SizedBox(height: SizeConfig.heightPercent(2.5)),
-                    Text("${user.name}, ${user.age}", style: TextStyle(fontSize: SizeConfig.widthPercent(6), fontWeight: FontWeight.bold)),
-                    Text(user.status, style: TextStyle(fontSize: SizeConfig.widthPercent(4.5), color: color, fontWeight: FontWeight.w600)),
-                    Text(user.university, style: TextStyle(fontSize: SizeConfig.widthPercent(3.5), color: Colors.grey, fontWeight: FontWeight.w500)),
+                    Text(
+                      "${user.name}, ${user.age}",
+                      style: TextStyle(
+                        fontSize: SizeConfig.widthPercent(6),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      user.status,
+                      style: TextStyle(
+                        fontSize: SizeConfig.widthPercent(4.5),
+                        color: color,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      user.university,
+                      style: TextStyle(
+                        fontSize: SizeConfig.widthPercent(3.5),
+                        color: Colors.grey,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                     SizedBox(height: SizeConfig.heightPercent(2.5)),
                     _verificationRow(user),
                     SizedBox(height: SizeConfig.heightPercent(3)),
@@ -149,7 +183,9 @@ class ProfilePage extends StatelessWidget {
             ),
           );
         }
-        return const Scaffold(body: Center(child: Text("No user data available.")));
+        return const Scaffold(
+          body: Center(child: Text("No user data available.")),
+        );
       },
     );
   }
@@ -161,8 +197,16 @@ class ProfilePage extends StatelessWidget {
           CircleAvatar(
             radius: SizeConfig.widthPercent(18),
             backgroundColor: color.withOpacity(0.1),
-            backgroundImage: user.profileImageUrl.isNotEmpty ? NetworkImage(user.profileImageUrl) : null,
-            child: user.profileImageUrl.isEmpty ? Icon(Icons.person, size: SizeConfig.widthPercent(18), color: color) : null,
+            backgroundImage: user.profileImageUrl.isNotEmpty
+                ? NetworkImage(user.profileImageUrl)
+                : null,
+            child: user.profileImageUrl.isEmpty
+                ? Icon(
+                    Icons.person,
+                    size: SizeConfig.widthPercent(18),
+                    color: color,
+                  )
+                : null,
           ),
           if (user.isVerified)
             Positioned(
@@ -170,8 +214,15 @@ class ProfilePage extends StatelessWidget {
               right: SizeConfig.widthPercent(1),
               child: Container(
                 padding: EdgeInsets.all(SizeConfig.widthPercent(1)),
-                decoration: const BoxDecoration(color: Colors.blue, shape: BoxShape.circle),
-                child: Icon(Icons.check, color: Colors.white, size: SizeConfig.widthPercent(4)),
+                decoration: const BoxDecoration(
+                  color: Colors.blue,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.check,
+                  color: Colors.white,
+                  size: SizeConfig.widthPercent(4),
+                ),
               ),
             ),
         ],
@@ -180,15 +231,27 @@ class ProfilePage extends StatelessWidget {
   }
 
   Widget _buildSectionTitle(String title) {
-    return Text(title, style: TextStyle(fontSize: SizeConfig.widthPercent(5), fontWeight: FontWeight.bold));
+    return Text(
+      title,
+      style: TextStyle(
+        fontSize: SizeConfig.widthPercent(5),
+        fontWeight: FontWeight.bold,
+      ),
+    );
   }
 
   Widget _buildBioCard(String bio) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(SizeConfig.widthPercent(4)),
-      decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(SizeConfig.widthPercent(4))),
-      child: Text(bio.isNotEmpty ? bio : "No bio provided yet.", style: TextStyle(fontSize: SizeConfig.widthPercent(3.8), height: 1.4)),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(SizeConfig.widthPercent(4)),
+      ),
+      child: Text(
+        bio.isNotEmpty ? bio : "No bio provided yet.",
+        style: TextStyle(fontSize: SizeConfig.widthPercent(3.8), height: 1.4),
+      ),
     );
   }
 
@@ -205,11 +268,22 @@ class ProfilePage extends StatelessWidget {
         child: Wrap(
           spacing: SizeConfig.widthPercent(2),
           runSpacing: SizeConfig.widthPercent(2),
-          children: interests.map((i) => Chip(
-            backgroundColor: Colors.white,
-            side: BorderSide(color: color.withOpacity(0.2)),
-            label: Text(i, style: TextStyle(color: color, fontWeight: FontWeight.w500, fontSize: SizeConfig.widthPercent(3.2))),
-          )).toList(),
+          children: interests
+              .map(
+                (i) => Chip(
+                  backgroundColor: Colors.white,
+                  side: BorderSide(color: color.withOpacity(0.2)),
+                  label: Text(
+                    i,
+                    style: TextStyle(
+                      color: color,
+                      fontWeight: FontWeight.w500,
+                      fontSize: SizeConfig.widthPercent(3.2),
+                    ),
+                  ),
+                ),
+              )
+              .toList(),
         ),
       ),
     );
@@ -223,9 +297,14 @@ class ProfilePage extends StatelessWidget {
         BlocBuilder<ImagesBloc, ImagesState>(
           builder: (context, state) => IconButton(
             onPressed: () async {
-              final picked = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 80);
+              final picked = await ImagePicker().pickImage(
+                source: ImageSource.gallery,
+                imageQuality: 80,
+              );
               if (picked != null && context.mounted) {
-                context.read<ImagesBloc>().add(UploadGalleryImage(userId: userId, image: File(picked.path)));
+                context.read<ImagesBloc>().add(
+                  UploadGalleryImage(userId: userId, image: File(picked.path)),
+                );
               }
             },
             icon: Icon(Icons.add_a_photo_outlined, color: color),
@@ -238,25 +317,42 @@ class ProfilePage extends StatelessWidget {
   Widget _buildPhotosGrid() {
     return BlocBuilder<ImagesBloc, ImagesState>(
       builder: (context, state) {
-        if (state is ImagesUploading) return const Center(child: CupertinoActivityIndicator());
+        if (state is ImagesUploading)
+          return const Center(child: CupertinoActivityIndicator());
         final images = state is ImagesLoaded ? state.galleryImages : [];
         if (images.isEmpty) {
-          return Center(child: Text('No photos yet.', style: TextStyle(color: Colors.grey, fontSize: SizeConfig.widthPercent(3.5))));
+          return Center(
+            child: Text(
+              'No photos yet.',
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: SizeConfig.widthPercent(3.5),
+              ),
+            ),
+          );
         }
         return GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3, crossAxisSpacing: SizeConfig.widthPercent(2.5), mainAxisSpacing: SizeConfig.widthPercent(2.5),
+            crossAxisCount: 3,
+            crossAxisSpacing: SizeConfig.widthPercent(2.5),
+            mainAxisSpacing: SizeConfig.widthPercent(2.5),
           ),
           itemCount: images.length,
           itemBuilder: (context, index) => ClipRRect(
             borderRadius: BorderRadius.circular(SizeConfig.widthPercent(3)),
             child: GestureDetector(
               onLongPress: () => _confirmDeleteImage(context, images[index]),
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => FullScreenPage(
-                images: images.map((e) => e.url).toList(), initialIndex: index,
-              ))),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => FullScreenPage(
+                    images: images.map((e) => e.url).toList(),
+                    initialIndex: index,
+                  ),
+                ),
+              ),
               child: Image.network(images[index].url, fit: BoxFit.cover),
             ),
           ),
@@ -269,7 +365,10 @@ class ProfilePage extends StatelessWidget {
     final color = user.isVerified ? Colors.blue : Colors.grey;
     return Container(
       padding: EdgeInsets.all(SizeConfig.widthPercent(3)),
-      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(SizeConfig.widthPercent(3))),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(SizeConfig.widthPercent(3)),
+      ),
       child: Row(
         children: [
           Icon(Icons.school, color: color, size: SizeConfig.widthPercent(6)),
@@ -278,10 +377,23 @@ class ProfilePage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(user.isVerified ? 'Verified Student' : 'Identity Unverified',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: color, fontSize: SizeConfig.widthPercent(3.8))),
-                Text(user.isVerified ? 'Official student at ${user.university}' : 'Connect with a university email to verify.',
-                    style: TextStyle(fontSize: SizeConfig.widthPercent(3.2), color: color.withOpacity(0.8))),
+                Text(
+                  user.isVerified ? 'Verified Student' : 'Identity Unverified',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                    fontSize: SizeConfig.widthPercent(3.8),
+                  ),
+                ),
+                Text(
+                  user.isVerified
+                      ? 'Official student at ${user.university}'
+                      : 'Connect with a university email to verify.',
+                  style: TextStyle(
+                    fontSize: SizeConfig.widthPercent(3.2),
+                    color: color.withOpacity(0.8),
+                  ),
+                ),
               ],
             ),
           ),

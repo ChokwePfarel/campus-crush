@@ -46,15 +46,22 @@ extension PostTypeExt on PostType {
   Color get color {
     switch (this) {
       case PostType.general:
-        return const Color(0xFF6C63FF);
+      // Darker indigo/purple
+        return const Color(0xFF3F3D9E);
       case PostType.crush:
-        return const Color(0xFFFF4D6D);
+      // Darker crimson/pink
+        return const Color(0xFFB22234);
       case PostType.confession:
-        return const Color(0xFFFF9F1C);
+      // Darker burnt orange
+        return const Color(0xFFCC6A00);
       case PostType.spotted:
-        return const Color(0xFF2EC4B6);
+      // Darker teal
+        return const Color(0xFF006A63);
     }
   }
+
+
+
 }
 
 
@@ -71,8 +78,11 @@ class LocationTags {
       'icon': '💻',
       'category': 'Libraries & Study',
     },
-    {'label': 'A Block', 'icon': '📚', 'category': 'Libraries & Study'},
-    {'label': 'B Block', 'icon': '📚', 'category': 'Libraries & Study'},
+    {'label': 'level 8', 'icon': '📚', 'category': 'Libraries & Study'},
+    {'label': 'level 9', 'icon': '📚', 'category': 'Libraries & Study'},
+    {'label': 'level 10', 'icon': '📚', 'category': 'Libraries & Study'},
+    {'label': 'level 11', 'icon': '📚', 'category': 'Libraries & Study'},
+    {'label': 'level 12', 'icon': '📚', 'category': 'Libraries & Study'},
     {'label': '24hr Study Room', 'icon': '🌙', 'category': 'Libraries & Study'},
     {'label': 'Main Cafeteria', 'icon': '🍽️', 'category': 'Food & Hangout'},
     {'label': 'Halaal Cafeteria', 'icon': '🥗', 'category': 'Food & Hangout'},

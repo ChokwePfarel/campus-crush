@@ -76,11 +76,11 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
     final userState = context.read<UserBloc>().state;
     if (userState is user_st.UserLoaded) {
       context.read<PostBloc>().add(LoadPosts(
-        university: userState.user.university,
-        postType: 'spotted',
-        locationTag: _selectedLocation,
-        isInitial: true,
-      ));
+            university: userState.user.university,
+            postType: 'spotted',
+            locationTag: _selectedLocation,
+            isInitial: true,
+          ));
     }
   }
 
@@ -108,8 +108,9 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
   }
 
   List<_BubbleData> _buildBubbles(List<PostModel> posts) {
+    if (_selectedLocation == null) return [];
     final rng = Random(_selectedLocation.hashCode);
-
+    
     // Only show top 5 for radar view
     final displayPosts = posts.take(5).toList();
 
@@ -142,34 +143,30 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     SizeConfig.init(context);
     return BlocProvider(
-      create: (context) {
-        final bloc = PostBloc(context.read<PostRepository>());
-        // Trigger load for the initial "Who's around" state if needed
-        return bloc;
-      },
+      create: (context) => PostBloc(context.read<PostRepository>()),
       child: Builder(
-          builder: (context) {
-            return Scaffold(
-              backgroundColor: Colors.black,
-              body: Stack(
-                children: [
-                  Positioned.fill(child: _RadarBackground(ctrl: _radarCtrl)),
-                  SafeArea(
-                    child: Column(
-                      children: [
-                        _buildHeader(context),
-                        Expanded(
-                          child: _selectedLocation == null
-                              ? _buildLocationPicker(context)
-                              : _buildRadarContent(context),
-                        ),
-                      ],
-                    ),
+        builder: (context) {
+          return Scaffold(
+            backgroundColor: Colors.black,
+            body: Stack(
+              children: [
+                Positioned.fill(child: _RadarBackground(ctrl: _radarCtrl)),
+                SafeArea(
+                  child: Column(
+                    children: [
+                      _buildHeader(context),
+                      Expanded(
+                        child: _selectedLocation == null 
+                          ? _buildLocationPicker(context) 
+                          : _buildRadarContent(context),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            );
-          }
+                ),
+              ],
+            ),
+          );
+        }
       ),
     );
   }
@@ -186,26 +183,30 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
           return LayoutBuilder(
             builder: (context, constraints) {
               return Stack(
+                alignment: Alignment.center,
                 children: [
-                  Center(child: _RadarRings(ctrl: _radarCtrl, pulse: _pulseCtrl)),
-                  if (bubbles.isEmpty)
-                    _buildEmptyRadar()
-                  else
+                  // Rings always in the background once per select
+                  _RadarRings(ctrl: _radarCtrl, pulse: _pulseCtrl),
+                  
+                  if (bubbles.isEmpty) 
+                    _buildEmptyRadarMessage()
+                  else ...[
                     ...bubbles.map((b) => _SpottedBubble(
-                      data: b,
-                      canvasSize: Size(constraints.maxWidth, constraints.maxHeight),
-                      onTap: () {
-                        HapticFeedback.mediumImpact();
-                        _showBubbleDetail(b.post);
-                      },
-                    )),
-                  _buildCountBadge(context, state.post.length),
+                          data: b,
+                          canvasSize: Size(constraints.maxWidth, constraints.maxHeight),
+                          onTap: () {
+                            HapticFeedback.mediumImpact();
+                            _showBubbleDetail(b.post);
+                          },
+                        )),
+                    _buildCountBadge(context, state.post.length),
+                  ],
                 ],
               );
             },
           );
         }
-        return _buildEmptyRadar();
+        return const SizedBox.shrink();
       },
     );
   }
@@ -375,18 +376,15 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildEmptyRadar() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _RadarRings(ctrl: _radarCtrl, pulse: _pulseCtrl),
-          const SizedBox(height: 32),
-          Text('No one spotted here yet', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white.withOpacity(0.7))),
-          const SizedBox(height: 8),
-          Text('Be the first to post your outfit!', style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.4))),
-        ],
-      ),
+  Widget _buildEmptyRadarMessage() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const SizedBox(height: 32),
+        Text('No one spotted here yet', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white.withOpacity(0.7))),
+        const SizedBox(height: 8),
+        Text('Be the first to post your outfit!', style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.4))),
+      ],
     );
   }
 

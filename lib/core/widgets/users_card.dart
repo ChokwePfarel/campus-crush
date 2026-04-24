@@ -74,7 +74,7 @@ class UsersCard extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.favorite, color: Colors.pinkAccent, size: 16),
+                            const Icon(Icons.favorite, color: Colors.pink, size: 16),
                             const SizedBox(width: 4),
                             Text(
                               '$matchPercentage% Match',
@@ -149,7 +149,7 @@ class UsersCard extends StatelessWidget {
         if (user.status.isNotEmpty)
           Text(
             user.status,
-            style: const TextStyle(color: Colors.blueAccent, fontSize: 14, fontWeight: FontWeight.w500),
+            style: TextStyle(color: Colors.blue, fontSize: 16, fontWeight: FontWeight.w500),
           ),
       ],
     );

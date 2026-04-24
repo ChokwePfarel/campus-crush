@@ -1,9 +1,9 @@
 import 'package:dating_app/core/utils/other_user_profile_skeleton.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
 import 'package:dating_app/core/utils/theme.dart';
+import 'package:dating_app/core/widgets/common/private_account.dart';
 import 'package:dating_app/data/datasources/image_remote_data_source.dart';
 import 'package:dating_app/data/repositories/image_repository_impl.dart';
-import 'package:dating_app/domain/entities/conversation_entity.dart';
 import 'package:dating_app/domain/repositories/users_repository.dart';
 import 'package:dating_app/presentation/bloc/image/image_bloc.dart';
 import 'package:dating_app/presentation/bloc/image/image_event.dart';
@@ -70,7 +70,7 @@ class OtherUserProfilePage extends StatelessWidget {
           body: BlocBuilder<OtherUserBloc, OtherUserState>(
             builder: (context, state) {
               if (state is OtherUserLoading) {
-                return OtherProfileSkeleton();
+                return const Center(child: CircularProgressIndicator.adaptive());
               }
 
               if (state is OtherUserError) {
@@ -79,9 +79,7 @@ class OtherUserProfilePage extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text('Error: ${state.message}'),
-
                       const SizedBox(height: 16),
-
                       ElevatedButton(
                         onPressed: () {
                           context.read<OtherUserBloc>().add(
@@ -97,6 +95,22 @@ class OtherUserProfilePage extends StatelessWidget {
 
               if (state is OtherUserLoaded) {
                 final user = state.user;
+
+                // --- CHECK PRIVACY SETTINGS ---
+                if (user.privacySettings.isProfilePrivate) {
+                  return PrivateProfilePage(
+                    username: user.name,
+                    avatarUrl: user.profileImageUrl,
+                    onMessagePressed: () {
+                      Navigator.push(
+                        context,
+                        CupertinoPageRoute(
+                          builder: (_) => SendPostPage(recipient: user),
+                        ),
+                      );
+                    },
+                  );
+                }
 
                 context.read<ImagesBloc>().add(LoadUserImages(user.id));
 
@@ -117,7 +131,7 @@ class OtherUserProfilePage extends StatelessWidget {
                                     image: user.profileImageUrl.isNotEmpty
                                         ? NetworkImage(user.profileImageUrl)
                                         : const AssetImage(
-                                            'assets/profile_picture.png',
+                                            'assets/Solid_white.png',
                                           ) as ImageProvider,
                                     fit: BoxFit.cover,
                                   ),
@@ -263,8 +277,9 @@ class OtherUserProfilePage extends StatelessWidget {
                                   builder: (context, imageState) {
                                     if (imageState is ImagesLoading ||
                                         imageState is ImagesInitial) {
-                                      return const Center(child: CupertinoActivityIndicator());
-
+                                      return const Center(
+                                        child: CircularProgressIndicator(),
+                                      );
                                     }
 
                                     final images = imageState is ImagesLoaded

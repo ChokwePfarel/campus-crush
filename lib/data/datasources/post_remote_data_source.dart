@@ -105,14 +105,11 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
       return (response as List).map((e) => PostModel.fromJson(e)).toList();
 
     } catch(e){
+
       print(e.toString());
     }
 
-
     return [];
-
-
-
 
   }
 

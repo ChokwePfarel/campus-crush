@@ -242,6 +242,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
             vertical: SizeConfig.heightPercent(1.5),
           ),
         ),
+        textAlignVertical: TextAlignVertical.center, // ensures vertical centering
       ),
     );
   }

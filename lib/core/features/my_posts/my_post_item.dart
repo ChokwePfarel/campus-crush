@@ -180,7 +180,7 @@ class MyPostItemState extends State<MyPostItem> {
                     onTap: widget.onComment,
                     child: Row(
                       children: [
-                        Icon(Icons.chat_bubble,
+                        Icon(CupertinoIcons.chat_bubble_fill,
                             size: 16, color: Colors.blue.withOpacity(0.5)),
                         const SizedBox(width: 4),
                         Text('${widget.post.commentCount}',

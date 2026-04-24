@@ -1,4 +1,5 @@
 import 'package:dating_app/core/utils/date_utils.dart';
+import 'package:dating_app/core/utils/theme.dart';
 import 'package:dating_app/domain/entities/comment_entity.dart';
 import 'package:dating_app/presentation/bloc/comments/commenst_event.dart';
 import 'package:dating_app/presentation/bloc/comments/comments_bloc.dart';
@@ -135,7 +136,8 @@ class _CommentsSheetState extends State<CommentsSheet> {
     return BlocBuilder<CommentsBloc, CommentsState>(
       builder: (context, state) {
         if (state is LoadingComments) {
-          return const Center(child: CircularProgressIndicator());
+
+          return const Center(child: CircularProgressIndicator.adaptive());
         }
         if (state is ErrorComments) {
           return Center(child: Text(state.message));
@@ -200,8 +202,8 @@ class _CommentsSheetState extends State<CommentsSheet> {
             ),
           ),
           IconButton(
-            icon: const Icon(CupertinoIcons.arrow_up_circle_fill,
-                color: Color(0xFF6C63FF), size: 32),
+            icon:  Icon(CupertinoIcons.arrow_up_circle_fill,
+                color: AppStylee.primaryColor, size: 32),
             onPressed: _submit,
           ),
         ],

@@ -109,8 +109,8 @@ class _InstaStyleNavState extends State<InstaStyleNav> {
                 ),
 
                 const BottomNavigationBarItem(
-                  icon: Icon(CupertinoIcons.news),
-                  activeIcon: Icon(CupertinoIcons.news_solid),
+                  icon: Icon(CupertinoIcons.chat_bubble_2),
+                  activeIcon: Icon(CupertinoIcons.chat_bubble_2_fill),
                 ),
 
                 const BottomNavigationBarItem(
@@ -131,8 +131,8 @@ class _InstaStyleNavState extends State<InstaStyleNav> {
                           : 0;
 
                       return BadgeIcon(
-                        icon: CupertinoIcons.chat_bubble_2,
-                        activeIcon: CupertinoIcons.chat_bubble_2_fill,
+                        icon: CupertinoIcons.chat_bubble,
+                        activeIcon: CupertinoIcons.chat_bubble_fill,
                         isActive: _selectedIndex == 4,
                         badgeCount: unread,
                       );
