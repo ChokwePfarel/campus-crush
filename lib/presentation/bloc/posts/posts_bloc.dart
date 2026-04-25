@@ -15,12 +15,14 @@ class PostBloc extends Bloc<PostEvent, PostState> {
   }
 
   Future<void> _onLoadPosts(
-    LoadPosts event,
-    Emitter<PostState> emit,
-  ) async {
+      LoadPosts event,
+      Emitter<PostState> emit,
+      ) async {
     final currentState = state;
 
-    if (currentState is PostsLoaded && currentState.hasReachedMax && !event.isInitial) {
+    if (currentState is PostsLoaded &&
+        currentState.hasReachedMax &&
+        !event.isInitial) {
       return;
     }
 
@@ -30,6 +32,8 @@ class PostBloc extends Bloc<PostEvent, PostState> {
 
         final posts = await _postRepository.getPosts(
           university: event.university,
+          postType: event.postType,
+          locationTag: event.locationTag,
           offset: 0,
           limit: _limit,
         );
@@ -41,6 +45,8 @@ class PostBloc extends Bloc<PostEvent, PostState> {
       } else {
         final posts = await _postRepository.getPosts(
           university: event.university,
+          postType: event.postType,
+          locationTag: event.locationTag,
           offset: currentState.post.length,
           limit: _limit,
         );
@@ -48,9 +54,9 @@ class PostBloc extends Bloc<PostEvent, PostState> {
         emit(posts.isEmpty
             ? currentState.copyWith(hasReachedMax: true)
             : PostsLoaded(
-                post: currentState.post + posts,
-                hasReachedMax: posts.length < _limit,
-              ));
+          post: currentState.post + posts,
+          hasReachedMax: posts.length < _limit,
+        ));
       }
     } catch (e) {
       emit(PostError(e.toString()));
@@ -58,9 +64,9 @@ class PostBloc extends Bloc<PostEvent, PostState> {
   }
 
   Future<void> _onCreatePost(
-    CreatePostRequested event,
-    Emitter<PostState> emit,
-  ) async {
+      CreatePostRequested event,
+      Emitter<PostState> emit,
+      ) async {
     try {
       await _postRepository.createPost(
         content: event.content,
@@ -71,25 +77,30 @@ class PostBloc extends Bloc<PostEvent, PostState> {
         authorName: event.authorName,
         recipientId: event.recipientId,
         isNormalPost: event.isNormalPost,
+        locationTag: event.locationTag,
+        expiresAt: event.expiresAt,
       );
-      // Refresh posts after creation
-      add(LoadPosts(university: event.university, isInitial: true));
+      add(LoadPosts(
+        university: event.university,
+        postType: event.postType,
+        locationTag: event.locationTag,
+        isInitial: true,
+      ));
     } catch (e) {
       emit(PostError(e.toString()));
     }
   }
 
-
   Future<void> _onDeletePost(
-    DeletePostRequested event,
-    Emitter<PostState> emit,
-  ) async {
+      DeletePostRequested event,
+      Emitter<PostState> emit,
+      ) async {
     try {
       await _postRepository.deletePost(event.postId);
-      // If we are in loaded state, we could also remove it optimistically
       if (state is PostsLoaded) {
         final currentPosts = (state as PostsLoaded).post;
-        final updatedPosts = currentPosts.where((p) => p.id != event.postId).toList();
+        final updatedPosts =
+        currentPosts.where((p) => p.id != event.postId).toList();
         emit((state as PostsLoaded).copyWith(post: updatedPosts));
       }
     } catch (e) {

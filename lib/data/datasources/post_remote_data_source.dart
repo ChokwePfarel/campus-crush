@@ -54,6 +54,12 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
     required int offset,
     required int limit,
   }) async {
+
+    print('university: $university');
+    print('postType: $postType');
+    print('locationTag: $locationTag');
+
+
     var query = client.from('posts').select('''
     *,
     profiles:user_id (
@@ -69,15 +75,25 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
       query = query.eq('university', university);
     }
 
+    // --- LOGIC FOR SPOTTED POSTS ---
+    bool hasLocation = locationTag != null && locationTag.isNotEmpty;
+
     if (postType != null && postType.isNotEmpty) {
+      // If user specifically requested 'spotted' but has no location,
+      // you might want to return an empty list or force a different type.
+      // Here, we proceed with the requested type.
       query = query.eq('post_type', postType);
+    } else if (!hasLocation) {
+      // If no specific postType is requested AND no location is provided,
+      // explicitly exclude 'spotted' posts.
+      query = query.neq('post_type', 'spotted');
     }
 
-    if (locationTag != null && locationTag.isNotEmpty) {
-      query = query.eq('location_tag', locationTag);
+    if (hasLocation) {
+      query = query.eq('location_tag', locationTag!);
     }
+    // -------------------------------
 
-    // Only fetch normal posts for the general feed
     query = query.eq('is_normal_post', true);
 
     query = query.or(
@@ -90,6 +106,9 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
 
     return (response as List).map((e) => PostModel.fromJson(e)).toList();
   }
+
+
+
 
   @override
   Future<void> createPost({

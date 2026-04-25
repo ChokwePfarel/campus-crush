@@ -1,10 +1,13 @@
 import 'package:dating_app/core/constants/lists.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
+import 'package:dating_app/core/utils/snackbar.dart';
 import 'package:dating_app/core/utils/theme.dart';
 import 'package:dating_app/core/widgets/confirmDialog.dart';
 import 'package:dating_app/core/widgets/dropdown.dart';
 import 'package:dating_app/data/models/privacy_settings_model.dart';
 import 'package:dating_app/data/models/user_model.dart';
+import 'package:dating_app/presentation/bloc/auth/auth_bloc.dart';
+import 'package:dating_app/presentation/bloc/auth/auth_event.dart';
 import 'package:dating_app/presentation/bloc/image/image_bloc.dart';
 import 'package:dating_app/presentation/bloc/image/image_event.dart';
 import 'package:dating_app/presentation/bloc/user/user_bloc.dart';
@@ -48,10 +51,15 @@ class _ProfileEditState extends State<ProfileEdit> {
     _interests = List.from(widget.user.interests);
     _isPrivate = widget.user.privacySettings.isProfilePrivate;
 
-    _nameController.addListener(() => _markAsDirty);
+    _nameController.addListener(_markAsDirty);
+    _bioController.addListener(_markAsDirty);
+    _ageController.addListener(_markAsDirty);
+    _residenceController.addListener(_markAsDirty);
+
+    /*_nameController.addListener(() => _markAsDirty);
     _bioController.addListener(() => _markAsDirty);
     _ageController.addListener(() => _markAsDirty);
-    _residenceController.addListener(() => _markAsDirty);
+    _residenceController.addListener(() => _markAsDirty);*/
   }
 
   @override
@@ -69,6 +77,38 @@ class _ProfileEditState extends State<ProfileEdit> {
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text('Log out'),
+        content: const Text('Are you sure you want to sign out?'),
+        actions: [
+          TextButton(
+            child: const Text('Cancel',
+              style: TextStyle(
+                color: Colors.grey
+              ),
+            ),
+            onPressed: () => Navigator.pop(ctx),
+          ),
+          TextButton(
+            child: const Text('Log out',
+              style: TextStyle(
+                color: Colors.red
+              ),
+            ),
+            onPressed: () {
+              Navigator.pop(ctx);
+              context.read<AuthBloc>().add(LogoutRequested());
+            },
+          ),
+        ],
+      ),
+    );
+  }
   void _saveProfile() {
     final name = _nameController.text.trim();
     final bio = _bioController.text.trim();
@@ -120,11 +160,10 @@ class _ProfileEditState extends State<ProfileEdit> {
       ),
     );
 
-    Navigator.pop(context);
+    AppSnackBar.show(context, 'Updating profile...');
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Updating profile...')));
+
+    Navigator.of(context).pop();
   }
 
   void _showAddInterestSheet() {
@@ -224,7 +263,31 @@ class _ProfileEditState extends State<ProfileEdit> {
           backgroundColor: Colors.white,
           leading: CupertinoButton(
             padding: EdgeInsets.zero,
-            onPressed: () => Navigator.of(context).pop(),
+//
+            onPressed: () async {
+              if (!_hasChanges) {
+                Navigator.of(context).pop();
+                return;
+              }
+
+              final action = await showUnsavedChangesDialog(
+                context: context,
+                onSave: () => _saveProfile(),
+                titleStyle: TextStyle(fontWeight: FontWeight.bold),
+                buttonStyle: TextStyle(fontWeight: FontWeight.bold),
+              );
+
+              if (!mounted) return;
+
+              if (action == 'DISCARD') {
+                Navigator.of(context).pop();
+              } else if (action == 'SAVE') {
+                _saveProfile();
+              }
+            }
+            ,
+
+            //
             child: const Icon(
               CupertinoIcons.chevron_left,
               color: Color(0xFF1A1A2E),
@@ -236,6 +299,13 @@ class _ProfileEditState extends State<ProfileEdit> {
             'Edit Profile',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
+          actions: [
+            IconButton(
+              onPressed: (){
+                _showLogoutDialog(context);
+              },
+              icon: const Icon(Icons.exit_to_app, color: Colors.red, size: 24,))
+          ],
         ),
         body: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: SizeConfig.widthPercent(5)),
@@ -350,15 +420,14 @@ class _ProfileEditState extends State<ProfileEdit> {
                           labelText: '',
                           items: DropDownOptions.statuses,
                           value:
-                              DropDownOptions.statuses.contains(
-                                widget.user.status,
-                              )
+                          DropDownOptions.statuses.contains(
+                            widget.user.status,
+                          )
                               ? widget.user.status
                               : DropDownOptions.statuses.first,
                           onChanged: (value) {
                             setState(() {
                               _selectedStatus = value!;
-
                               _markAsDirty();
                             });
                           },

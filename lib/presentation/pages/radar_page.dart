@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:dating_app/core/constants/post_constants.dart';
+import 'package:dating_app/core/utils/date_utils.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
 import 'package:dating_app/data/models/post_model.dart';
 import 'package:dating_app/domain/repositories/posts_repository.dart';
@@ -9,16 +10,16 @@ import 'package:dating_app/presentation/bloc/posts/posts_state.dart';
 import 'package:dating_app/presentation/bloc/user/user_bloc.dart';
 import 'package:dating_app/presentation/bloc/user/user_state.dart' as user_st;
 import 'package:dating_app/presentation/pages/other_user_profile.dart';
+import 'package:dating_app/presentation/pages/spotted_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 
 // ─── Bubble position model ────────────────────────────────────────────────────
 
 class _BubbleData {
   final PostModel post;
-  final Offset position; // fractional 0..1
+  final Offset position;
   final double size;
   final Color color;
   final Duration animDelay;
@@ -40,8 +41,6 @@ const _bubbleColors = [
   Color(0xFF43C59E),
   Color(0xFFE040FB),
 ];
-
-// ─── Radar Page ───────────────────────────────────────────────────────────────
 
 class RadarPage extends StatefulWidget {
   final void Function(String userId)? onProfileTap;
@@ -73,32 +72,52 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  void _fetchSpottedPosts(String location) {
+  void _fetchSpottedPosts(BuildContext context) {
     final userState = context.read<UserBloc>().state;
     if (userState is user_st.UserLoaded) {
       context.read<PostBloc>().add(LoadPosts(
             university: userState.user.university,
+            postType: 'spotted',
+            locationTag: _selectedLocation,
             isInitial: true,
           ));
     }
   }
 
-  void _selectLocation(String location) {
+  void _selectLocation(BuildContext context, String location) {
     HapticFeedback.mediumImpact();
     setState(() {
       _selectedLocation = location;
     });
-    _fetchSpottedPosts(location);
+    _fetchSpottedPosts(context);
   }
 
-  List<_BubbleData> _buildBubbles(List<PostModel> posts, String location) {
-    final rng = Random(location.hashCode);
-    final spottedPosts = posts.where((p) => p.postType == 'spotted' && p.locationTag == location).toList();
+  void _navigateToSpottedPage(BuildContext context) {
+    final userState = context.read<UserBloc>().state;
+    if (userState is user_st.UserLoaded && _selectedLocation != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SpottedPage(
+            location: _selectedLocation!,
+            university: userState.user.university,
+          ),
+        ),
+      );
+    }
+  }
+
+  List<_BubbleData> _buildBubbles(List<PostModel> posts) {
+    if (_selectedLocation == null) return [];
+    final rng = Random(_selectedLocation.hashCode);
+
+    // Only show top 5 for radar view
+    final displayPosts = posts.take(5).toList();
 
     final positions = <Offset>[];
     final bubbles = <_BubbleData>[];
 
-    for (var i = 0; i < spottedPosts.length; i++) {
+    for (var i = 0; i < displayPosts.length; i++) {
       Offset pos;
       int attempts = 0;
       do {
@@ -110,7 +129,7 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
 
       positions.add(pos);
       bubbles.add(_BubbleData(
-        post: spottedPosts[i],
+        post: displayPosts[i],
         position: pos,
         size: 88 + rng.nextDouble() * 28,
         color: _bubbleColors[i % _bubbleColors.length],
@@ -125,84 +144,108 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
     SizeConfig.init(context);
     return BlocProvider(
       create: (context) => PostBloc(context.read<PostRepository>()),
-      child: Scaffold(
-        backgroundColor: Colors.black,
-        body: Stack(
-          children: [
-            Positioned.fill(child: _RadarBackground(ctrl: _radarCtrl)),
-            SafeArea(
-              child: Column(
-                children: [
-                  _buildHeader(),
-                  Expanded(
-                    child: _selectedLocation == null ? _buildLocationPicker() : _buildRadarContent(),
+      child: Builder(
+        builder: (context) {
+          return Scaffold(
+            backgroundColor: Colors.black,
+            body: Stack(
+              children: [
+                Positioned.fill(child: _RadarBackground(ctrl: _radarCtrl)),
+                SafeArea(
+                  child: Column(
+                    children: [
+                      _buildHeader(context),
+                      Expanded(
+                        child: _selectedLocation == null
+                          ? _buildLocationPicker(context)
+                          : _buildRadarContent(context),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        }
       ),
     );
   }
 
-  Widget _buildRadarContent() {
+  Widget _buildRadarContent(BuildContext context) {
     return BlocBuilder<PostBloc, PostState>(
       builder: (context, state) {
         if (state is LoadingPosts) {
           return const Center(child: CircularProgressIndicator(color: Color(0xFF2EC4B6)));
         }
         if (state is PostsLoaded) {
-          final bubbles = _buildBubbles(state.post, _selectedLocation!);
-          if (bubbles.isEmpty) return _buildEmptyRadar();
+          final bubbles = _buildBubbles(state.post);
 
           return LayoutBuilder(
             builder: (context, constraints) {
               return Stack(
+                alignment: Alignment.center,
                 children: [
-                  Center(child: _RadarRings(ctrl: _radarCtrl, pulse: _pulseCtrl)),
-                  ...bubbles.map((b) => _SpottedBubble(
-                        data: b,
-                        canvasSize: Size(constraints.maxWidth, constraints.maxHeight),
-                        onTap: () {
-                          HapticFeedback.mediumImpact();
-                          _showBubbleDetail(b.post);
-                        },
-                      )),
-                  _buildCountBadge(bubbles.length),
+                  // Rings always in the background once per select
+                  _RadarRings(ctrl: _radarCtrl, pulse: _pulseCtrl),
+
+                  if (bubbles.isEmpty)
+                    _buildEmptyRadarMessage()
+                  else ...[
+                    ...bubbles.map((b) => _SpottedBubble(
+                          data: b,
+                          canvasSize: Size(constraints.maxWidth, constraints.maxHeight),
+                          onTap: () {
+                            HapticFeedback.mediumImpact();
+                            _showBubbleDetail(b.post);
+                          },
+                        )),
+                    _buildCountBadge(context, state.post.length),
+                  ],
                 ],
               );
             },
           );
         }
-        return _buildEmptyRadar();
+        return const SizedBox.shrink();
       },
     );
   }
 
-  Widget _buildCountBadge(int count) {
+  Widget _buildCountBadge(BuildContext context, int totalCount) {
     return Positioned(
       top: 12,
       left: 0,
       right: 0,
       child: Center(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-          decoration: BoxDecoration(
-            color: const Color(0xFF2EC4B6).withOpacity(0.15),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFF2EC4B6).withOpacity(0.3)),
-          ),
-          child: Text(
-            '$count ${count == 1 ? 'person' : 'people'} spotted at $_selectedLocation',
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF2EC4B6)),
+        child: GestureDetector(
+          onTap: () => _navigateToSpottedPage(context),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF2EC4B6).withOpacity(0.15),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFF2EC4B6).withOpacity(0.3)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '$totalCount ${totalCount == 1 ? 'person' : 'people'} spotted',
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF2EC4B6)),
+                ),
+                if (totalCount > 5) ...[
+                  const SizedBox(width: 8),
+                  const Text('|  See more >', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF2EC4B6))),
+                ]
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
       child: Row(
@@ -211,9 +254,7 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
             GestureDetector(
               onTap: () {
                 HapticFeedback.lightImpact();
-                setState(() {
-                  _selectedLocation = null;
-                });
+                setState(() => _selectedLocation = null);
               },
               child: Container(
                 width: 38,
@@ -280,7 +321,7 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildLocationPicker() {
+  Widget _buildLocationPicker(BuildContext context) {
     final grouped = LocationTags.grouped;
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
@@ -304,7 +345,7 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
               childAspectRatio: 2.6,
               children: entry.value.map((tag) {
                 return GestureDetector(
-                  onTap: () => _selectLocation(tag['label']!),
+                  onTap: () => _selectLocation(context, tag['label']!),
                   child: Container(
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.07),
@@ -335,25 +376,19 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildEmptyRadar() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _RadarRings(ctrl: _radarCtrl, pulse: _pulseCtrl),
-          const SizedBox(height: 32),
-          Text('No one spotted here yet', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white.withOpacity(0.7))),
-          const SizedBox(height: 8),
-          Text('Be the first to post your outfit!', style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.4))),
-        ],
-      ),
+  Widget _buildEmptyRadarMessage() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const SizedBox(height: 32),
+        Text('No one spotted here yet', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white.withOpacity(0.7))),
+        const SizedBox(height: 8),
+        Text('Be the first to post your outfit!', style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.4))),
+      ],
     );
   }
 
   void _showBubbleDetail(PostModel post) {
-    final userId = post.userId;
-    print('USER ID $userId');
-    
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -371,8 +406,8 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
             Row(
               children: [
                 CircleAvatar(
-                  radius: 24, 
-                  backgroundColor: Colors.white10, 
+                  radius: 24,
+                  backgroundColor: Colors.white10,
                   child: Text(post.isAnonymous ? '🎭' : '👤', style: const TextStyle(fontSize: 24)),
                 ),
                 const SizedBox(width: 16),
@@ -398,11 +433,11 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.pop(context); // Close sheet
+                      Navigator.pop(context);
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => OtherUserProfilePage(userId: userId),
+                          builder: (context) => OtherUserProfilePage(userId: post.userId),
                         ),
                       );
                     },
@@ -412,10 +447,7 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     ),
-                    child: Text(
-                      'Say Hi',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
+                    child: const Text('Say Hi', style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],
@@ -427,19 +459,16 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
   }
 }
 
-// ─── Animation Components ───────────────────────────────────────────────────
+// ─── Animation Components (Painters) ──────────────────────────────────────────
 
 class _RadarBackground extends StatelessWidget {
   final Animation<double> ctrl;
   const _RadarBackground({required this.ctrl});
-
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: ctrl,
-      builder: (context, child) {
-        return CustomPaint(painter: _RadarBackgroundPainter(progress: ctrl.value));
-      },
+      builder: (context, child) => CustomPaint(painter: _RadarBackgroundPainter(progress: ctrl.value)),
     );
   }
 }
@@ -447,21 +476,12 @@ class _RadarBackground extends StatelessWidget {
 class _RadarBackgroundPainter extends CustomPainter {
   final double progress;
   _RadarBackgroundPainter({required this.progress});
-
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white.withOpacity(0.03)
-      ..strokeWidth = 1;
-
-    for (double i = 0; i < size.width; i += 40) {
-      canvas.drawLine(Offset(i, 0), Offset(i, size.height), paint);
-    }
-    for (double i = 0; i < size.height; i += 40) {
-      canvas.drawLine(Offset(0, i), Offset(size.width, i), paint);
-    }
+    final paint = Paint()..color = Colors.white.withOpacity(0.03)..strokeWidth = 1;
+    for (double i = 0; i < size.width; i += 40) { canvas.drawLine(Offset(i, 0), Offset(i, size.height), paint); }
+    for (double i = 0; i < size.height; i += 40) { canvas.drawLine(Offset(0, i), Offset(size.width, i), paint); }
   }
-
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
@@ -470,14 +490,11 @@ class _RadarRings extends StatelessWidget {
   final Animation<double> ctrl;
   final Animation<double> pulse;
   const _RadarRings({required this.ctrl, required this.pulse});
-
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: Listenable.merge([ctrl, pulse]),
-      builder: (context, child) {
-        return CustomPaint(painter: _RadarRingsPainter(progress: ctrl.value, pulse: pulse.value), size: const Size(300, 300));
-      },
+      builder: (context, child) => CustomPaint(painter: _RadarRingsPainter(progress: ctrl.value, pulse: pulse.value), size: const Size(300, 300)),
     );
   }
 }
@@ -486,29 +503,21 @@ class _RadarRingsPainter extends CustomPainter {
   final double progress;
   final double pulse;
   _RadarRingsPainter({required this.progress, required this.pulse});
-
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
-
+    final paint = Paint()..style = PaintingStyle.stroke..strokeWidth = 1;
     for (int i = 1; i <= 3; i++) {
       paint.color = const Color(0xFF2EC4B6).withOpacity(0.1 - (i * 0.02) + (pulse * 0.05));
       canvas.drawCircle(center, (size.width / 2) * (i / 3), paint);
     }
-
-    final sweepPaint = Paint()
-      ..shader = SweepGradient(
-        colors: [Colors.transparent, const Color(0xFF2EC4B6).withOpacity(0.3), Colors.transparent],
-        stops: const [0.0, 0.5, 1.0],
-        transform: GradientRotation(progress * 2 * pi),
-      ).createShader(Rect.fromCircle(center: center, radius: size.width / 2));
-
+    final sweepPaint = Paint()..shader = SweepGradient(
+      colors: [Colors.transparent, const Color(0xFF2EC4B6).withOpacity(0.3), Colors.transparent],
+      stops: const [0.0, 0.5, 1.0],
+      transform: GradientRotation(progress * 2 * pi),
+    ).createShader(Rect.fromCircle(center: center, radius: size.width / 2));
     canvas.drawCircle(center, size.width / 2, sweepPaint..style = PaintingStyle.fill);
   }
-
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
@@ -517,9 +526,7 @@ class _SpottedBubble extends StatefulWidget {
   final _BubbleData data;
   final Size canvasSize;
   final VoidCallback onTap;
-
   const _SpottedBubble({required this.data, required this.canvasSize, required this.onTap});
-
   @override
   State<_SpottedBubble> createState() => _SpottedBubbleState();
 }
@@ -527,26 +534,17 @@ class _SpottedBubble extends StatefulWidget {
 class _SpottedBubbleState extends State<_SpottedBubble> with SingleTickerProviderStateMixin {
   late final _animCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 800));
   late final _scaleAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.elasticOut);
-
   @override
   void initState() {
     super.initState();
-    Future.delayed(widget.data.animDelay, () {
-      if (mounted) _animCtrl.forward();
-    });
+    Future.delayed(widget.data.animDelay, () { if (mounted) _animCtrl.forward(); });
   }
-
   @override
-  void dispose() {
-    _animCtrl.dispose();
-    super.dispose();
-  }
-
+  void dispose() { _animCtrl.dispose(); super.dispose(); }
   @override
   Widget build(BuildContext context) {
     final x = widget.data.position.dx * widget.canvasSize.width;
     final y = widget.data.position.dy * widget.canvasSize.height;
-
     return Positioned(
       left: x - widget.data.size / 2,
       top: y - widget.data.size / 2,
@@ -574,12 +572,8 @@ class _SpottedBubbleState extends State<_SpottedBubble> with SingleTickerProvide
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    widget.data.post.isAnonymous ? '???' : 'Student',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: widget.data.size * 0.12,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    widget.data.post.isAnonymous ? '???' : (widget.data.post.authorName.split(' ').first),
+                    style: TextStyle(color: Colors.white, fontSize: widget.data.size * 0.12, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),

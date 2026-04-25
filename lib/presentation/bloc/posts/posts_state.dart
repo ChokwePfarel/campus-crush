@@ -31,6 +31,6 @@ class PostsLoaded extends PostState {
 class PostError extends PostState {
   final String message;
 
-PostError(this.message);
+  PostError(this.message);
 
 }

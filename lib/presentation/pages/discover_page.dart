@@ -177,11 +177,11 @@ class _DiscoverPageState extends State<DiscoverPage> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(
+                            const Text(
 
-                              _currentSex ?? '',
+                              'No Users Found',
 
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.purple,
                               ),
