@@ -1,4 +1,5 @@
 import '../../domain/entities/user_entity.dart';
+import '../../domain/entities/privacy_settings_entity.dart';
 import 'privacy_settings_model.dart';
 
 class UserModel extends UserEntity {
@@ -70,5 +71,40 @@ class UserModel extends UserEntity {
       'daily_direct_posts_count': dailyDirectPostsCount,
       'last_direct_post_date': lastDirectPostDate?.toIso8601String(),
     };
+  }
+
+  UserModel copyWith({
+    String? name,
+    int? age,
+    String? status,
+    String? bio,
+    String? residence,
+    List<String>? interests,
+    PrivacySettingsEntity? privacySettings,
+    String? profileImageUrl,
+    List<String>? imageUrls,
+    bool? isVerified,
+  }) {
+    return UserModel(
+      id: id,
+      name: name ?? this.name,
+      age: age ?? this.age,
+      sex: sex,
+      university: university,
+      residence: residence ?? this.residence,
+      status: status ?? this.status,
+      major: major,
+      bio: bio ?? this.bio,
+      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
+      imageUrls: imageUrls ?? this.imageUrls,
+      interests: interests ?? this.interests,
+      isVerified: isVerified ?? this.isVerified,
+      privacySettings: (privacySettings ?? this.privacySettings) as PrivacySettingsModel,
+      coins: coins,
+      dailyAdsWatched: dailyAdsWatched,
+      lastAdDate: lastAdDate,
+      dailyDirectPostsCount: dailyDirectPostsCount,
+      lastDirectPostDate: lastDirectPostDate,
+    );
   }
 }

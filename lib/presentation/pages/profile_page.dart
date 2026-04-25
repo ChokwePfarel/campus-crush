@@ -93,6 +93,14 @@ class ProfilePage extends StatelessWidget {
               elevation: 0,
               title: const Text('My Profile', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
               centerTitle: true,
+              leading: CupertinoButton(
+              padding: EdgeInsets.zero,
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Icon(
+                CupertinoIcons.chevron_left,
+                color: Color(0xFF1A1A2E),
+              ),
+            ),
               actions: [
                 PopupMenuButton<String>(
                   icon: const Icon(Icons.expand_more, color: Colors.black),
