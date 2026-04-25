@@ -39,7 +39,7 @@ extension PostTypeExt on PostType {
 
   Color get color {
     switch (this) {
-      case PostType.general:    return const Color(0xFF6C63FF);
+      case PostType.general:    return const Color(0xFF000000);
       case PostType.crush:      return const Color(0xFFFF4D6D);
       case PostType.confession: return const Color(0xFFFF9F1C);
       case PostType.spotted:    return const Color(0xFF2EC4B6);
@@ -52,6 +52,7 @@ class DropDownOptions{
   static  final List<String> sexOptions = [
     'Male',
     'Female',
+    'LGBTQ'
   ];
 
   static final List<String> availableInterests = [

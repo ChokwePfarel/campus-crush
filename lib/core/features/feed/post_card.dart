@@ -241,7 +241,7 @@ class PostCardState extends State<PostCard> with SingleTickerProviderStateMixin 
                         return ActionButton(
                           icon: hasLiked ? Icons.favorite : Icons.favorite_border,
                           label: count.toString(),
-                          color: hasLiked ? Colors.pink : _subtextColor,
+                          color: hasLiked ? Colors.pink : Colors.white,
                           onTap: () {
                             HapticFeedback.lightImpact();
                             final userState = context.read<UserBloc>().state;
@@ -264,9 +264,9 @@ class PostCardState extends State<PostCard> with SingleTickerProviderStateMixin 
                       },
                     ),
                     ActionButton(
-                      icon: Icons.chat_bubble_outline,
+                      icon: CupertinoIcons.chat_bubble_fill,
                       label: post.commentCount.toString(),
-                      color: _subtextColor,
+                      color: Colors.white,
                       onTap: widget.onComment,
                     ),
                   ],

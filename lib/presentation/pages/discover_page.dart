@@ -173,14 +173,38 @@ class _DiscoverPageState extends State<DiscoverPage> {
                     final users = state.users;
 
                     if (users.isEmpty) {
-                      return const Center(
-                        child: Text(
-                          'No users found matching your university',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.purple,
-                          ),
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+
+                              _currentSex ?? '',
+
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Colors.purple,
+                              ),
+                            ),
+
+                            const SizedBox(height: 16),
+
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.purple,),
+                                onPressed: (){
+                                  if (!mounted) return;
+                                  _triggerLoad(context, isInitial: true);
+                                }, child: const Text(
+                              'Try again',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold
+                              ),
+                            ))
+                          ],
+
                         ),
                       );
                     }

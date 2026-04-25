@@ -46,7 +46,7 @@ extension PostTypeExt on PostType {
   Color get color {
     switch (this) {
       case PostType.general:
-        return const Color(0xFF6C63FF);
+        return const Color(0xFF000000);
       case PostType.crush:
         return const Color(0xFFFF4D6D);
       case PostType.confession:
@@ -71,10 +71,12 @@ class LocationTags {
       'icon': '💻',
       'category': 'Libraries & Study',
     },
-    {'label': 'A Block', 'icon': '📚', 'category': 'Libraries & Study'},
-    {'label': 'B Block', 'icon': '📚', 'category': 'Libraries & Study'},
+    {'label': 'level 8', 'icon': '📚', 'category': 'Libraries & Study'},
+    {'label': 'level 9', 'icon': '📚', 'category': 'Libraries & Study'},
+    {'label': 'level 10', 'icon': '📚', 'category': 'Libraries & Study'},
+    {'label': 'level 11', 'icon': '📚', 'category': 'Libraries & Study'},
+    {'label': 'level 12', 'icon': '📚', 'category': 'Libraries & Study'},
     {'label': '24hr Study Room', 'icon': '🌙', 'category': 'Libraries & Study'},
-    {'label': 'Main Cafeteria', 'icon': '🍽️', 'category': 'Food & Hangout'},
     {'label': 'Halaal Cafeteria', 'icon': '🥗', 'category': 'Food & Hangout'},
     {'label': 'Student Centre Café', 'icon': '☕', 'category': 'Food & Hangout'},
     {'label': 'Student Centre', 'icon': '🏛️', 'category': 'Social Spaces'},
@@ -101,12 +103,12 @@ const List<Color?> postBgColors = [
   null, // no background (default)
 
   Color(0xFF1A1A2E),
-  Color(0xFF1A1A2E), // deep navy
   Color(0xFF2D1B1B), // dark maroon
   Color(0xFF1B2D1B), // dark forest green
   Color(0xFF0D1B2A), // midnight blue
   Color(0xFF2C2C54), // indigo
   Color(0xFF263238), // charcoal grey
+  Color(0xFF000000), // teal green
   Color(0xFF00695C), // teal green
 ];
 

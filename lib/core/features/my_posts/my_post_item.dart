@@ -45,11 +45,13 @@ class MyPostItemState extends State<MyPostItem> {
     // so we pass an empty userId for hasLiked (they can't like their own post).
     Future.microtask(() {
       if (!mounted) return;
-      context.read<LikesBloc>().add(InitializeLikes(
-        postId: widget.post.id,
-        userId: widget.currentUserId,
-        initialCount: widget.post.likeCount,
-      ));
+      context.read<LikesBloc>().add(
+        InitializeLikes(
+          postId: widget.post.id,
+          userId: widget.currentUserId,
+          initialCount: widget.post.likeCount,
+        ),
+      );
     });
   }
 
@@ -58,12 +60,10 @@ class MyPostItemState extends State<MyPostItem> {
     final accent = widget.post.postType.accentColor;
     final backgroundColor = widget.post.backgroundColor;
 
-
     return BlocListener<LikesBloc, LikesState>(
       listenWhen: (prev, curr) =>
-      curr is LikesLoaded &&
-          (prev is! LikesLoaded ||
-              (prev).likeCount != curr.likeCount),
+          curr is LikesLoaded &&
+          (prev is! LikesLoaded || (prev).likeCount != curr.likeCount),
       listener: (_, state) {
         if (state is LikesLoaded) {
           widget.onLikeCountChanged(state.likeCount);
@@ -104,16 +104,18 @@ class MyPostItemState extends State<MyPostItem> {
                     child: Text(
                       widget.post.postType.label,
                       style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: SizeConfig.widthPercent(2.8)),
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: SizeConfig.widthPercent(2.8),
+                      ),
                     ),
                   ),
                   Text(
                     DateUtilsHelper.timeAgo(widget.post.createdAt),
                     style: TextStyle(
-                        color: Colors.white,
-                        fontSize: SizeConfig.widthPercent(3)),
+                      color: Colors.white,
+                      fontSize: SizeConfig.widthPercent(3),
+                    ),
                   ),
                 ],
               ),
@@ -121,8 +123,10 @@ class MyPostItemState extends State<MyPostItem> {
               Text(
                 widget.post.content,
                 style: TextStyle(
-                    color: Colors.white,
-                    fontSize: SizeConfig.widthPercent(3.8), height: 1.4),
+                  color: Colors.white,
+                  fontSize: SizeConfig.widthPercent(3.8),
+                  height: 1.4,
+                ),
               ),
               SizedBox(height: SizeConfig.heightPercent(2)),
               Row(
@@ -142,20 +146,26 @@ class MyPostItemState extends State<MyPostItem> {
                               final userState = context.read<UserBloc>().state;
                               if (userState is! UserLoaded) return;
                               if (hasLiked) {
-                                context.read<LikesBloc>().add(UnlikePost(
-                                    postId: widget.post.id,
-                                    userId: userState.user.id));
-                              } else {
-                                context.read<LikesBloc>().add(LikePost(
+                                context.read<LikesBloc>().add(
+                                  UnlikePost(
                                     postId: widget.post.id,
                                     userId: userState.user.id,
-                                    likedByName: userState.user.name));
+                                  ),
+                                );
+                              } else {
+                                context.read<LikesBloc>().add(
+                                  LikePost(
+                                    postId: widget.post.id,
+                                    userId: userState.user.id,
+                                    likedByName: userState.user.name,
+                                  ),
+                                );
                               }
                             },
                             child: Icon(
                               hasLiked ? Icons.favorite : Icons.favorite_border,
                               size: 18,
-                              color: hasLiked ? Colors.pink : Colors.grey,
+                              color: hasLiked ? Colors.white : Colors.white,
                             ),
                           ),
                           const SizedBox(width: 4),
@@ -164,10 +174,9 @@ class MyPostItemState extends State<MyPostItem> {
                             child: Text(
                               '$count',
                               style: TextStyle(
-                                color: Colors.grey[700],
+                                color: Colors.white,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                decoration: TextDecoration.underline,
                               ),
                             ),
                           ),
@@ -180,12 +189,19 @@ class MyPostItemState extends State<MyPostItem> {
                     onTap: widget.onComment,
                     child: Row(
                       children: [
-                        Icon(Icons.chat_bubble,
-                            size: 16, color: Colors.blue.withOpacity(0.5)),
+                        Icon(
+                          CupertinoIcons.chat_bubble_fill,
+                          size: 16,
+                          color: Colors.white,
+                        ),
                         const SizedBox(width: 4),
-                        Text('${widget.post.commentCount}',
-                            style:
-                            const TextStyle(color: Colors.grey, fontSize: 12)),
+                        Text(
+                          '${widget.post.commentCount}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                          ),
+                        ),
                       ],
                     ),
                   ),

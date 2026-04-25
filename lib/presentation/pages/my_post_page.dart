@@ -191,7 +191,6 @@ class _MyPostsPageState extends State<MyPostsPage> {
                     slivers: [
                       _buildAppBar(),
                       if (state is UserPostLoaded) ...[
-                        _buildStatsBar(visiblePosts),
                         _buildPostList(visiblePosts, currentUserId),
                       ] else if (state is UserPostLoading)
                         const SliverFillRemaining(child: Center(child: CupertinoActivityIndicator()))
@@ -229,43 +228,7 @@ class _MyPostsPageState extends State<MyPostsPage> {
     );
   }
 
-  SliverToBoxAdapter _buildStatsBar(List<PostModel> posts) {
-    return SliverToBoxAdapter(
-      child: Container(
-        color: Colors.white,
-        padding: EdgeInsets.fromLTRB(
-          SizeConfig.widthPercent(5),
-          SizeConfig.heightPercent(2),
-          SizeConfig.widthPercent(5),
-          SizeConfig.heightPercent(2.5),
-        ),
-        child: Row(
-          children: [
-            StatChip(
-              emoji: '📝',
-              value: '${posts.length}',
-              label: posts.length == 1 ? 'Post' : 'Posts',
-              color: const Color(0xFF6C63FF),
-            ),
-            SizedBox(width: SizeConfig.widthPercent(2.5)),
-            StatChip(
-              emoji: '❤️',
-              value: '${_totalLikes(posts)}',
-              label: 'Likes',
-              color: const Color(0xFFFF4D6D),
-            ),
-            SizedBox(width: SizeConfig.widthPercent(2.5)),
-            StatChip(
-              emoji: '💬',
-              value: '${_totalComments(posts)}',
-              label: 'Comments',
-              color: const Color(0xFF2EC4B6),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+
 
   SliverPadding _buildPostList(List<PostModel> posts, String currentUserId) {
     return SliverPadding(

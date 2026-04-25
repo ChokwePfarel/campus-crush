@@ -70,7 +70,7 @@ class OtherUserProfilePage extends StatelessWidget {
           body: BlocBuilder<OtherUserBloc, OtherUserState>(
             builder: (context, state) {
               if (state is OtherUserLoading) {
-                return OtherProfileSkeleton();
+                return Center(child:  CircularProgressIndicator.adaptive(),);
               }
 
               if (state is OtherUserError) {

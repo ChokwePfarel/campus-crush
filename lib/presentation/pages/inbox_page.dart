@@ -114,7 +114,7 @@ class _InboxPageState extends State<InboxPage>
       elevation: 0,
       pinned: true,
       title: const Text(
-        'Messages',
+        'Chats',
         style: TextStyle(
           fontSize: 22,
           fontWeight: FontWeight.w800,

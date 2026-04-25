@@ -267,14 +267,7 @@ class _DirectPostsPageState extends State<DirectPostsPage>
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Daily Free Replies: $freeLeft left',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: freeLeft > 0 ? Colors.green : Colors.orange,
-                        ),
-                      ),
+
                     ],
                   ),
                 ),

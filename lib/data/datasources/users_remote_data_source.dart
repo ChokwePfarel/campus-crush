@@ -22,29 +22,55 @@ class UsersRemoteDataSourceImpl implements UsersRemoteDataSource {
   @override
   Future<List<UserModel>> getUsers({
     required String university,
-    required String sex,
+    required String sex, // This is the current user's sex
     String? residence,
     required int offset,
     required int limit,
-
   }) async {
 
-      var query = client
-          .from('profiles')
-          .select().eq('university', university)
-          .neq('sex', sex).neq('id', client.auth.currentUser?.id ?? ''); // Exclude current user
+    print('University: $university, Sex: $sex, ');
+    // 1. Determine the target sex based on your logic
+    String targetSex;
+    bool useNeq = true;
 
-      if (residence != null && residence.isNotEmpty) {
-        query = query.ilike('residence', '%$residence%');
-      }
+    if (sex == 'LGBTQ') {
+      targetSex = 'LGBTQ';
+      useNeq = false; // We want ONLY LGBTQ
+    } else if (sex == 'male') {
+      targetSex = 'female';
+    } else {
+      targetSex = 'male';
+    }
 
-      final response = await query
-          .range(offset, offset + limit - 1)
-          .order('name');
+    // 2. Build the query
+    var query = client.from('profiles').select().eq('university', university);
 
-      return (response as List).map((e) => UserModel.fromJson(e)).toList();
+    // Apply gender filter
+    if (useNeq) {
+      // If male/female, we look for the opposite
+      query = query.eq('sex', targetSex);
+    } else {
+      // If LGBTQ, we look for the same
+      query = query.eq('sex', 'LGBTQ');
+    }
+
+    // Exclude current user
+    query = query.neq('id', client.auth.currentUser?.id ?? '');
+
+    if (residence != null && residence.isNotEmpty) {
+      query = query.ilike('residence', '%$residence%');
+    }
+
+    final response = await query
+        .range(offset, offset + limit - 1)
+        .order('name');
+
+    print('Response: ${response.length}');
+
+    return (response as List).map((e) => UserModel.fromJson(e)).toList();
 
   }
+
 
 
   @override

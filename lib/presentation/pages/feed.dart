@@ -29,10 +29,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 // ─── Filter bar data ──────────────────────────────────────────────────────────
 
 const _filters = [
-  {'type': null, 'emoji': '✨', 'label': 'All'},
-  {'type': 'crush', 'emoji': '💘', 'label': 'Crush'},
-  {'type': 'confession', 'emoji': '🤫', 'label': 'Confession'},
-  {'type': 'spotted', 'emoji': '📡', 'label': 'Spotted'},
+  {'type': null, 'label': 'All'},
+  {'type': 'crush', 'label': 'Crush'},
+  {'type': 'confession', 'label': 'Confession'},
 ];
 
 // ─── Feed Screen ──────────────────────────────────────────────────────────────
@@ -283,11 +282,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                 ),
                 child: Column(
                   children: [
-                    Text(
-                      f['emoji'] as String,
-                      style: TextStyle(fontSize: SizeConfig.widthPercent(4)),
-                    ),
-                    SizedBox(height: SizeConfig.heightPercent(0.3)),
+
                     Text(
                       f['label'] as String,
                       style: TextStyle(
@@ -348,15 +343,9 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
         height: SizeConfig.heightPercent(7),
         padding: EdgeInsets.symmetric(horizontal: SizeConfig.widthPercent(6)),
         decoration: BoxDecoration(
-          color: const Color(0xFF0D1B2A), // midnight blue
+          color: const Color(0xFF000000), // midnight blue
           borderRadius: BorderRadius.circular(SizeConfig.heightPercent(3.5)),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFFFF4D6D).withOpacity(0.35),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
-          ],
+
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

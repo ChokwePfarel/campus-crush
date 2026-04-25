@@ -31,7 +31,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   final List<String> _interests = [];
   String _selectedUniversity = 'University of the Western Cape (UWC)';
-  String _selectedSex = 'Male';
+  String _selectedSex = 'male';
 
   final List<String> _saUniversities = [
     'University of the Western Cape (UWC)',
@@ -58,7 +58,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       context.read<UserBloc>().add(
         UpdateUserRequested(
           name: widget.userName,
-          sex: _selectedSex,
+          sex: _selectedSex.toLowerCase(),
           bio: _bioController.text.trim(),
           status: 'looking',
           residence: _residenceController.text.trim(),
