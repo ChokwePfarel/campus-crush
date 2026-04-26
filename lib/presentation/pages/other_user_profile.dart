@@ -99,16 +99,7 @@ class OtherUserProfilePage extends StatelessWidget {
                 // --- CHECK PRIVACY SETTINGS ---
                 if (user.privacySettings.isProfilePrivate) {
                   return PrivateProfilePage(
-                    username: user.name,
-                    avatarUrl: user.profileImageUrl,
-                    onMessagePressed: () {
-                      Navigator.push(
-                        context,
-                        CupertinoPageRoute(
-                          builder: (_) => SendPostPage(recipient: user),
-                        ),
-                      );
-                    },
+
                   );
                 }
 
