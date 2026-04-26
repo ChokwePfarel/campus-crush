@@ -1,4 +1,3 @@
-import 'package:dating_app/core/utils/other_user_profile_skeleton.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
 import 'package:dating_app/core/utils/theme.dart';
 import 'package:dating_app/core/widgets/common/private_account.dart';

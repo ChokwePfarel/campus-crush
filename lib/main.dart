@@ -1,4 +1,5 @@
 import 'package:dating_app/core/services/ad_service.dart';
+import 'package:dating_app/core/utils/offline_cache.dart';
 import 'package:dating_app/data/datasources/auth_remote_data_source.dart';
 import 'package:dating_app/data/datasources/chat_remote_data_source.dart';
 import 'package:dating_app/data/datasources/coins_remote_data_source.dart';
@@ -47,6 +48,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Offline Cache (Hive)
+  await OfflineCache.init();
+
+
   await MobileAds.instance.initialize();
   AdService.instance.loadRewardedAd();
 

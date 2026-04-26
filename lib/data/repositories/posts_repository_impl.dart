@@ -1,5 +1,5 @@
 import 'dart:ui';
-import 'package:dating_app/core/constants/mock_data.dart';
+import 'package:dating_app/core/utils/offline_cache.dart';
 import 'package:dating_app/data/datasources/post_remote_data_source.dart';
 import 'package:dating_app/data/models/post_model.dart';
 import 'package:dating_app/domain/repositories/posts_repository.dart';
@@ -17,13 +17,29 @@ class PostRepositoryImp implements PostRepository {
     required int offset,
     required int limit,
   }) async {
-    return await remoteDataSource.getPosts(
-      university: university,
-      postType: postType,
-      locationTag: locationTag,
-      offset: offset,
-      limit: limit,
-    );
+    try {
+      final posts = await remoteDataSource.getPosts(
+        university: university,
+        postType: postType,
+        locationTag: locationTag,
+        offset: offset,
+        limit: limit,
+      );
+
+      // Update cache with fresh data (if initial load)
+      if (offset == 0) {
+        await OfflineCache.cachePosts(posts);
+      }
+
+      return posts;
+
+    } catch (e) {
+      // If offline or error, return cached data
+      if (offset == 0) {
+        return OfflineCache.getCachedPosts();
+      }
+      rethrow;
+    }
   }
 
   @override
@@ -53,7 +69,12 @@ class PostRepositoryImp implements PostRepository {
     );
   }
 
+  @override
+  Future<void> deletePost(String postId) async {
+    await remoteDataSource.deletePost(postId);
+  }
 
+  @override
   Future<List<PostModel>> getDirectPostsPaginated({
     required String recipientId,
     DateTime? before,
@@ -65,14 +86,8 @@ class PostRepositoryImp implements PostRepository {
     );
   }
 
+  @override
   Stream<List<PostModel>> watchNewDirectPosts(String recipientId) {
     return remoteDataSource.watchNewDirectPosts(recipientId);
   }
-
-
-  @override
-  Future<void> deletePost(String postId) async {
-    await remoteDataSource.deletePost(postId);
-  }
-
 }

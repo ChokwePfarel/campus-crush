@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:dating_app/core/constants/mock_data.dart';
+import 'package:dating_app/core/utils/offline_cache.dart';
 import 'package:dating_app/data/datasources/users_remote_data_source.dart';
 import 'package:dating_app/data/models/user_model.dart';
 import 'package:dating_app/domain/repositories/users_repository.dart';
@@ -17,18 +19,54 @@ class UsersRepositoryImpl implements UsersRepository {
     required int offset,
     required int limit,
   }) async {
-    return await remoteDataSource.getUsers(
-      university: university,
-      sex: sex,
-      residence: residence,
-      offset: offset,
-      limit: limit,
-    );
+    try {
+      final users = await remoteDataSource.getUsers(
+        university: university,
+        sex: sex,
+        residence: residence,
+        offset: offset,
+        limit: limit,
+      );
+
+      // Update cache on initial load (offset 0)
+      if (offset == 0) {
+        print('Caching discovery users');
+        await OfflineCache.cacheDiscoveryUsers(users);
+      }
+
+      return users;
+
+    } on SocketException {
+      // Return cached data if network fails on initial load
+      print('Network error, returning cached data');
+      if (offset == 0) {
+        return OfflineCache.getCachedDiscoveryUsers();
+      }
+      rethrow;
+    } catch (e) {
+      // For other errors on initial load, try fallback to cache
+      if (offset == 0) {
+        final cached = OfflineCache.getCachedDiscoveryUsers();
+        if (cached.isNotEmpty) return cached;
+      }
+      rethrow;
+    }
   }
 
   @override
   Future<UserModel> getUserById(String userId) async {
-    return await remoteDataSource.getUserById(userId);
+    try {
+      final user = await remoteDataSource.getUserById(userId);
+      // Cache basic profile info
+      await OfflineCache.cacheProfile(userId, user.toJson());
+      return user;
+    } catch (e) {
+      final cachedJson = OfflineCache.getCachedProfile(userId);
+      if (cachedJson != null) {
+        return UserModel.fromJson(cachedJson);
+      }
+      rethrow;
+    }
   }
 }
 

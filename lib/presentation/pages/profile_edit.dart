@@ -89,7 +89,7 @@ class _ProfileEditState extends State<ProfileEdit> {
           TextButton(
             child: const Text('Cancel',
               style: TextStyle(
-                color: Colors.grey
+                  color: Colors.grey
               ),
             ),
             onPressed: () => Navigator.pop(ctx),
@@ -97,7 +97,7 @@ class _ProfileEditState extends State<ProfileEdit> {
           TextButton(
             child: const Text('Log out',
               style: TextStyle(
-                color: Colors.red
+                  color: Colors.red
               ),
             ),
             onPressed: () {
@@ -193,17 +193,17 @@ class _ProfileEditState extends State<ProfileEdit> {
                 children: DropDownOptions.availableInterests
                     .where((i) => !_interests.contains(i))
                     .map((interest) {
-                      return ActionChip(
-                        label: Text(interest),
-                        onPressed: () {
-                          setState(() {
-                            _interests.add(interest);
-                          });
-                          _markAsDirty();
-                          Navigator.pop(context);
-                        },
-                      );
-                    })
+                  return ActionChip(
+                    label: Text(interest),
+                    onPressed: () {
+                      setState(() {
+                        _interests.add(interest);
+                      });
+                      _markAsDirty();
+                      Navigator.pop(context);
+                    },
+                  );
+                })
                     .toList(),
               ),
               SizedBox(height: SizeConfig.heightPercent(4)),
@@ -301,10 +301,10 @@ class _ProfileEditState extends State<ProfileEdit> {
           ),
           actions: [
             IconButton(
-              onPressed: (){
-                _showLogoutDialog(context);
-              },
-              icon: const Icon(Icons.exit_to_app, color: Colors.red, size: 24,))
+                onPressed: (){
+                  _showLogoutDialog(context);
+                },
+                icon: const Icon(Icons.exit_to_app, color: Colors.red, size: 24,))
           ],
         ),
         body: SingleChildScrollView(
@@ -323,9 +323,9 @@ class _ProfileEditState extends State<ProfileEdit> {
                           : null,
                       child: widget.user.profileImageUrl.isEmpty
                           ? Icon(
-                              Icons.person,
-                              size: SizeConfig.widthPercent(15),
-                            )
+                        Icons.person,
+                        size: SizeConfig.widthPercent(15),
+                      )
                           : null,
                     ),
                     Positioned(
