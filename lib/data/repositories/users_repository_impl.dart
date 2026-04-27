@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:dating_app/core/constants/mock_data.dart';
 import 'package:dating_app/core/utils/offline_cache.dart';
 import 'package:dating_app/data/datasources/users_remote_data_source.dart';
@@ -20,6 +19,7 @@ class UsersRepositoryImpl implements UsersRepository {
     required int limit,
   }) async {
     try {
+      // 1. Try to fetch fresh data from Supabase
       final users = await remoteDataSource.getUsers(
         university: university,
         sex: sex,
@@ -28,27 +28,26 @@ class UsersRepositoryImpl implements UsersRepository {
         limit: limit,
       );
 
-      // Update cache on initial load (offset 0)
+      // 2. On success, update the local cache (only for the first page)
       if (offset == 0) {
-        print('Caching discovery users');
+        print('Offline Sync: Updating Discovery Cache');
         await OfflineCache.cacheDiscoveryUsers(users);
       }
 
       return users;
-
-    } on SocketException {
-      // Return cached data if network fails on initial load
-      print('Network error, returning cached data');
-      if (offset == 0) {
-        return OfflineCache.getCachedDiscoveryUsers();
-      }
-      rethrow;
     } catch (e) {
-      // For other errors on initial load, try fallback to cache
+      // 3. On ANY error (Offline, Timeout, Server Error), fall back to Hive
+      print('Offline Sync: Fetch failed, falling back to Hive cache. Error: $e');
+      
       if (offset == 0) {
         final cached = OfflineCache.getCachedDiscoveryUsers();
-        if (cached.isNotEmpty) return cached;
+        if (cached.isNotEmpty) {
+          print('Offline Sync: Successfully loaded ${cached.length} users from Hive');
+          return cached;
+        }
       }
+      
+      // If we have no cache and no network, bubble up the error
       rethrow;
     }
   }
@@ -57,7 +56,7 @@ class UsersRepositoryImpl implements UsersRepository {
   Future<UserModel> getUserById(String userId) async {
     try {
       final user = await remoteDataSource.getUserById(userId);
-      // Cache basic profile info
+      // Cache basic profile info for offline viewing
       await OfflineCache.cacheProfile(userId, user.toJson());
       return user;
     } catch (e) {
@@ -92,7 +91,6 @@ class MockRepositoryImpl implements UsersRepository {
 
   @override
   Future<UserModel> getUserById(String userId) async {
-    // Look for the user in MockData.mockUsers
     return MockData.mockUsers.firstWhere(
       (user) => user.id == userId,
       orElse: () => MockData.mockUsers.first,
