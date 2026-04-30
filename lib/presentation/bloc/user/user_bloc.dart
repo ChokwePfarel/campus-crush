@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dating_app/data/models/user_model.dart';
 import 'package:dating_app/domain/repositories/user_repository.dart';
 import 'package:dating_app/presentation/bloc/user/user_event.dart';
 import 'package:dating_app/presentation/bloc/user/user_state.dart';
@@ -40,13 +41,29 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     }
   }
 
-  Future<void> _onUpdateUserRequested(
-    UpdateUserRequested event,
-    Emitter<UserState> emit,
-  ) async {
+  //
+
+  Future<void> _onUpdateUserRequested(    UpdateUserRequested event,
+      Emitter<UserState> emit,
+      ) async {
+    final currentState = state;
+    if (currentState is UserLoaded) {
+        // 1. OPTIMISTIC UPDATE: Update memory immediately
+        final updatedUser = (currentState.user as UserModel).copyWith(
+          name: event.name,
+          bio: event.bio,
+          status: event.status,
+          residence: event.residence,
+          interests: event.interests,
+          age: event.age,
+          privacySettings: event.privacySettings,
+        );
+        emit(UserLoaded(updatedUser));
+      }
+
     try {
-      await _userRepository.updateUserData(
-        name: event.name,
+      // 2. BACKGROUND SYNC: Update Supabase
+      await _userRepository.updateUserData(name: event.name,
         sex: event.sex,
         bio: event.bio,
         status: event.status,
@@ -55,13 +72,15 @@ class UserBloc extends Bloc<UserEvent, UserState> {
         interests: event.interests,
         age: event.age,
         privacySettings: event.privacySettings,
-        isVerified: event.isVerified,
-      );
+        isVerified: event.isVerified,);
     } catch (e) {
-      print("Error updating user data: $e");
+      // 3. REVERT ON ERROR: If server fails, show error and let stream fix it
       emit(UserError(e.toString()));
     }
   }
+
+  //
+
 
   @override
   Future<void> close() {

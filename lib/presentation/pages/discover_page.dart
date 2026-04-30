@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dating_app/core/utils/offline_cache.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
@@ -40,19 +39,16 @@ class _DiscoverPageState extends State<DiscoverPage> {
     super.initState();
     _scrollController.addListener(_scrollListener);
     
-    // Listen for connectivity changes
+    // Initial check
+    Connectivity().checkConnectivity().then((results) {
+      if (mounted) setState(() => _isOffline = results.first == ConnectivityResult.none);
+    });
+
+    // Listen for changes
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen((results) {
-      // results is a List<ConnectivityResult> in newer versions
-      final result = results.first;
-      final bool offline = result == ConnectivityResult.none;
-      if (_isOffline && !offline) {
-        // Resync: coming back online
-        _triggerLoad(context, isInitial: true);
-      }
-      setState(() {
-        _isOffline = offline;
-        print('Offline: $_isOffline');
-      });
+      final bool offline = results.first == ConnectivityResult.none;
+      if (_isOffline && !offline) _triggerLoad(context, isInitial: true);
+      if (mounted) setState(() => _isOffline = offline);
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -122,9 +118,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
     return BlocBuilder<UserBloc, UserState>(
       builder: (builderCtx, userState) {
         String profileImg = '';
-        if (userState is UserLoaded) {
-          profileImg = userState.user.profileImageUrl;
-        }
+        if (userState is UserLoaded) profileImg = userState.user.profileImageUrl;
 
         return Scaffold(
           backgroundColor: Colors.white,
@@ -174,27 +168,14 @@ class _DiscoverPageState extends State<DiscoverPage> {
                     body: BlocBuilder<UsersBloc, users_st.UsersState>(
                       builder: (usersBuilderCtx, state) {
                         if (state is users_st.UsersLoading) {
-                          // Try loading from cache immediately if offline
-                          if (_isOffline) {
-
-                            print('Loading from cache');
-
-                            final cachedUsers = OfflineCache.getCachedDiscoveryUsers();
-
-                            if (cachedUsers.isNotEmpty) {
-                              print('Returning cached users');
-                               return _buildUserList(cachedUsers, true);
-                            }
-                            print('Empty cache');
-                          }
+                          final cached = OfflineCache.getCachedDiscoveryUsers();
+                          if (cached.isNotEmpty) return _buildUserList(cached, true);
                           return const UserListSkeleton();
                         }
 
                         if (state is users_st.UsersError) {
-                          final cachedUsers = OfflineCache.getCachedDiscoveryUsers();
-                          if (cachedUsers.isNotEmpty) {
-                             return _buildUserList(cachedUsers, true);
-                          }
+                          final cached = OfflineCache.getCachedDiscoveryUsers();
+                          if (cached.isNotEmpty) return _buildUserList(cached, true);
                           return _buildErrorState();
                         }
 
@@ -221,7 +202,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
       color: Colors.orange.shade800,
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: const Text(
-        'You are offline',
+        'Offline Mode — viewing cached content',
         textAlign: TextAlign.center,
         style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
       ),
@@ -229,9 +210,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
   }
 
   Widget _buildUserList(List<dynamic> users, bool hasReachedMax) {
-    if (users.isEmpty) {
-      return const Center(child: Text('No users found matching your university'));
-    }
+    if (users.isEmpty) return const Center(child: Text('No students found yet.'));
     return RefreshIndicator(
       onRefresh: () async {
         if (_isOffline) return;
@@ -294,10 +273,10 @@ class _DiscoverPageState extends State<DiscoverPage> {
       child: CircleAvatar(
         radius: SizeConfig.widthPercent(5),
         backgroundColor: Colors.grey[200],
-        backgroundImage: !_isOffline && image.startsWith('http')
+        backgroundImage: !_isOffline && image.isNotEmpty && image.startsWith('http')
             ? NetworkImage(image)
             : const AssetImage('assets/profile_picture.png') as ImageProvider,
-        child: _isOffline || !image.startsWith('http') ? const Icon(Icons.person, color: Colors.grey) : null,
+        child: _isOffline || image.isEmpty ? const Icon(Icons.person, color: Colors.grey) : null,
       ),
     );
   }

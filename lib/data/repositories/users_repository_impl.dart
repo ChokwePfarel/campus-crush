@@ -35,12 +35,15 @@ class UsersRepositoryImpl implements UsersRepository {
       }
 
       return users;
+
     } catch (e) {
       // 3. On ANY error (Offline, Timeout, Server Error), fall back to Hive
       print('Offline Sync: Fetch failed, falling back to Hive cache. Error: $e');
       
       if (offset == 0) {
+
         final cached = OfflineCache.getCachedDiscoveryUsers();
+        
         if (cached.isNotEmpty) {
           print('Offline Sync: Successfully loaded ${cached.length} users from Hive');
           return cached;

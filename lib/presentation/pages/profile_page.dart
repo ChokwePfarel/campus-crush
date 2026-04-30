@@ -45,26 +45,7 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  void _showLogoutDialog(BuildContext context) {
-    showCupertinoDialog(
-      context: context,
-      builder: (ctx) => CupertinoAlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to sign out?'),
-        actions: [
-          CupertinoDialogAction(child: const Text('Cancel'), onPressed: () => Navigator.pop(ctx)),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            child: const Text('Logout'),
-            onPressed: () {
-              Navigator.pop(ctx);
-              context.read<AuthBloc>().add(LogoutRequested());
-            },
-          ),
-        ],
-      ),
-    );
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -102,22 +83,9 @@ class ProfilePage extends StatelessWidget {
               title: const Text('My Profile', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
               centerTitle: true,
               actions: [
-                PopupMenuButton<String>(
-                  icon: const Icon(Icons.expand_more, color: Colors.black),
-                  color: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(SizeConfig.widthPercent(3))),
-                  onSelected: (value) {
-                    if (value == 'edit') {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => ProfileEdit(user: user)));
-                    } else if (value == 'logout') {
-                      _showLogoutDialog(context);
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(value: 'edit', child: Text('Edit Profile')),
-                    const PopupMenuItem(value: 'logout', child: Text('Logout')),
-                  ],
-                ),
+                IconButton(onPressed: (){
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => ProfileEdit(user: user)));
+                }, icon: Icon(Icons.edit, color: Colors.black))
               ],
             ),
             body: RefreshIndicator(

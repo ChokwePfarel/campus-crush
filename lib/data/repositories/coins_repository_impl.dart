@@ -1,3 +1,4 @@
+import 'package:dating_app/core/utils/offline_cache.dart';
 import 'package:dating_app/data/datasources/coins_remote_data_source.dart';
 import 'package:dating_app/domain/entities/coins_entity.dart';
 import 'package:dating_app/domain/repositories/coins_repository.dart';
@@ -13,11 +14,26 @@ class CoinsRepositoryImpl implements CoinsRepository {
   Future<CoinsEntity> trackFreeDirectPost(String userId) =>
       remoteDataSource.trackFreeDirectPost(userId);
 
-  @override
-  Future<CoinsEntity> getCoins(String userId) =>
-      remoteDataSource.getCoins(userId);
 
   @override
+  Future<CoinsEntity> getCoins(String userId) async {
+    try {
+
+      final coins = await remoteDataSource.getCoins(userId);
+
+      // Success: Update Hive cache
+      await OfflineCache.cacheCoins(coins);
+
+      return coins;
+
+    } catch (e) {
+      // Error: Fallback to last-known Hive data
+      return OfflineCache.getCachedCoins();
+    }
+  }
+
+
+      @override
   Future<CoinsEntity> earnCoinsFromAd(String userId) =>
       remoteDataSource.earnCoinsFromAd(userId);
 
