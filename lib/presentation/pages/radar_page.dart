@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:math';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dating_app/core/constants/post_constants.dart';
 import 'package:dating_app/core/utils/date_utils.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
@@ -55,6 +57,7 @@ class RadarPage extends StatefulWidget {
 class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
   String? _selectedLocation;
 
+
   late final _radarCtrl = AnimationController(
     vsync: this,
     duration: const Duration(seconds: 3),
@@ -64,6 +67,20 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
     vsync: this,
     duration: const Duration(seconds: 2),
   )..repeat(reverse: true);
+
+
+  StreamSubscription? _connectivitySub;
+  bool _isOffline = false;
+
+
+  @override
+  void initState(){
+    super.initState();
+
+    _connectivitySub = Connectivity().onConnectivityChanged.listen((results) {
+      final _isOffline = results.first == ConnectivityResult.none;
+    });
+    }
 
   @override
   void dispose() {
@@ -139,6 +156,7 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
     return bubbles;
   }
 
+
   @override
   Widget build(BuildContext context) {
     SizeConfig.init(context);
@@ -150,6 +168,13 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
             backgroundColor: Colors.black,
             body: Stack(
               children: [
+
+                if (_isOffline)
+
+                  Center(
+                    child: Image.asset("assets/offline.png"),
+                  ),
+
                 Positioned.fill(child: _RadarBackground(ctrl: _radarCtrl)),
                 SafeArea(
                   child: Column(

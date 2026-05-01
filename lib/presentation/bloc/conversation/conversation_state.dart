@@ -36,3 +36,4 @@ class ConversationsError extends ConversationsState {
   final String message;
   ConversationsError(this.message);
 }
+

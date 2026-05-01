@@ -28,9 +28,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 // ─── Filter bar data ──────────────────────────────────────────────────────────
 
 const _filters = [
-  {'type': null, 'label': 'All'},
-  {'type': 'crush', 'label': 'Crush'},
-  {'type': 'confession', 'label': 'Confession'},
+  {'type': null, 'emoji': '✨', 'label': 'All'},
+  {'type': 'crush', 'emoji': '💘', 'label': 'Crush'},
+  {'type': 'confession', 'emoji': '🤫', 'label': 'Confession'},
+  {'type': 'spotted', 'emoji': '📡', 'label': 'Spotted'},
 ];
 
 // ─── Feed Screen ──────────────────────────────────────────────────────────────
@@ -55,11 +56,24 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
     super.initState();
     
     _scrollCtrl.addListener(_scrollListener);
+
+    // Initial check
+    Connectivity().checkConnectivity().then((results) {
+      if (mounted) {
+        setState(() => _isOffline = results.first == ConnectivityResult.none);
+      }
+    });
     
+    // Connectivity listener for real-time resync
     _connectivitySub = Connectivity().onConnectivityChanged.listen((results) {
       final offline = results.first == ConnectivityResult.none;
-      if (_isOffline && !offline) _fetchPosts(context, isInitial: true);
-      setState(() => _isOffline = offline);
+      if (mounted) {
+        // If we were offline and now online, refresh the feed
+        if (_isOffline && !offline) {
+          _fetchPosts(context, isInitial: true);
+        }
+        setState(() => _isOffline = offline);
+      }
     });
 
     Future.microtask(() {
@@ -72,12 +86,15 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
 
   void _scrollListener() {
     if (!mounted) return;
+    
+    // FAB visibility logic
     if (_scrollCtrl.position.userScrollDirection == ScrollDirection.reverse) {
       if (_isFabVisible) setState(() => _isFabVisible = false);
     } else if (_scrollCtrl.position.userScrollDirection == ScrollDirection.forward) {
       if (!_isFabVisible) setState(() => _isFabVisible = true);
     }
     
+    // Pagination trigger (only if online)
     if (!_isOffline && _scrollCtrl.position.pixels >= _scrollCtrl.position.maxScrollExtent * 0.9) {
       _fetchPosts(context, isInitial: false);
     }
@@ -88,7 +105,10 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
     final userState = context.read<UserBloc>().state;
     if (userState is UserLoaded) {
       context.read<PostBloc>().add(
-        LoadPosts(university: userState.user.university, isInitial: isInitial),
+        LoadPosts(
+          university: userState.user.university, 
+          isInitial: isInitial
+        ),
       );
     }
   }
@@ -132,24 +152,28 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                           Expanded(
                             child: BlocBuilder<PostBloc, PostState>(
                               builder: (context, state) {
-                                if (state is LoadingPosts) {
-                                  if (_isOffline) {
+                                // Loading/Error handling with Cache Fallback
+                                if (state is LoadingPosts || state is PostError) {
+                                  if (_isOffline || state is PostError) {
                                     final cached = OfflineCache.getCachedPosts();
-                                    if (cached.isNotEmpty) return _buildPostList(cached, true);
+                                    if (cached.isNotEmpty) {
+                                      return _buildPostList(cached, true);
+                                    }
                                   }
                                   return const FeedSkeleton();
-                                }
-
-                                if (state is PostError) {
-                                  final cached = OfflineCache.getCachedPosts();
-                                  if (cached.isNotEmpty) return _buildPostList(cached, true);
-                                  return Center(child: Text('Error: ${state.message}'));
                                 }
 
                                 if (state is PostsLoaded) {
                                   final posts = _activeFilter == null
                                       ? state.post
                                       : state.post.where((p) => p.postType == _activeFilter).toList();
+                                  
+                                  if (posts.isEmpty && _isOffline) {
+                                    final cached = OfflineCache.getCachedPosts();
+                                    if (cached.isNotEmpty) return _buildPostList(cached, true);
+                                    return const Center(child: Text("No cached posts available."));
+                                  }
+
                                   return _buildPostList(posts, state.hasReachedMax);
                                 }
                                 return const FeedSkeleton();
@@ -174,9 +198,9 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
     return Container(
       width: double.infinity,
       color: Colors.orange.shade800,
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: const Text(
-        'You are offline',
+        'Offline Mode — viewing cached feed',
         textAlign: TextAlign.center,
         style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
       ),
@@ -185,6 +209,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
 
   Widget _buildPostList(List<PostModel> posts, bool hasReachedMax) {
     if (posts.isEmpty) return _buildEmpty();
+    
     return RefreshIndicator(
       onRefresh: () async {
         if (!_isOffline) _fetchPosts(context);
@@ -208,6 +233,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
             child: PostCard(
               post: post,
               currentUserId: widget.currentUserId,
+              isOffline: _isOffline,
               onComment: () => showCommentsSheet(context: context, postId: post.id, commentCount: post.commentCount),
               onAuthorTap: (uid) => Navigator.push(context, MaterialPageRoute(builder: (_) => OtherUserProfilePage(userId: uid))),
             ),
@@ -224,7 +250,14 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
       pinned: true,
       floating: true,
       snap: true,
-      title: Text('Campus Feed', style: TextStyle(fontSize: SizeConfig.widthPercent(5), fontWeight: FontWeight.w800, color: const Color(0xFF1A1A2E))),
+      title: Text(
+        'Campus Feed', 
+        style: TextStyle(
+          fontSize: SizeConfig.widthPercent(5), 
+          fontWeight: FontWeight.w800, 
+          color: const Color(0xFF1A1A2E)
+        )
+      ),
       actions: [
         IconButton(
           onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyPostsPage())),
@@ -240,9 +273,10 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
       padding: EdgeInsets.fromLTRB(SizeConfig.widthPercent(4), 0, SizeConfig.widthPercent(4), SizeConfig.heightPercent(1.5)),
       child: Row(
         children: _filters.map((f) {
-          final type = f['type'];
+          final type = f['type'] as String?;
           final isActive = _activeFilter == type;
           final color = type != null ? type.accentColor : const Color(0xFF6C63FF);
+          
           return Expanded(
             child: GestureDetector(
               onTap: () => _setFilter(type),
@@ -250,10 +284,21 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                 duration: const Duration(milliseconds: 200),
                 margin: EdgeInsets.only(right: SizeConfig.widthPercent(1.5)),
                 padding: EdgeInsets.symmetric(vertical: SizeConfig.heightPercent(1)),
-                decoration: BoxDecoration(color: isActive ? color : const Color(0xFFF4F4F8), borderRadius: BorderRadius.circular(SizeConfig.widthPercent(3))),
+                decoration: BoxDecoration(
+                  color: isActive ? color : const Color(0xFFF4F4F8), 
+                  borderRadius: BorderRadius.circular(SizeConfig.widthPercent(3))
+                ),
                 child: Column(
                   children: [
-                    Text(f['label'] as String, style: TextStyle(fontSize: SizeConfig.widthPercent(2.5), fontWeight: FontWeight.w700, color: isActive ? Colors.white : const Color(0xFF8E8E9A))),
+                    Text(f['emoji'] as String, style: TextStyle(fontSize: SizeConfig.widthPercent(4))),
+                    Text(
+                      f['label'] as String, 
+                      style: TextStyle(
+                        fontSize: SizeConfig.widthPercent(2.5), 
+                        fontWeight: FontWeight.w700, 
+                        color: isActive ? Colors.white : const Color(0xFF8E8E9A)
+                      )
+                    ),
                   ],
                 ),
               ),
@@ -271,7 +316,10 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
         children: [
           Text(_activeFilter?.emoji ?? '✨', style: TextStyle(fontSize: SizeConfig.widthPercent(12))),
           const SizedBox(height: 16),
-          Text('No ${_activeFilter?.label ?? ''} posts yet', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(
+            'No ${_activeFilter?.label ?? ''} posts yet', 
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)
+          ),
         ],
       ),
     );
@@ -289,13 +337,24 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
           child: Container(
             height: SizeConfig.heightPercent(7),
             padding: EdgeInsets.symmetric(horizontal: SizeConfig.widthPercent(6)),
-            decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(SizeConfig.heightPercent(3.5)), boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10, offset: const Offset(0, 4))]),
+            decoration: BoxDecoration(
+              color: Colors.black, 
+              borderRadius: BorderRadius.circular(SizeConfig.heightPercent(3.5)), 
+              boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10, offset: const Offset(0, 4))]
+            ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Icon(Icons.add_rounded, color: Colors.white, size: 22),
                 const SizedBox(width: 8),
-                Text('New Post', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: SizeConfig.widthPercent(3.8))),
+                Text(
+                  'New Post', 
+                  style: TextStyle(
+                    color: Colors.white, 
+                    fontWeight: FontWeight.bold, 
+                    fontSize: SizeConfig.widthPercent(3.8)
+                  )
+                ),
               ],
             ),
           ),

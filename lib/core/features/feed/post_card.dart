@@ -18,6 +18,7 @@ class PostCard extends StatefulWidget {
   final String currentUserId;
   final VoidCallback onComment;
   final Function(String) onAuthorTap;
+  final bool isOffline; // Added isOffline
 
   const PostCard({
     super.key,
@@ -25,6 +26,7 @@ class PostCard extends StatefulWidget {
     required this.currentUserId,
     required this.onComment,
     required this.onAuthorTap,
+    this.isOffline = false,
   });
 
   @override
@@ -32,7 +34,6 @@ class PostCard extends StatefulWidget {
 }
 
 class PostCardState extends State<PostCard> with SingleTickerProviderStateMixin {
-
   late final _animCtrl = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 400),
@@ -46,19 +47,13 @@ class PostCardState extends State<PostCard> with SingleTickerProviderStateMixin 
     curve: Curves.easeOut,
   );
 
-  // ── Local like state ───────────────────────────────────────────────────────
-  late bool _hasLiked;
-  late int _likeCount;
-
   @override
   void initState() {
     super.initState();
-
     Future.delayed(const Duration(milliseconds: 50), () {
       if (mounted) _animCtrl.forward();
     });
 
-    // Fire InitializeLikes — this card's own LikesBloc handles it
     Future.microtask(() {
       if (!mounted) return;
       context.read<LikesBloc>().add(InitializeLikes(
@@ -75,11 +70,8 @@ class PostCardState extends State<PostCard> with SingleTickerProviderStateMixin 
     super.dispose();
   }
 
-
   bool get _isDark => widget.post.backgroundColor != null;
-
   Color get _textColor => _isDark ? Colors.white : const Color(0xFF1A1A2E);
-
   Color get _subtextColor => _isDark ? Colors.white60 : const Color(0xFF8E8E9A);
 
   @override
@@ -111,15 +103,15 @@ class PostCardState extends State<PostCard> with SingleTickerProviderStateMixin 
                 padding: EdgeInsets.all(SizeConfig.widthPercent(4)),
                 child: GestureDetector(
                   onTap: () {
+                    if (widget.isOffline) return;
                     post.isAnonymous
                         ? null
                         : Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            OtherUserProfilePage(userId: post.userId),
-                      ),
-                    );
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => OtherUserProfilePage(userId: post.userId),
+                            ),
+                          );
                   },
                   child: Row(
                     children: [
@@ -132,18 +124,14 @@ class PostCardState extends State<PostCard> with SingleTickerProviderStateMixin 
                               ? const Color(0xFF8E8E9A).withOpacity(0.15)
                               : accent.withOpacity(0.12),
                           border: Border.all(
-                            color: post.isAnonymous
-                                ? Colors.transparent
-                                : accent.withOpacity(0.3),
+                            color: post.isAnonymous ? Colors.transparent : accent.withOpacity(0.3),
                             width: 1.5,
                           ),
                         ),
                         child: Center(
                           child: Text(
                             post.isAnonymous ? '🎭' : '👤',
-                            style: TextStyle(
-                              fontSize: SizeConfig.widthPercent(5),
-                            ),
+                            style: TextStyle(fontSize: SizeConfig.widthPercent(5)),
                           ),
                         ),
                       ),
@@ -153,9 +141,7 @@ class PostCardState extends State<PostCard> with SingleTickerProviderStateMixin 
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              post.isAnonymous
-                                  ? 'Anonymous'
-                                  : post.authorName,
+                              post.isAnonymous ? 'Anonymous' : post.authorName,
                               style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: SizeConfig.widthPercent(3.8),
@@ -179,9 +165,7 @@ class PostCardState extends State<PostCard> with SingleTickerProviderStateMixin 
                         ),
                         decoration: BoxDecoration(
                           color: accent.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(
-                            SizeConfig.widthPercent(1.5),
-                          ),
+                          borderRadius: BorderRadius.circular(SizeConfig.widthPercent(1.5)),
                         ),
                         child: Text(
                           post.postType.label,
@@ -212,15 +196,12 @@ class PostCardState extends State<PostCard> with SingleTickerProviderStateMixin 
                   ),
                 ),
               ),
-              if (post.imageUrl != null)
+              // Hide image if offline
+              if (post.imageUrl != null && !widget.isOffline)
                 Padding(
-                  padding: EdgeInsets.only(
-                    bottom: SizeConfig.heightPercent(2),
-                  ),
+                  padding: EdgeInsets.only(bottom: SizeConfig.heightPercent(2)),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(
-                      SizeConfig.widthPercent(2),
-                    ),
+                    borderRadius: BorderRadius.circular(SizeConfig.widthPercent(2)),
                     child: Image.network(post.imageUrl!, fit: BoxFit.cover),
                   ),
                 ),
@@ -234,40 +215,40 @@ class PostCardState extends State<PostCard> with SingleTickerProviderStateMixin 
                     BlocBuilder<LikesBloc, LikesState>(
                       builder: (context, state) {
                         final hasLiked = state is LikesLoaded && state.hasLiked;
-                        final count = state is LikesLoaded
-                            ? state.likeCount
-                            : post.likeCount;
+                        final count = state is LikesLoaded ? state.likeCount : post.likeCount;
 
                         return ActionButton(
                           icon: hasLiked ? Icons.favorite : Icons.favorite_border,
                           label: count.toString(),
-                          color: hasLiked ? Colors.pink : Colors.white,
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            final userState = context.read<UserBloc>().state;
-                            if (userState is! user_st.UserLoaded) return;
+                          color: hasLiked ? Colors.pink : (widget.isOffline ? Colors.grey : Colors.white),
+                          onTap: widget.isOffline
+                              ? () {}
+                              : () {
+                                  HapticFeedback.lightImpact();
+                                  final userState = context.read<UserBloc>().state;
+                                  if (userState is! user_st.UserLoaded) return;
 
-                            if (hasLiked) {
-                              context.read<LikesBloc>().add(UnlikePost(
-                                postId: post.id,
-                                userId: userState.user.id,
-                              ));
-                            } else {
-                              context.read<LikesBloc>().add(LikePost(
-                                postId: post.id,
-                                userId: userState.user.id,
-                                likedByName: userState.user.name,
-                              ));
-                            }
-                          },
+                                  if (hasLiked) {
+                                    context.read<LikesBloc>().add(UnlikePost(
+                                          postId: post.id,
+                                          userId: userState.user.id,
+                                        ));
+                                  } else {
+                                    context.read<LikesBloc>().add(LikePost(
+                                          postId: post.id,
+                                          userId: userState.user.id,
+                                          likedByName: userState.user.name,
+                                        ));
+                                  }
+                                },
                         );
                       },
                     ),
                     ActionButton(
                       icon: CupertinoIcons.chat_bubble_fill,
                       label: post.commentCount.toString(),
-                      color: Colors.white,
-                      onTap: widget.onComment,
+                      color: widget.isOffline ? Colors.grey : Colors.white,
+                      onTap: widget.isOffline ? () {} : widget.onComment,
                     ),
                   ],
                 ),
@@ -276,7 +257,6 @@ class PostCardState extends State<PostCard> with SingleTickerProviderStateMixin 
           ),
         ),
       ),
-
     );
   }
 }

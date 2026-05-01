@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dating_app/core/utils/date_utils.dart';
 import 'package:dating_app/core/utils/feed_skeleton.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
@@ -35,6 +38,10 @@ class _DirectPostsPageState extends State<DirectPostsPage>
   String? _pendingPostId;
   bool _isCheckingReveal = false;
 
+  bool _isOffline = false;
+
+  StreamSubscription? _connectivitySub;
+
   late final _fadeCtrl = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 400),
@@ -43,6 +50,12 @@ class _DirectPostsPageState extends State<DirectPostsPage>
   @override
   void initState() {
     super.initState();
+
+
+    _connectivitySub = Connectivity().onConnectivityChanged.listen((results){
+      final _isOffline = results.first == ConnectionState.none;
+    });
+
     _scrollCtrl.addListener(_onScroll);
 
     // Initial load after mount
@@ -155,7 +168,14 @@ class _DirectPostsPageState extends State<DirectPostsPage>
 
     return BlocListener<CoinsBloc, CoinsState>(
       listener: (context, state) {
+
         if (!mounted) return;
+
+        if (_isOffline)
+
+          Center(
+            child: Image.asset("assets/offline.png"),
+          );
 
         if (state is CoinsLoaded && _isCheckingReveal) {
           _isCheckingReveal = false;

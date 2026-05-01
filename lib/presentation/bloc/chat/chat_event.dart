@@ -1,4 +1,3 @@
-
 import 'package:dating_app/domain/entities/message_entity.dart';
 
 abstract class ChatEvent {}
@@ -23,4 +22,15 @@ class SendMessage extends ChatEvent {
 class MessageReceived extends ChatEvent {
   final MessageEntity message;
   MessageReceived(this.message);
+}
+
+class ResendQueuedMessages extends ChatEvent {
+  final String conversationId;
+  ResendQueuedMessages({required this.conversationId});
+}
+
+class UpdateMessageStatus extends ChatEvent {
+  final String messageId;
+  final MessageStatus status;
+  UpdateMessageStatus({required this.messageId, required this.status});
 }

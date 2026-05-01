@@ -1,3 +1,4 @@
+enum MessageStatus { sent, pending, error }
 
 class MessageEntity {
   final String id;
@@ -6,6 +7,7 @@ class MessageEntity {
   final String text;
   final bool isRead;
   final DateTime createdAt;
+  final MessageStatus status; // New field
 
   const MessageEntity({
     required this.id,
@@ -14,5 +16,26 @@ class MessageEntity {
     required this.text,
     required this.isRead,
     required this.createdAt,
+    this.status = MessageStatus.sent, // Default to sent
   });
+
+  MessageEntity copyWith({
+    String? id,
+    String? conversationId,
+    String? senderId,
+    String? text,
+    bool? isRead,
+    DateTime? createdAt,
+    MessageStatus? status,
+  }) {
+    return MessageEntity(
+      id: id ?? this.id,
+      conversationId: conversationId ?? this.conversationId,
+      senderId: senderId ?? this.senderId,
+      text: text ?? this.text,
+      isRead: isRead ?? this.isRead,
+      createdAt: createdAt ?? this.createdAt,
+      status: status ?? this.status,
+    );
+  }
 }
