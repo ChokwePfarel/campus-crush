@@ -6,7 +6,6 @@ import 'package:dating_app/presentation/bloc/conversation/conversation_event.dar
 import 'package:dating_app/presentation/bloc/conversation/conversation_state.dart';
 
 import 'package:dating_app/presentation/pages/chat_page.dart';
-import 'package:dating_app/presentation/pages/other_user_profile.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

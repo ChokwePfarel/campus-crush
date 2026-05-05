@@ -1,9 +1,13 @@
+import 'dart:async';
+
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
 import 'package:dating_app/core/utils/theme.dart';
 import 'package:dating_app/core/widgets/common/private_account.dart';
 import 'package:dating_app/data/datasources/image_remote_data_source.dart';
 import 'package:dating_app/data/repositories/image_repository_impl.dart';
 import 'package:dating_app/domain/repositories/users_repository.dart';
+import 'package:dating_app/presentation/bloc/conectivity/conectivityBloc.dart';
 import 'package:dating_app/presentation/bloc/image/image_bloc.dart';
 import 'package:dating_app/presentation/bloc/image/image_event.dart';
 import 'package:dating_app/presentation/bloc/image/image_sate.dart';
@@ -21,11 +25,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class OtherUserProfilePage extends StatelessWidget {
+class OtherUserProfilePage extends StatefulWidget {
   final String userId;
 
   const OtherUserProfilePage({super.key, required this.userId});
 
+  @override
+  State<OtherUserProfilePage> createState() => _OtherUserProfilePageState();
+}
+
+class _OtherUserProfilePageState extends State<OtherUserProfilePage> {
   @override
   Widget build(BuildContext context) {
     SizeConfig.init(context);
@@ -36,7 +45,7 @@ class OtherUserProfilePage extends StatelessWidget {
       providers: [
         BlocProvider(
           create: (context) => OtherUserBloc(context.read<UsersRepository>())
-            ..add(FetchOtherUserRequested(userId)),
+            ..add(FetchOtherUserRequested(widget.userId)),
         ),
         BlocProvider(
           create: (context) => ImagesBloc(
@@ -48,7 +57,7 @@ class OtherUserProfilePage extends StatelessWidget {
       ],
       child: BlocListener<ConversationsBloc, ConversationsState>(
         listener: (context, state) {
-          if (state is ConversationReady) {
+          if (state is ConversationReady && widget.userId != currentUserId) {
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -69,7 +78,9 @@ class OtherUserProfilePage extends StatelessWidget {
           body: BlocBuilder<OtherUserBloc, OtherUserState>(
             builder: (context, state) {
               if (state is OtherUserLoading) {
-                return const Center(child: CircularProgressIndicator.adaptive());
+                return const Center(
+                  child: CircularProgressIndicator.adaptive(),
+                );
               }
 
               if (state is OtherUserError) {
@@ -82,7 +93,7 @@ class OtherUserProfilePage extends StatelessWidget {
                       ElevatedButton(
                         onPressed: () {
                           context.read<OtherUserBloc>().add(
-                                FetchOtherUserRequested(userId),
+                                FetchOtherUserRequested(widget.userId),
                               );
                         },
                         child: const Text('Retry'),
@@ -97,9 +108,7 @@ class OtherUserProfilePage extends StatelessWidget {
 
                 // --- CHECK PRIVACY SETTINGS ---
                 if (user.privacySettings.isProfilePrivate) {
-                  return PrivateProfilePage(
-
-                  );
+                  return PrivateProfilePage();
                 }
 
                 context.read<ImagesBloc>().add(LoadUserImages(user.id));
@@ -165,14 +174,8 @@ class OtherUserProfilePage extends StatelessWidget {
                                       ),
                                     ),
                                     if (user.isVerified) ...[
-                                      SizedBox(
-                                        width: SizeConfig.widthPercent(2),
-                                      ),
-                                      Icon(
-                                        Icons.verified,
-                                        color: Colors.blue,
-                                        size: SizeConfig.widthPercent(6),
-                                      ),
+                                      SizedBox(width: SizeConfig.widthPercent(2)),
+                                      const Icon(Icons.verified, color: Colors.blue, size: 24),
                                     ],
                                   ],
                                 ),
@@ -234,7 +237,7 @@ class OtherUserProfilePage extends StatelessWidget {
                                   ),
                                 ),
                                 SizedBox(height: SizeConfig.heightPercent(3)),
-                                Text(
+                                 Text(
                                   'Interests',
                                   style: TextStyle(
                                     fontSize: SizeConfig.widthPercent(5),
@@ -253,86 +256,51 @@ class OtherUserProfilePage extends StatelessWidget {
                                         interest,
                                         style: TextStyle(
                                           color: Colors.black87,
-                                          fontSize: SizeConfig.widthPercent(
-                                            3.2,
-                                          ),
+                                          fontSize: SizeConfig.widthPercent(3.2),
                                         ),
                                       ),
                                     );
                                   }).toList(),
                                 ),
                                 SizedBox(height: SizeConfig.heightPercent(3)),
-
                                 BlocBuilder<ImagesBloc, ImagesState>(
                                   builder: (context, imageState) {
-                                    if (imageState is ImagesLoading ||
-                                        imageState is ImagesInitial) {
-                                      return const Center(
-                                        child: CircularProgressIndicator(),
-                                      );
+                                    if (imageState is ImagesLoading || imageState is ImagesInitial) {
+                                      return const Center(child: CupertinoActivityIndicator());
                                     }
-
-                                    final images = imageState is ImagesLoaded
-                                        ? imageState.galleryImages
-                                        : [];
-
-                                    if (images.isEmpty) {
-                                      return const SizedBox.shrink();
-                                    }
-
+                                    final images = imageState is ImagesLoaded ? imageState.galleryImages : [];
+                                    if (images.isEmpty) return const SizedBox.shrink();
                                     return Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          'Gallery',
-                                          style: TextStyle(
-                                            fontSize: SizeConfig.widthPercent(
-                                              5,
-                                            ),
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        SizedBox(
-                                          height: SizeConfig.heightPercent(1.5),
-                                        ),
+                                        const Text('Gallery', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                                        SizedBox(height: SizeConfig.heightPercent(1.5)),
                                         GridView.builder(
                                           shrinkWrap: true,
-                                          physics:
-                                              const NeverScrollableScrollPhysics(),
-                                          gridDelegate:
-                                              SliverGridDelegateWithFixedCrossAxisCount(
-                                                crossAxisCount: 2,
-                                                crossAxisSpacing:
-                                                    SizeConfig.widthPercent(3),
-                                                mainAxisSpacing:
-                                                    SizeConfig.widthPercent(3),
-                                                childAspectRatio: 0.8,
-                                              ),
+                                          physics: const NeverScrollableScrollPhysics(),
+                                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                            crossAxisCount: 2,
+                                            crossAxisSpacing: SizeConfig.widthPercent(3),
+                                            mainAxisSpacing: SizeConfig.widthPercent(3),
+                                            childAspectRatio: 0.8,
+                                          ),
                                           itemCount: images.length,
                                           itemBuilder: (context, index) {
                                             return ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(
-                                                    SizeConfig.widthPercent(4),
-                                                  ),
+                                              borderRadius: BorderRadius.circular(SizeConfig.widthPercent(4)),
                                               child: GestureDetector(
                                                 onTap: () {
                                                   Navigator.push(
                                                     context,
                                                     MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          FullScreenPage(
-                                                            images: images.map((e) => e.url).toList(),
-                                                            initialIndex: index,
-                                                          ),
+                                                      builder: (context) => FullScreenPage(
+                                                        images: images.map((e) => e.url).toList(),
+                                                        initialIndex: index,
+                                                      ),
                                                     ),
                                                   );
                                                 },
-                                                child: Image.network(
-                                                  images[index].url,
-                                                  fit: BoxFit.cover,
-                                                ),
+                                                child: Image.network(images[index].url, fit: BoxFit.cover),
                                               ),
                                             );
                                           },
@@ -341,7 +309,6 @@ class OtherUserProfilePage extends StatelessWidget {
                                     );
                                   },
                                 ),
-
                                 SizedBox(height: SizeConfig.heightPercent(15)),
                               ],
                             ),
@@ -355,10 +322,7 @@ class OtherUserProfilePage extends StatelessWidget {
                       child: CircleAvatar(
                         backgroundColor: Colors.white.withOpacity(0.3),
                         child: IconButton(
-                          icon: const Icon(
-                            Icons.arrow_back,
-                            color: Colors.white,
-                          ),
+                          icon: const Icon(Icons.arrow_back, color: Colors.white),
                           onPressed: () => Navigator.pop(context),
                         ),
                       ),
@@ -367,42 +331,47 @@ class OtherUserProfilePage extends StatelessWidget {
                       bottom: SizeConfig.heightPercent(3),
                       left: 0,
                       right: 0,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          _circularActionButton(
-                            icon: CupertinoIcons.xmark,
-                            color: Colors.redAccent,
-                            onTap: () => Navigator.pop(context),
-                          ),
-                          SizedBox(width: SizeConfig.widthPercent(8)),
-                          _circularActionButton(
-                            icon: CupertinoIcons.heart_fill,
-                            color: Colors.pinkAccent,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                CupertinoPageRoute(
-                                  builder: (_) => SendPostPage(recipient: user),
-                                ),
-                              );
-                            },
-                            isLarge: true,
-                          ),
-                          SizedBox(width: SizeConfig.widthPercent(8)),
-                          _circularActionButton(
-                            icon: CupertinoIcons.chat_bubble_fill,
-                            color: Colors.blueAccent,
-                            onTap: () {
-                              context.read<ConversationsBloc>().add(
-                                    OpenOrCreateConversation(
-                                      currentUserId: currentUserId,
-                                      otherUserId: user.id,
+                      child: BlocBuilder<ConnectivityBloc, ConnectivityState>(
+                        builder: (context, connState) {
+                          if (connState.isOffline) return const SizedBox.shrink();
+                          return Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              _circularActionButton(
+                                icon: CupertinoIcons.xmark,
+                                color: Colors.redAccent,
+                                onTap: () => Navigator.pop(context),
+                              ),
+                              SizedBox(width: SizeConfig.widthPercent(8)),
+                              _circularActionButton(
+                                icon: CupertinoIcons.heart_fill,
+                                color: Colors.pinkAccent,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    CupertinoPageRoute(
+                                      builder: (_) => SendPostPage(recipient: user),
                                     ),
                                   );
-                            },
-                          ),
-                        ],
+                                },
+                                isLarge: true,
+                              ),
+                              SizedBox(width: SizeConfig.widthPercent(8)),
+                              _circularActionButton(
+                                icon: CupertinoIcons.chat_bubble_fill,
+                                color: Colors.blueAccent,
+                                onTap: () {
+                                  context.read<ConversationsBloc>().add(
+                                        OpenOrCreateConversation(
+                                          currentUserId: currentUserId,
+                                          otherUserId: user.id,
+                                        ),
+                                      );
+                                },
+                              ),
+                            ],
+                          );
+                        },
                       ),
                     ),
                   ],
@@ -422,10 +391,8 @@ class OtherUserProfilePage extends StatelessWidget {
     required VoidCallback onTap,
     bool isLarge = false,
   }) {
-    final double size =
-        isLarge ? SizeConfig.widthPercent(18) : SizeConfig.widthPercent(14);
-    final double iconSize =
-        isLarge ? SizeConfig.widthPercent(8) : SizeConfig.widthPercent(6);
+    final double size = isLarge ? SizeConfig.widthPercent(18) : SizeConfig.widthPercent(14);
+    final double iconSize = isLarge ? SizeConfig.widthPercent(8) : SizeConfig.widthPercent(6);
 
     return GestureDetector(
       onTap: onTap,

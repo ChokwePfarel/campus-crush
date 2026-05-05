@@ -1,4 +1,3 @@
-
 import 'dart:async';
 
 import 'package:dating_app/data/models/conversation_model.dart';
@@ -7,18 +6,24 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 abstract class ChatRemoteDataSource {
   Future<List<ConversationModel>> getConversations(String currentUserId);
+
   Future<ConversationModel> getOrCreateConversation({
     required String currentUserId,
     required String otherUserId,
   });
+
   Future<List<MessageModel>> getMessages(String conversationId);
+
   Future<MessageModel> sendMessage({
     required String conversationId,
     required String senderId,
     required String text,
   });
+
   Future<void> markAsRead(String conversationId, String currentUserId);
+
   Stream<MessageModel> subscribeToMessages(String conversationId);
+
   Stream<ConversationModel> subscribeToConversations(String currentUserId);
 
   Future<int> getUnreadCount(String currentUserId);
@@ -34,34 +39,31 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
   ChatRemoteDataSourceImpl(this.client);
 
   @override
-  Future<List<ConversationModel>> getConversations(
-      String currentUserId) async {
+  Future<List<ConversationModel>> getConversations(String currentUserId) async {
     final response = await client
         .from('conversations')
         .select('''
-        *,
-        user_one:profiles!conversations_user_one_id_fkey (
-          id, name, profile_image_url, is_verified
-        ),
-        user_two:profiles!conversations_user_two_id_fkey (
-          id, name, profile_image_url, is_verified
-        ),
-        messages (
-          id,
-          is_read,
-          sender_id
-        )
-      ''')
+      *,
+      user_one:profiles!conversations_user_one_id_fkey (
+        id, name, profile_image_url, is_verified
+      ),
+      user_two:profiles!conversations_user_two_id_fkey (
+        id, name, profile_image_url, is_verified
+      ),
+      messages (
+        id,
+        is_read,
+        sender_id
+      )
+    ''')
         .or('user_one_id.eq.$currentUserId,user_two_id.eq.$currentUserId')
         .order('last_message_at', ascending: false);
 
     return (response as List).map((e) {
-      // Count unread messages not sent by current user
       final messages = (e['messages'] as List? ?? []);
-      final unreadCount = messages.where((m) =>
-      m['is_read'] == false &&
-          m['sender_id'] != currentUserId
-      ).length;
+      final unreadCount = messages
+          .where((m) => m['is_read'] == false && m['sender_id'] != currentUserId)
+          .length;
 
       return ConversationModel.fromJson(e, currentUserId, unreadCount);
     }).toList();
@@ -72,7 +74,6 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
     required String currentUserId,
     required String otherUserId,
   }) async {
-    // Check if conversation already exists
     final existing = await client
         .from('conversations')
         .select('''
@@ -85,22 +86,18 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
           )
         ''')
         .or(
-      'and(user_one_id.eq.$currentUserId,user_two_id.eq.$otherUserId),'
+          'and(user_one_id.eq.$currentUserId,user_two_id.eq.$otherUserId),'
           'and(user_one_id.eq.$otherUserId,user_two_id.eq.$currentUserId)',
-    )
+        )
         .maybeSingle();
 
     if (existing != null) {
       return ConversationModel.fromJson(existing, currentUserId);
     }
 
-    // Create new conversation
     final created = await client
         .from('conversations')
-        .insert({
-      'user_one_id': currentUserId,
-      'user_two_id': otherUserId,
-    })
+        .insert({'user_one_id': currentUserId, 'user_two_id': otherUserId})
         .select('''
           *,
           user_one:profiles!conversations_user_one_id_fkey (
@@ -123,9 +120,7 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
         .eq('conversation_id', conversationId)
         .order('created_at', ascending: true);
 
-    return (response as List)
-        .map((e) => MessageModel.fromJson(e))
-        .toList();
+    return (response as List).map((e) => MessageModel.fromJson(e)).toList();
   }
 
   @override
@@ -137,10 +132,10 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
     final response = await client
         .from('messages')
         .insert({
-      'conversation_id': conversationId,
-      'sender_id':       senderId,
-      'text':            text,
-    })
+          'conversation_id': conversationId,
+          'sender_id': senderId,
+          'text': text,
+        })
         .select()
         .single();
 
@@ -148,8 +143,7 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
   }
 
   @override
-  Future<void> markAsRead(
-      String conversationId, String currentUserId) async {
+  Future<void> markAsRead(String conversationId, String currentUserId) async {
     await client
         .from('messages')
         .update({'is_read': true})
@@ -165,40 +159,38 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
     _messagesChannel = client
         .channel('messages:$conversationId')
         .onPostgresChanges(
-      event: PostgresChangeEvent.insert,
-      schema: 'public',
-      table: 'messages',
-      filter: PostgresChangeFilter(
-        type: PostgresChangeFilterType.eq,
-        column: 'conversation_id',
-        value: conversationId,
-      ),
-      callback: (payload) {
-        final message = MessageModel.fromJson(payload.newRecord);
-        controller.add(message);
-      },
-    )
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'messages',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'conversation_id',
+            value: conversationId,
+          ),
+          callback: (payload) {
+            final message = MessageModel.fromJson(payload.newRecord);
+            controller.add(message);
+          },
+        )
         .subscribe();
 
     return controller.stream;
   }
 
   @override
-  Stream<ConversationModel> subscribeToConversations(
-      String currentUserId) {
+  Stream<ConversationModel> subscribeToConversations(String currentUserId) {
     final controller = StreamController<ConversationModel>.broadcast();
 
     _conversationsChannel = client
         .channel('conversations:$currentUserId')
         .onPostgresChanges(
-      event: PostgresChangeEvent.update,
-      schema: 'public',
-      table: 'conversations',
-      callback: (payload) async {
-        // Fetch full conversation with joined profiles
-        final updated = await client
-            .from('conversations')
-            .select('''
+          event: PostgresChangeEvent.update,
+          schema: 'public',
+          table: 'conversations',
+          callback: (payload) async {
+            final updated = await client
+                .from('conversations')
+                .select('''
                   *,
                   user_one:profiles!conversations_user_one_id_fkey (
                     id, name, profile_image_url, is_verified
@@ -207,18 +199,16 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
                     id, name, profile_image_url, is_verified
                   )
                 ''')
-            .eq('id', payload.newRecord['id'])
-            .single();
+                .eq('id', payload.newRecord['id'])
+                .single();
 
-        controller.add(
-            ConversationModel.fromJson(updated, currentUserId));
-      },
-    )
+            controller.add(ConversationModel.fromJson(updated, currentUserId));
+          },
+        )
         .subscribe();
 
     return controller.stream;
   }
-
 
   Future<int> getUnreadCount(String currentUserId) async {
     final response = await client.rpc(

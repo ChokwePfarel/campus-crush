@@ -28,10 +28,10 @@ class UsersCard extends StatelessWidget {
         );
       },
       child: Card(
-        elevation: 0,
+        elevation: 4,
         margin: EdgeInsets.zero,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.zero,
+          borderRadius: BorderRadius.all(Radius.circular(20)),
         ),
         child: Stack(
           children: [

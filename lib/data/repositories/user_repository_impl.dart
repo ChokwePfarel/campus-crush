@@ -56,34 +56,4 @@ class UserRepositoryImpl implements UserRepository {
   }
 }
 
-class MockUserRepositoryImpl implements UserRepository {
-  final _mockUser = MockCurrentUser().currentUserMock;
 
-  @override
-  Future<UserEntity> getCurrentUser() async {
-    return _mockUser;
-  }
-
-  @override
-  Stream<UserEntity?> watchCurrentUser() {
-    return Stream.value(_mockUser);
-  }
-
-  @override
-  Future<void> updateUserData({
-    required String name,
-    required String sex,
-    required String bio,
-    required String status,
-    required String residence,
-    required String university,
-    required List<String> interests,
-    required int age,
-    PrivacySettingsEntity? privacySettings,
-    required bool isVerified,
-
-  }) async {
-    // In a real mock, we might update the local _mockUser variable
-    print("Mock update user data called");
-  }
-}

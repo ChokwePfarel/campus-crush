@@ -2,10 +2,11 @@ import 'dart:async';
 import 'dart:math';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dating_app/core/constants/post_constants.dart';
-import 'package:dating_app/core/utils/date_utils.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
+import 'package:dating_app/core/utils/snackbar.dart';
 import 'package:dating_app/data/models/post_model.dart';
 import 'package:dating_app/domain/repositories/posts_repository.dart';
+import 'package:dating_app/presentation/bloc/conectivity/conectivityBloc.dart';
 import 'package:dating_app/presentation/bloc/posts/posts_bloc.dart';
 import 'package:dating_app/presentation/bloc/posts/posts_event.dart';
 import 'package:dating_app/presentation/bloc/posts/posts_state.dart';
@@ -69,19 +70,6 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
   )..repeat(reverse: true);
 
 
-  StreamSubscription? _connectivitySub;
-  bool _isOffline = false;
-
-
-  @override
-  void initState(){
-    super.initState();
-
-    _connectivitySub = Connectivity().onConnectivityChanged.listen((results) {
-      final _isOffline = results.first == ConnectivityResult.none;
-    });
-    }
-
   @override
   void dispose() {
     _radarCtrl.dispose();
@@ -92,6 +80,7 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
   void _fetchSpottedPosts(BuildContext context) {
     final userState = context.read<UserBloc>().state;
     if (userState is user_st.UserLoaded) {
+
       context.read<PostBloc>().add(LoadPosts(
             university: userState.user.university,
             postType: 'spotted',
@@ -101,12 +90,19 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
     }
   }
 
-  void _selectLocation(BuildContext context, String location) {
+  void _selectLocation(BuildContext context, String location, bool isOffline) {
     HapticFeedback.mediumImpact();
+
+    if (isOffline) {
+      AppSnackBar.show(context, 'No internet connection',
+          type: SnackBarType.warning);
+      return; // stops here
+    }
     setState(() {
       _selectedLocation = location;
     });
     _fetchSpottedPosts(context);
+
   }
 
   void _navigateToSpottedPage(BuildContext context) {
@@ -160,6 +156,8 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     SizeConfig.init(context);
+
+
     return BlocProvider(
       create: (context) => PostBloc(context.read<PostRepository>()),
       child: Builder(
@@ -169,19 +167,15 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
             body: Stack(
               children: [
 
-                if (_isOffline)
-
-                  Center(
-                    child: Image.asset("assets/offline.png"),
-                  ),
-
                 Positioned.fill(child: _RadarBackground(ctrl: _radarCtrl)),
                 SafeArea(
                   child: Column(
                     children: [
                       _buildHeader(context),
                       Expanded(
-                        child: _selectedLocation == null
+                        child:
+
+                        _selectedLocation == null
                           ? _buildLocationPicker(context)
                           : _buildRadarContent(context),
                       ),
@@ -348,58 +342,83 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
 
   Widget _buildLocationPicker(BuildContext context) {
     final grouped = LocationTags.grouped;
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-      children: grouped.entries.map((entry) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(4, 16, 4, 8),
-              child: Text(
-                entry.key.toUpperCase(),
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white.withOpacity(0.35), letterSpacing: 1.2),
-              ),
-            ),
-            GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              childAspectRatio: 2.6,
-              children: entry.value.map((tag) {
-                return GestureDetector(
-                  onTap: () => _selectLocation(context, tag['label']!),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.07),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Colors.white.withOpacity(0.1)),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(tag['icon']!, style: const TextStyle(fontSize: 18)),
-                        const SizedBox(width: 8),
-                        Flexible(
-                          child: Text(
-                            tag['label']!,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white.withOpacity(0.85)),
-                          ),
-                        ),
-                      ],
+
+    return BlocBuilder<ConnectivityBloc, ConnectivityState>(
+      builder: (context, state) {
+        final isOffline = state.isOffline;
+
+        return ListView(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          children: grouped.entries.map((entry) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(4, 16, 4, 8),
+                  child: Text(
+                    entry.key.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white.withOpacity(0.35),
+                      letterSpacing: 1.2,
                     ),
                   ),
-                );
-              }).toList(),
-            ),
-          ],
+                ),
+                GridView.count(
+                  crossAxisCount: 2,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  childAspectRatio: 2.6,
+                  children: entry.value.map((tag) {
+                    return GestureDetector(
+                      onTap: isOffline
+                          ? () => AppSnackBar.show(
+                        context,
+                        'No internet connection',
+                        type: SnackBarType.warning,
+                      )
+                          : () => _selectLocation(context, tag['label']!, isOffline),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.07),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.1),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(tag['icon']!, style: const TextStyle(fontSize: 18)),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                tag['label']!,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white.withOpacity(0.85),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            );
+          }).toList(),
         );
-      }).toList(),
+      },
     );
   }
+
 
   Widget _buildEmptyRadarMessage() {
     return Column(

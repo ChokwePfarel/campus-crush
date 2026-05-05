@@ -1,7 +1,5 @@
-import 'package:dating_app/core/utils/date_utils.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
 import 'package:dating_app/data/models/user_model.dart';
-import 'package:dating_app/domain/entities/coins_entity.dart';
 import 'package:dating_app/presentation/bloc/coins/coins_bloc.dart';
 import 'package:dating_app/presentation/bloc/coins/coins_event.dart';
 import 'package:dating_app/presentation/bloc/coins/coins_state.dart';

@@ -116,7 +116,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       controller: _passwordController,
                       hint: 'Password',
                       icon: Icons.lock_outline,
-                      obscure: true,
+                      obscure: false,
                       validator: (val) => val == null || val.length < 6
                           ? 'Min 6 characters'
                           : null,
@@ -144,7 +144,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       ],
                     ),
 
-                    SizedBox(height: screenHeight * 0.05),
+                    SizedBox(height: screenHeight * 0.2),
 
                     BlocBuilder<AuthBloc, AuthState>(
                       builder: (context, state) {

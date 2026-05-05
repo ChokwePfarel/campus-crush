@@ -1,10 +1,7 @@
-import 'package:dating_app/core/features/my_posts/chip.dart';
 import 'package:dating_app/core/features/my_posts/my_post_item.dart';
 import 'package:dating_app/core/utils/date_utils.dart';
-import 'package:dating_app/core/utils/posts_skeleton.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
 import 'package:dating_app/core/widgets/bottom_sheet.dart';
-import 'package:dating_app/core/widgets/common/empty_state.dart';
 import 'package:dating_app/data/models/post_model.dart';
 import 'package:dating_app/domain/repositories/current_user_post_repository.dart';
 import 'package:dating_app/domain/repositories/likes_repository.dart';

@@ -26,18 +26,10 @@ class PostRepositoryImp implements PostRepository {
         limit: limit,
       );
 
-      // Update cache with fresh data (if initial load)
-      if (offset == 0) {
-        await OfflineCache.cachePosts(posts);
-      }
-
       return posts;
 
     } catch (e) {
-      // If offline or error, return cached data
-      if (offset == 0) {
-        return OfflineCache.getCachedPosts();
-      }
+
       rethrow;
     }
   }

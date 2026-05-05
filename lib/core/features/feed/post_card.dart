@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dating_app/core/utils/date_utils.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
 import 'package:dating_app/core/widgets/like_comment_button.dart';
@@ -18,7 +19,7 @@ class PostCard extends StatefulWidget {
   final String currentUserId;
   final VoidCallback onComment;
   final Function(String) onAuthorTap;
-  final bool isOffline; // Added isOffline
+  final bool isOffline;
 
   const PostCard({
     super.key,
@@ -50,6 +51,7 @@ class PostCardState extends State<PostCard> with SingleTickerProviderStateMixin 
   @override
   void initState() {
     super.initState();
+
     Future.delayed(const Duration(milliseconds: 50), () {
       if (mounted) _animCtrl.forward();
     });
@@ -57,10 +59,10 @@ class PostCardState extends State<PostCard> with SingleTickerProviderStateMixin 
     Future.microtask(() {
       if (!mounted) return;
       context.read<LikesBloc>().add(InitializeLikes(
-        postId: widget.post.id,
-        userId: widget.currentUserId,
-        initialCount: widget.post.likeCount,
-      ));
+            postId: widget.post.id,
+            userId: widget.currentUserId,
+            initialCount: widget.post.likeCount,
+          ));
     });
   }
 
@@ -104,14 +106,13 @@ class PostCardState extends State<PostCard> with SingleTickerProviderStateMixin 
                 child: GestureDetector(
                   onTap: () {
                     if (widget.isOffline) return;
-                    post.isAnonymous
-                        ? null
-                        : Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => OtherUserProfilePage(userId: post.userId),
-                            ),
-                          );
+                    if (post.isAnonymous) return;
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => OtherUserProfilePage(userId: post.userId),
+                      ),
+                    );
                   },
                   child: Row(
                     children: [
@@ -196,13 +197,25 @@ class PostCardState extends State<PostCard> with SingleTickerProviderStateMixin 
                   ),
                 ),
               ),
-              // Hide image if offline
-              if (post.imageUrl != null && !widget.isOffline)
+              if (post.imageUrl != null)
                 Padding(
                   padding: EdgeInsets.only(bottom: SizeConfig.heightPercent(2)),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(SizeConfig.widthPercent(2)),
-                    child: Image.network(post.imageUrl!, fit: BoxFit.cover),
+                    child: CachedNetworkImage(
+                      imageUrl: post.imageUrl!,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        height: 200,
+                        color: Colors.grey[200],
+                        child: const Center(child: CircularProgressIndicator.adaptive()),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        height: 200,
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.error_outline, color: Colors.grey),
+                      ),
+                    ),
                   ),
                 ),
               Padding(
@@ -220,7 +233,7 @@ class PostCardState extends State<PostCard> with SingleTickerProviderStateMixin 
                         return ActionButton(
                           icon: hasLiked ? Icons.favorite : Icons.favorite_border,
                           label: count.toString(),
-                          color: hasLiked ? Colors.pink : (widget.isOffline ? Colors.grey : Colors.white),
+                          color: hasLiked ? Colors.pink : (widget.isOffline ? Colors.grey : _textColor),
                           onTap: widget.isOffline
                               ? () {}
                               : () {
@@ -247,7 +260,7 @@ class PostCardState extends State<PostCard> with SingleTickerProviderStateMixin 
                     ActionButton(
                       icon: CupertinoIcons.chat_bubble_fill,
                       label: post.commentCount.toString(),
-                      color: widget.isOffline ? Colors.grey : Colors.white,
+                      color: widget.isOffline ? Colors.grey : _textColor,
                       onTap: widget.isOffline ? () {} : widget.onComment,
                     ),
                   ],

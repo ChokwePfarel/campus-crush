@@ -1,4 +1,3 @@
-import 'dart:ui';
 
 import 'package:dating_app/core/utils/date_utils.dart';
 import 'package:dating_app/core/utils/screen_size.dart';

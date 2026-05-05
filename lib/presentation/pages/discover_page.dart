@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:dating_app/core/utils/offline_cache.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
 import 'package:dating_app/core/utils/users_skeleton.dart';
 import 'package:dating_app/presentation/bloc/user/user_bloc.dart';
+import 'package:dating_app/presentation/bloc/user/user_event.dart';
 import 'package:dating_app/presentation/bloc/user/user_state.dart';
 import 'package:dating_app/presentation/bloc/users/users_bloc.dart';
 import 'package:dating_app/presentation/bloc/users/users_event.dart';
@@ -58,6 +58,10 @@ class _DiscoverPageState extends State<DiscoverPage> {
         _currentUniversity = userState.user.university;
         _currentSex = userState.user.sex;
         _triggerLoad(context, isInitial: true);
+      }else {
+        // Not loaded yet — BlocListener will handle it when UserLoaded arrives
+        // but make sure the subscription is running
+        context.read<UserBloc>().add(LoadUserSubscription());
       }
     });
   }
@@ -168,14 +172,10 @@ class _DiscoverPageState extends State<DiscoverPage> {
                     body: BlocBuilder<UsersBloc, users_st.UsersState>(
                       builder: (usersBuilderCtx, state) {
                         if (state is users_st.UsersLoading) {
-                          final cached = OfflineCache.getCachedDiscoveryUsers();
-                          if (cached.isNotEmpty) return _buildUserList(cached, true);
                           return const UserListSkeleton();
                         }
 
                         if (state is users_st.UsersError) {
-                          final cached = OfflineCache.getCachedDiscoveryUsers();
-                          if (cached.isNotEmpty) return _buildUserList(cached, true);
                           return _buildErrorState();
                         }
 

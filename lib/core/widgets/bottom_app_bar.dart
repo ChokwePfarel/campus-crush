@@ -7,13 +7,11 @@ import 'package:dating_app/presentation/pages/direct_posts.dart';
 import 'package:dating_app/presentation/pages/discover_page.dart';
 import 'package:dating_app/presentation/pages/feed.dart';
 import 'package:dating_app/presentation/pages/inbox_page.dart';
-import 'package:dating_app/presentation/pages/profile_page.dart';
 import 'package:dating_app/presentation/pages/radar_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:supabase/supabase.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class InstaStyleNav extends StatefulWidget {

@@ -1,6 +1,5 @@
 import 'package:dating_app/core/utils/theme.dart';
 import 'package:dating_app/presentation/pages/login_page.dart';
-import 'package:dating_app/presentation/pages/onboarding_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 

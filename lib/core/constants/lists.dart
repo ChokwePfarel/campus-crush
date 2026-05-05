@@ -1,26 +1,31 @@
-
-
 import 'dart:ui';
-
 
 enum PostType { general, crush, confession, spotted }
 
 extension PostTypeExt on PostType {
   String get label {
     switch (this) {
-      case PostType.general:    return 'General';
-      case PostType.crush:      return 'Crush';
-      case PostType.confession: return 'Confession';
-      case PostType.spotted:    return 'Spotted';
+      case PostType.general:
+        return 'General';
+      case PostType.crush:
+        return 'Crush';
+      case PostType.confession:
+        return 'Confession';
+      case PostType.spotted:
+        return 'Spotted';
     }
   }
 
   String get emoji {
     switch (this) {
-      case PostType.general:    return '💬';
-      case PostType.crush:      return '💘';
-      case PostType.confession: return '🤫';
-      case PostType.spotted:    return '📡';
+      case PostType.general:
+        return '💬';
+      case PostType.crush:
+        return '💘';
+      case PostType.confession:
+        return '🤫';
+      case PostType.spotted:
+        return '📡';
     }
   }
 
@@ -39,26 +44,45 @@ extension PostTypeExt on PostType {
 
   Color get color {
     switch (this) {
-      case PostType.general:    return const Color(0xFF000000);
-      case PostType.crush:      return const Color(0xFFFF4D6D);
-      case PostType.confession: return const Color(0xFFFF9F1C);
-      case PostType.spotted:    return const Color(0xFF2EC4B6);
+      case PostType.general:
+        return const Color(0xFF000000);
+      case PostType.crush:
+        return const Color(0xFFFF4D6D);
+      case PostType.confession:
+        return const Color(0xFFFF9F1C);
+      case PostType.spotted:
+        return const Color(0xFF2EC4B6);
     }
   }
-
 }
 
-class DropDownOptions{
-  static  final List<String> sexOptions = [
-    'Male',
-    'Female',
-    'LGBTQ'
+class DropDownOptions {
+  static final List<String> sexOptions = ['Male', 'Female', 'LGBTQ'];
+
+  static final List<String> universities = [
+    'University of the Western Cape (UWC)'
   ];
 
   static final List<String> availableInterests = [
-  'Coding', 'Music', 'Sports', 'Traveling', 'Foodie', 'Photography',
-  'Gaming', 'Reading', 'Dancing', 'Art', 'Movies', 'Volunteering',
-  'Fitness', 'Hiking', 'Cooking', 'Netflix', 'Anime', 'Gym', 'Coffee'
+    'Coding',
+    'Music',
+    'Sports',
+    'Traveling',
+    'Foodie',
+    'Photography',
+    'Gaming',
+    'Reading',
+    'Dancing',
+    'Art',
+    'Movies',
+    'Volunteering',
+    'Fitness',
+    'Hiking',
+    'Cooking',
+    'Netflix',
+    'Anime',
+    'Gym',
+    'Coffee',
   ];
 
   static final List<String> statuses = [
@@ -67,9 +91,6 @@ class DropDownOptions{
     'Engaged',
     'Married',
     'Divorced',
-    'Widowed'
+    'Widowed',
   ];
 }
-
-
-
