@@ -12,6 +12,7 @@ import 'package:dating_app/presentation/bloc/image/image_bloc.dart';
 import 'package:dating_app/presentation/bloc/image/image_event.dart';
 import 'package:dating_app/presentation/bloc/user/user_bloc.dart';
 import 'package:dating_app/presentation/bloc/user/user_event.dart';
+import 'package:dating_app/presentation/pages/login_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -32,6 +33,7 @@ class _ProfileEditState extends State<ProfileEdit> {
   late TextEditingController _bioController;
   late TextEditingController _ageController;
   late TextEditingController _residenceController;
+  late TextEditingController _majorController;
   late String _selectedStatus;
   late String _selectedSex;
   late List<String> _interests;
@@ -44,6 +46,7 @@ class _ProfileEditState extends State<ProfileEdit> {
     _bioController = TextEditingController(text: widget.user.bio);
     _ageController = TextEditingController(text: widget.user.age.toString());
     _residenceController = TextEditingController(text: widget.user.residence);
+    _majorController = TextEditingController(text: widget.user.major);
     _selectedStatus = widget.user.status.isNotEmpty
         ? widget.user.status
         : 'Single';
@@ -81,34 +84,38 @@ class _ProfileEditState extends State<ProfileEdit> {
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: const Text('Log out'),
-        content: const Text('Are you sure you want to sign out?'),
-        actions: [
-          TextButton(
-            child: const Text('Cancel',
-              style: TextStyle(
-                color: Colors.grey
+      builder: (ctx) =>
+          AlertDialog(
+            backgroundColor: Colors.white,
+            title: const Text('Log out'),
+            content: const Text('Are you sure you want to sign out?'),
+            actions: [
+              TextButton(
+                child: const Text('Cancel',
+                  style: TextStyle(
+                      color: Colors.grey
+                  ),
+                ),
+                onPressed: () => Navigator.pop(ctx),
               ),
-            ),
-            onPressed: () => Navigator.pop(ctx),
+              TextButton(
+                child: const Text('Log out',
+                  style: TextStyle(
+                      color: Colors.red
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  context.read<AuthBloc>().add(LogoutRequested());
+
+                  Navigator.pushAndRemoveUntil(context,
+                      MaterialPageRoute(builder: (context) =>
+                      const LoginPage()), (route) => false);})
+            ],
           ),
-          TextButton(
-            child: const Text('Log out',
-              style: TextStyle(
-                color: Colors.red
-              ),
-            ),
-            onPressed: () {
-              Navigator.pop(ctx);
-              context.read<AuthBloc>().add(LogoutRequested());
-            },
-          ),
-        ],
-      ),
     );
   }
+
   void _saveProfile() {
     final name = _nameController.text.trim();
     final bio = _bioController.text.trim();
@@ -193,17 +200,17 @@ class _ProfileEditState extends State<ProfileEdit> {
                 children: DropDownOptions.availableInterests
                     .where((i) => !_interests.contains(i))
                     .map((interest) {
-                      return ActionChip(
-                        label: Text(interest),
-                        onPressed: () {
-                          setState(() {
-                            _interests.add(interest);
-                          });
-                          _markAsDirty();
-                          Navigator.pop(context);
-                        },
-                      );
-                    })
+                  return ActionChip(
+                    label: Text(interest),
+                    onPressed: () {
+                      setState(() {
+                        _interests.add(interest);
+                      });
+                      _markAsDirty();
+                      Navigator.pop(context);
+                    },
+                  );
+                })
                     .toList(),
               ),
               SizedBox(height: SizeConfig.heightPercent(4)),
@@ -301,10 +308,11 @@ class _ProfileEditState extends State<ProfileEdit> {
           ),
           actions: [
             IconButton(
-              onPressed: (){
-                _showLogoutDialog(context);
-              },
-              icon: const Icon(Icons.exit_to_app, color: Colors.red, size: 24,))
+                onPressed: () {
+                  _showLogoutDialog(context);
+                },
+                icon: const Icon(
+                  Icons.arrow_forward, color: Colors.red, size: 24,))
           ],
         ),
         body: SingleChildScrollView(
@@ -323,9 +331,9 @@ class _ProfileEditState extends State<ProfileEdit> {
                           : null,
                       child: widget.user.profileImageUrl.isEmpty
                           ? Icon(
-                              Icons.person,
-                              size: SizeConfig.widthPercent(15),
-                            )
+                        Icons.person,
+                        size: SizeConfig.widthPercent(15),
+                      )
                           : null,
                     ),
                     Positioned(
@@ -387,7 +395,8 @@ class _ProfileEditState extends State<ProfileEdit> {
               ),
               SizedBox(height: SizeConfig.heightPercent(2)),
 
-              _buildTextField("Full Name", _nameController, onChangedCallback: _markAsDirty),
+              _buildTextField("Full Name", _nameController,
+                  onChangedCallback: _markAsDirty),
 
               SizedBox(height: SizeConfig.heightPercent(2)),
               Row(
@@ -439,9 +448,20 @@ class _ProfileEditState extends State<ProfileEdit> {
                 ],
               ),
               SizedBox(height: SizeConfig.heightPercent(2)),
-              _buildTextField("Residence", _residenceController,onChangedCallback: _markAsDirty),
+
+              _buildTextField("Course", _majorController,
+                  onChangedCallback: _markAsDirty),
+
               SizedBox(height: SizeConfig.heightPercent(2)),
-              _buildTextField("About Me", _bioController, onChangedCallback: _markAsDirty, maxLines: 3),
+
+              _buildTextField("Residence", _residenceController,
+                  onChangedCallback: _markAsDirty),
+
+              SizedBox(height: SizeConfig.heightPercent(2)),
+
+              _buildTextField(
+                  "About Me", _bioController, onChangedCallback: _markAsDirty,
+                  maxLines: 3),
               SizedBox(height: SizeConfig.heightPercent(3)),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -540,8 +560,7 @@ class _ProfileEditState extends State<ProfileEdit> {
     );
   }
 
-  Widget _buildTextField(
-      String label,
+  Widget _buildTextField(String label,
       TextEditingController controller, {
         int maxLines = 1,
         TextInputType keyboardType = TextInputType.text,

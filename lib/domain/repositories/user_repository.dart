@@ -16,5 +16,6 @@ abstract class UserRepository {
     required int age,
     PrivacySettingsEntity? privacySettings,
     required bool isVerified,
+    int? coins,
   });
 }

@@ -1,10 +1,7 @@
-import 'package:dating_app/core/features/my_posts/chip.dart';
 import 'package:dating_app/core/features/my_posts/my_post_item.dart';
 import 'package:dating_app/core/utils/date_utils.dart';
-import 'package:dating_app/core/utils/posts_skeleton.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
 import 'package:dating_app/core/widgets/bottom_sheet.dart';
-import 'package:dating_app/core/widgets/common/empty_state.dart';
 import 'package:dating_app/data/models/post_model.dart';
 import 'package:dating_app/domain/repositories/current_user_post_repository.dart';
 import 'package:dating_app/domain/repositories/likes_repository.dart';
@@ -41,9 +38,9 @@ class _MyPostsPageState extends State<MyPostsPage> {
   }
 
   int _totalLikes(List<PostModel> posts) => posts.fold(
-        0,
+    0,
         (sum, p) => sum + (_liveLikeCounts[p.id] ?? p.likeCount),
-      );
+  );
 
   int _totalComments(List<PostModel> posts) =>
       posts.fold(0, (sum, p) => sum + p.commentCount);
@@ -142,7 +139,7 @@ class _MyPostsPageState extends State<MyPostsPage> {
                               contentPadding: EdgeInsets.zero,
                               leading: CircleAvatar(
                                 backgroundColor:
-                                    Colors.pinkAccent.withOpacity(0.1),
+                                Colors.pinkAccent.withOpacity(0.1),
                                 child: const Icon(Icons.favorite,
                                     color: Colors.pinkAccent, size: 16),
                               ),
@@ -175,34 +172,34 @@ class _MyPostsPageState extends State<MyPostsPage> {
         Supabase.instance.client.auth.currentUser?.id ?? '';
 
     return BlocProvider(
-        create: (context) =>
-        CurrentUserPostBloc(context.read<CurrentUserPostRepository>())
-          ..add(LoadUserPosts()),
-        child: Scaffold(
-            backgroundColor: const Color(0xFFF4F4F8),
-            body: BlocBuilder<CurrentUserPostBloc, UserPostState>(
-                builder: (context, state) {
-                  // Filter posts here to exclude those being deleted
-                  List<PostModel> visiblePosts = [];
-                  if (state is UserPostLoaded) {
-                    visiblePosts = state.posts.where((p) => !_deletingIds.contains(p.id)).toList();
-                  }
-                  return CustomScrollView(
-                    slivers: [
-                      _buildAppBar(),
-                      if (state is UserPostLoaded) ...[
-                        _buildPostList(visiblePosts, currentUserId),
-                      ] else if (state is UserPostLoading)
-                        const SliverFillRemaining(child: Center(child: CupertinoActivityIndicator()))
-                      else if (state is UserPostError)
-                          SliverFillRemaining(child: Center(child: Text(state.message)))
-                        else
-                          const SliverFillRemaining(child: Center(child: Text("No posts found"))),
-                    ],
-                  );
-                },
-            ),
+      create: (context) =>
+      CurrentUserPostBloc(context.read<CurrentUserPostRepository>())
+        ..add(LoadUserPosts()),
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF4F4F8),
+        body: BlocBuilder<CurrentUserPostBloc, UserPostState>(
+          builder: (context, state) {
+            // Filter posts here to exclude those being deleted
+            List<PostModel> visiblePosts = [];
+            if (state is UserPostLoaded) {
+              visiblePosts = state.posts.where((p) => !_deletingIds.contains(p.id)).toList();
+            }
+            return CustomScrollView(
+              slivers: [
+                _buildAppBar(),
+                if (state is UserPostLoaded) ...[
+                  _buildPostList(visiblePosts, currentUserId),
+                ] else if (state is UserPostLoading)
+                  const SliverFillRemaining(child: Center(child: CupertinoActivityIndicator()))
+                else if (state is UserPostError)
+                    SliverFillRemaining(child: Center(child: Text(state.message)))
+                  else
+                    const SliverFillRemaining(child: Center(child: Text("No posts found"))),
+              ],
+            );
+          },
         ),
+      ),
     );
   }
 
@@ -240,7 +237,7 @@ class _MyPostsPageState extends State<MyPostsPage> {
       ),
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate(
-          (context, i) {
+              (context, i) {
             final post = posts[i];
             return BlocProvider(
               key: ValueKey(post.id),
@@ -267,5 +264,4 @@ class _MyPostsPageState extends State<MyPostsPage> {
     );
   }
 }
-
 

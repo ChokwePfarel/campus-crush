@@ -1,5 +1,4 @@
 import 'package:dating_app/core/utils/screen_size.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class ActionButton extends StatelessWidget {

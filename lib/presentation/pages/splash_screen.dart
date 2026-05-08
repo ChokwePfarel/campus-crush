@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dating_app/core/utils/raout_decider.dart';
 import 'package:flutter/material.dart';
 
@@ -9,7 +10,6 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-
   @override
   void initState() {
     super.initState();
@@ -32,10 +32,7 @@ class _SplashScreenState extends State<SplashScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
-        child: Image.asset(
-          'assets/icon.png',
-          width: 120,
-        ),
+        child: CachedNetworkImage(imageUrl: 'assets/icon.png', width: 120),
       ),
     );
   }

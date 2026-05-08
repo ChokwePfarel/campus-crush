@@ -1,4 +1,5 @@
 import 'package:dating_app/core/utils/purple.dart';
+import 'package:dating_app/core/utils/snackbar.dart';
 import 'package:dating_app/core/utils/theme.dart';
 import 'package:dating_app/presentation/pages/home_page.dart';
 import 'package:flutter/material.dart';
@@ -51,23 +52,12 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: PurplePalette.bg,
+      resizeToAvoidBottomInset: true,
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Row(children: [
-                  const Icon(Icons.error_outline, color: Colors.white, size: 18),
-                  const SizedBox(width: 8),
-                  Expanded(child: Text(state.message)),
-                ]),
-                backgroundColor: PurplePalette.primary,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            );
+            AppSnackBar.show(context, 'Something went wrong, try again later',
+                type: SnackBarType.warning);
           } else if (state is Authenticated) {
             Navigator.pushReplacement(
               context,
@@ -75,59 +65,49 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
             );
           }
         },
-        child: Stack(
-          children: [
-            // ── Background decorations ──────────────────────────────────────
-
-            Positioned(
-              bottom: 160,
-              right: -60,
-              child: _decorCircle(180, PurplePalette.fieldBorder, 0.8),
-            ),
-
-            SafeArea(
-              child: FadeTransition(
-                opacity: _fadeAnim,
-                child: SlideTransition(
-                  position: _slideAnim,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // ── App name + header ─────────────────────────────────
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(28, 150, 28, 0),
+        child: SafeArea(
+          child: FadeTransition(
+            opacity: _fadeAnim,
+            child: SlideTransition(
+              position: _slideAnim,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 28),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
+                      child: IntrinsicHeight(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            // App name
+                            const SizedBox(height: 120),
 
-
+                            /// Title
                             Text(
-                              'Campus Crush ',
+                              'Campus Crush',
                               style: TextStyle(
                                 fontFamily: 'DancingScript',
                                 fontSize: 42,
                                 fontWeight: FontWeight.w700,
                                 color: Colors.black,
-                                letterSpacing: 0.5,
                               ),
                             ),
 
-                            const SizedBox(height: 28),
+                            const SizedBox(height: 40),
 
-
-                            const SizedBox(height: 32),
-
-                            // ── Email ───────────────────────────────────────
+                            /// Email
                             _inputField(
                               controller: _emailController,
                               hint: 'Email address',
                               icon: Icons.email_outlined,
                               keyboardType: TextInputType.emailAddress,
                             ),
+
                             const SizedBox(height: 14),
 
-                            // ── Password ────────────────────────────────────
+                            /// Password
                             _inputField(
                               controller: _passwordController,
                               hint: 'Password',
@@ -135,7 +115,8 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                               obscure: _obscurePassword,
                               suffix: GestureDetector(
                                 onTap: () => setState(
-                                        () => _obscurePassword = !_obscurePassword),
+                                      () => _obscurePassword = !_obscurePassword,
+                                ),
                                 child: Icon(
                                   _obscurePassword
                                       ? Icons.visibility_off_outlined
@@ -148,169 +129,153 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
 
                             const SizedBox(height: 8),
 
-                            // ── Forgot password ─────────────────────────────
+                            /// Forgot password
                             Align(
                               alignment: Alignment.centerRight,
                               child: TextButton(
                                 onPressed: () {},
-                                style: TextButton.styleFrom(
-                                  padding: EdgeInsets.zero,
-                                  minimumSize: Size.zero,
-                                  tapTargetSize:
-                                  MaterialTapTargetSize.shrinkWrap,
-                                ),
                                 child: Text(
                                   'Forgot password?',
                                   style: TextStyle(
                                     fontSize: 13,
                                     color: AppStylee.primaryColor,
-                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),
                             ),
-                          ],
-                        ),
-                      ),
 
-                      const Spacer(),
+                            const Spacer(),
 
-                      // ── Bottom action area ──────────────────────────────
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(28, 0, 28, 36),
-                        child: Column(
-                          children: [
-                            // Sign in button
-                            BlocBuilder<AuthBloc, AuthState>(
-                              builder: (context, state) {
-                                final isLoading = state is AuthLoading;
-                                return SizedBox(
-                                  width: double.infinity,
-                                  height: 54,
-                                  child: ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppStylee.primaryColor,
-                                      foregroundColor: Colors.white,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                      elevation: 0,
-                                    ),
-                                    onPressed: isLoading
-                                        ? null
-                                        : () {
-                                      context.read<AuthBloc>().add(
-                                        LoginRequested(
-                                          _emailController.text
-                                              .trim(),
-                                          _passwordController.text
-                                              .trim(),
-                                        ),
-                                      );
-                                    },
-                                    child: isLoading
-                                        ? const SizedBox(
-                                      width: 22,
-                                      height: 22,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2.5,
-                                      ),
-                                    )
-                                        : const Text(
-                                      'Sign In',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: 0.3,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-
-                            const SizedBox(height: 16),
-
-                            // OR divider
-                            Row(
+                            /// Sign in button
+                            Column(
                               children: [
-                                Expanded(
-                                  child: Divider(
-                                      color: PurplePalette.fieldBorder,
-                                      thickness: 1),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 14),
-                                  child: Text(
-                                    'or',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: PurplePalette.placeholder,
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Divider(
-                                      color: PurplePalette.fieldBorder,
-                                      thickness: 1),
-                                ),
-                              ],
-                            ),
-
-                            const SizedBox(height: 16),
-
-                            // Sign up row
-                            GestureDetector(
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (_) => const SignUpPage()),
-                              ),
-                              child: RichText(
-                                text: TextSpan(
-                                  text: "Don't have an account? ",
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: PurplePalette.placeholder,
-                                  ),
-                                  children: [
-                                    TextSpan(
-                                      text: 'Sign up',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        color: AppStylee.primaryColor,
+                                // Sign in button
+                                BlocBuilder<AuthBloc, AuthState>(
+                                  builder: (context, state) {
+                                    final isLoading = state is AuthLoading;
+                                    return SizedBox(
+                                      width: double.infinity,
+                                      height: 54,
+                                      child: ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: AppStylee.primaryColor,
+                                          foregroundColor: Colors.white,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(16),
+                                          ),
+                                          elevation: 0,
+                                        ),
+                                        onPressed: isLoading
+                                            ? null
+                                            : () {
+                                          context.read<AuthBloc>().add(
+                                            LoginRequested(
+                                              _emailController.text
+                                                  .trim(),
+                                              _passwordController.text
+                                                  .trim(),
+                                            ),
+                                          );
+                                        },
+                                        child: isLoading
+                                            ? const SizedBox(
+                                          width: 22,
+                                          height: 22,
+                                          child: CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 2.5,
+                                          ),
+                                        )
+                                            : const Text(
+                                          'Sign In',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w700,
+                                            letterSpacing: 0.3,
+                                          ),
+                                        ),
                                       ),
+                                    );
+                                  },
+                                ),
+
+                                const SizedBox(height: 16),
+
+                                // OR divider
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Divider(
+                                          color: PurplePalette.fieldBorder,
+                                          thickness: 1),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 14),
+                                      child: Text(
+                                        'or',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: PurplePalette.placeholder,
+                                        ),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Divider(
+                                          color: PurplePalette.fieldBorder,
+                                          thickness: 1),
                                     ),
                                   ],
                                 ),
-                              ),
+
+                                const SizedBox(height: 16),
+
+                                // Sign up row
+                                GestureDetector(
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (_) => const SignUpPage()),
+                                  ),
+                                  child: RichText(
+                                    text: TextSpan(
+                                      text: "Don't have an account? ",
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: PurplePalette.placeholder,
+                                      ),
+                                      children: [
+                                        TextSpan(
+                                          text: 'Sign up',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            color: AppStylee.primaryColor,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+
+                              ],
                             ),
+
                           ],
                         ),
                       ),
-                    ],
-                  ),
-                ),
+                    ),
+                  );
+                },
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _decorCircle(double size, Color color, double opacity) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: color.withOpacity(opacity),
-        shape: BoxShape.circle,
-      ),
-    );
-  }
+
 
   Widget _inputField({
     required TextEditingController controller,

@@ -1,4 +1,5 @@
 import 'package:dating_app/core/services/ad_service.dart';
+import 'package:dating_app/core/utils/offline_cache.dart';
 import 'package:dating_app/data/datasources/auth_remote_data_source.dart';
 import 'package:dating_app/data/datasources/chat_remote_data_source.dart';
 import 'package:dating_app/data/datasources/coins_remote_data_source.dart';
@@ -24,6 +25,7 @@ import 'package:dating_app/presentation/bloc/auth/auth_bloc.dart';
 import 'package:dating_app/presentation/bloc/auth/auth_event.dart';
 import 'package:dating_app/presentation/bloc/coins/coins_bloc.dart';
 import 'package:dating_app/presentation/bloc/comments/comments_bloc.dart';
+import 'package:dating_app/presentation/bloc/conectivity/conectivityBloc.dart';
 import 'package:dating_app/presentation/bloc/conversation/conversation_bloc.dart';
 import 'package:dating_app/presentation/bloc/direct_posts/direct_posts_bloc.dart';
 import 'package:dating_app/presentation/bloc/image/image_bloc.dart';
@@ -47,8 +49,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+
   await MobileAds.instance.initialize();
   AdService.instance.loadRewardedAd();
+
+  await HiveInit.init();
+
 
   try {
     await Supabase.initialize(
@@ -110,8 +117,7 @@ Future<void> main() async {
         RepositoryProvider<CurrentUserPostRepository>(
           create: (_) => currentUserPostRepository,
         ),
-        RepositoryProvider<CommentsRepository>(
-          create: (_) => commentsRepository,
+        RepositoryProvider<CommentsRepository>(create: (_) => commentsRepository,
         ),
         RepositoryProvider<LikesRepository>(create: (_) => likesRepository),
         RepositoryProvider<ChatRepository>(create: (_) => chatRepository),
@@ -155,7 +161,12 @@ Future<void> main() async {
 
           BlocProvider<PostBloc>(
             create: (context) => PostBloc(context.read<PostRepository>()),
-          )
+          ),
+
+          BlocProvider(
+            create: (_) => ConnectivityBloc(),
+            child: MyApp(),
+          ),
 
         ],
         child: const MyApp(),
@@ -177,5 +188,13 @@ class MyApp extends StatelessWidget {
       ),
       home: const SplashScreen(),
     );
+  }
+}
+
+class HiveInit {
+  HiveInit._();
+
+  static Future<void> init() async {
+    await OfflineCache.init();
   }
 }

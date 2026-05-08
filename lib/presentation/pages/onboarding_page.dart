@@ -1,6 +1,8 @@
 import 'package:dating_app/core/constants/lists.dart';
 import 'package:dating_app/core/utils/purple.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
+import 'package:dating_app/core/utils/theme.dart';
+import 'package:dating_app/core/widgets/dropdown.dart';
 import 'package:dating_app/presentation/bloc/user/user_bloc.dart';
 import 'package:dating_app/presentation/bloc/user/user_event.dart';
 import 'package:flutter/material.dart';
@@ -33,9 +35,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
   String _selectedUniversity = 'University of the Western Cape (UWC)';
   String _selectedSex = 'male';
 
-  final List<String> _saUniversities = [
-    'University of the Western Cape (UWC)',
-  ];
+
 
   @override
   void initState() {
@@ -54,25 +54,35 @@ class _OnboardingPageState extends State<OnboardingPage> {
   }
 
   void _submit() {
+    print("SUBMIT BUTTON CLICKED");
     if (_formKey.currentState!.validate()) {
+      debugPrint('Onboarding: Submitting user data');
+
       context.read<UserBloc>().add(
         UpdateUserRequested(
           name: widget.userName,
-          sex: _selectedSex.toLowerCase(),
+          sex: _selectedSex,
           bio: _bioController.text.trim(),
           status: 'looking',
           residence: _residenceController.text.trim(),
           university: _selectedUniversity,
           interests: _interests,
-          age: int.parse(_ageController.text),
+          age: int.tryParse(_ageController.text) ?? 0,
           privacySettings: null,
           isVerified: widget.isVerified,
+          coins: 30,
         ),
       );
+
+      // Start fresh subscription
+      context.read<UserBloc>().add(LoadUserSubscription());
+
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const MyHomePage()),
-            (route) => false,
+        (route) => false,
       );
+    } else {
+      debugPrint("Onboarding: Validation failed");
     }
   }
 
@@ -136,7 +146,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+
                           _label("How old are you?"),
+
                           _pillField(
                             controller: _ageController,
                             hint: 'Enter your age',
@@ -147,26 +159,44 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           ),
 
                           _label("Gender"),
-                          _pillDropdown<String>(
-                            value: _selectedSex,
-                            icon: Icons.person_outline,
-                            hint: 'Select gender',
+
+                          CustomDropdown<String>(
+                            labelText: '',
                             items: DropDownOptions.sexOptions,
-                            onChanged: (v) =>
-                                setState(() => _selectedSex = v!),
+                            value:
+                            DropDownOptions.sexOptions.contains(
+                              _selectedSex,
+                            )
+                                ? _selectedSex
+                                : DropDownOptions.sexOptions.first,
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedSex = value!;
+                              });
+                            },
                           ),
 
                           _label("Where do you study?"),
-                          _pillDropdown<String>(
-                            value: _selectedUniversity,
-                            icon: Icons.school_outlined,
-                            hint: 'Select university',
-                            items: _saUniversities,
-                            onChanged: (v) =>
-                                setState(() => _selectedUniversity = v!),
+
+
+                          CustomDropdown<String>(
+                            labelText: '',
+                            items: DropDownOptions.universities,
+                            value:
+                            DropDownOptions.statuses.contains(
+                              _selectedUniversity,
+                            )
+                                ? _selectedUniversity
+                                : DropDownOptions.universities.first,
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedUniversity = value!;
+                              });
+                            },
                           ),
 
                           _label("Where do you stay? (Residence)"),
+
                           _pillField(
                             controller: _residenceController,
                             hint: 'e.g. Hector Peterson',
@@ -232,14 +262,14 @@ class _OnboardingPageState extends State<OnboardingPage> {
                             height: 52,
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: PurplePalette.primary,
+                                backgroundColor: AppStylee.primaryColor,
                                 foregroundColor: Colors.white,
                                 shape: const StadiumBorder(),
                                 elevation: 0,
                               ),
                               onPressed: _submit,
                               child: const Text(
-                                'FINISH SETUP',
+                                'Done',
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w800,
@@ -264,13 +294,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
   // ── Helpers ──────────────────────────────────────
 
   Widget _blob(double size, Color color, double opacity) => Container(
-    width: size,
-    height: size,
-    decoration: BoxDecoration(
-      color: color.withOpacity(opacity),
-      shape: BoxShape.circle,
-    ),
-  );
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: color.withOpacity(opacity),
+          shape: BoxShape.circle,
+        ),
+      );
 
   Widget _label(String text) => Padding(
     padding: const EdgeInsets.only(bottom: 8),

@@ -1,6 +1,11 @@
+import 'dart:async';
+
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dating_app/core/utils/date_utils.dart';
 import 'package:dating_app/core/utils/feed_skeleton.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
+import 'package:dating_app/core/utils/snackbar.dart';
+import 'package:dating_app/core/utils/theme.dart';
 import 'package:dating_app/core/widgets/bottom_sheet.dart';
 import 'package:dating_app/data/models/post_model.dart';
 import 'package:dating_app/data/models/user_model.dart';
@@ -35,6 +40,9 @@ class _DirectPostsPageState extends State<DirectPostsPage>
   String? _pendingPostId;
   bool _isCheckingReveal = false;
 
+  bool _isOffline = false;
+  StreamSubscription? _connectivitySub;
+
   late final _fadeCtrl = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 400),
@@ -43,6 +51,15 @@ class _DirectPostsPageState extends State<DirectPostsPage>
   @override
   void initState() {
     super.initState();
+
+    _connectivitySub = Connectivity().onConnectivityChanged.listen((results) {
+      if (mounted) {
+        setState(() {
+          _isOffline = results.first == ConnectivityResult.none;
+        });
+      }
+    });
+
     _scrollCtrl.addListener(_onScroll);
 
     // Initial load after mount
@@ -63,6 +80,7 @@ class _DirectPostsPageState extends State<DirectPostsPage>
 
   @override
   void dispose() {
+    _connectivitySub?.cancel();
     _scrollCtrl.removeListener(_onScroll);
     _scrollCtrl.dispose();
     _fadeCtrl.dispose();
@@ -71,7 +89,7 @@ class _DirectPostsPageState extends State<DirectPostsPage>
 
   void _onScroll() {
     if (!_scrollCtrl.hasClients || !mounted) return;
-    
+
     if (_scrollCtrl.position.pixels >=
         _scrollCtrl.position.maxScrollExtent * 0.9) {
       context.read<DirectPostsBloc>().add(
@@ -90,11 +108,19 @@ class _DirectPostsPageState extends State<DirectPostsPage>
   void _handlePostTap(PostModel post, String currentUserId) {
     if (!mounted) return;
 
+    if (_isOffline) {
+      AppSnackBar.show(context, 'No internet connection',
+          type: SnackBarType.warning);
+      return; // stops here
+    }
+
+
     if (!post.isAnonymous) {
       _navigateToProfile(post.userId);
       return;
     }
 
+    // It's anonymous. First check if we've already revealed it.
     _pendingPostId = post.id;
     _pendingProfileUserId = post.userId;
     _isCheckingReveal = true;
@@ -105,8 +131,19 @@ class _DirectPostsPageState extends State<DirectPostsPage>
         );
   }
 
-  void _showRevealDialog(PostModel post, String currentUserId) {
+  void _showRevealDialog(
+    BuildContext context,
+    PostModel post,
+    String currentUserId,
+  ) {
     if (!mounted) return;
+
+    if (_isOffline) {
+      AppSnackBar.show(context, 'No internet connection',
+          type: SnackBarType.warning);
+
+      return; // stops here
+    }
 
     final coinsState = context.read<CoinsBloc>().state;
     final coins = coinsState is CoinsLoaded ? coinsState.coins : null;
@@ -114,12 +151,12 @@ class _DirectPostsPageState extends State<DirectPostsPage>
 
     showCupertinoDialog(
       context: context,
-      builder: (dialogCtx) => _RevealDialog(
+      builder: (_) => _RevealDialog(
         post: post,
         hasEnoughCoins: hasEnough,
         coinBalance: coins?.balance ?? 0,
         onReveal: () {
-          Navigator.pop(dialogCtx);
+          Navigator.pop(context);
           if (post.isAnonymous) {
             _pendingProfileUserId = post.userId;
             _pendingPostId = post.id;
@@ -131,7 +168,7 @@ class _DirectPostsPageState extends State<DirectPostsPage>
           }
         },
         onWatchAd: () {
-          Navigator.pop(dialogCtx);
+          Navigator.pop(context);
           _pendingProfileUserId = post.userId;
           _pendingPostId = post.id;
           context.read<CoinsBloc>().add(WatchAdRequested(currentUserId));
@@ -159,16 +196,19 @@ class _DirectPostsPageState extends State<DirectPostsPage>
 
         if (state is CoinsLoaded && _isCheckingReveal) {
           _isCheckingReveal = false;
+
           if (state.hasRevealed == true) {
+            // Already revealed! Navigate directly.
             _navigateToProfile(_pendingProfileUserId!);
             _pendingProfileUserId = null;
             _pendingPostId = null;
           } else {
+            // Not revealed yet. Show dialog.
             final directPostsState = context.read<DirectPostsBloc>().state;
             if (directPostsState is DirectPostsLoaded) {
               final post = directPostsState.posts
                   .firstWhere((p) => p.id == _pendingPostId);
-              _showRevealDialog(post, currentUserId!);
+              _showRevealDialog(context, post, currentUserId!);
             }
           }
         }
@@ -178,14 +218,12 @@ class _DirectPostsPageState extends State<DirectPostsPage>
                 SpendCoinsOnReveal(userId: currentUserId!, postId: _pendingPostId!),
               );
         }
-        
         if (state is CoinsSpent && _pendingProfileUserId != null) {
           HapticFeedback.mediumImpact();
           _navigateToProfile(_pendingProfileUserId!);
           _pendingProfileUserId = null;
           _pendingPostId = null;
         }
-
         if (state is CoinsError) {
           _pendingProfileUserId = null;
           _pendingPostId = null;
@@ -201,7 +239,7 @@ class _DirectPostsPageState extends State<DirectPostsPage>
       child: FadeTransition(
         opacity: _fadeCtrl,
         child: Scaffold(
-          backgroundColor: const Color(0xFFF7F7FB),
+          backgroundColor: Colors.white,
           body: RefreshIndicator(
             onRefresh: _onRefresh,
             displacement: 100,
@@ -246,16 +284,13 @@ class _DirectPostsPageState extends State<DirectPostsPage>
       child: BlocBuilder<CoinsBloc, CoinsState>(
         builder: (context, state) {
           final balance = state is CoinsLoaded ? state.coins.balance : 0;
-          final freeLeft = state is CoinsLoaded
-              ? (CoinsEntity.freeDirectPosts - state.coins.dailyDirectPostsCount).clamp(0, 2)
-              : 0;
 
           return Container(
             color: Colors.white,
             padding: const EdgeInsets.fromLTRB(20, 10, 20, 14),
             child: Row(
               children: [
-                Expanded(
+                const Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -263,23 +298,18 @@ class _DirectPostsPageState extends State<DirectPostsPage>
                         'Reveal identities for 20 coins',
                         style: TextStyle(
                           fontSize: 13,
-                          color: Colors.grey[600],
+                          color: Colors.grey,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                     /* const SizedBox(height: 2),
-                      Text(
-                        'Daily Free Replies: $freeLeft left',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: freeLeft > 0 ? Colors.green : Colors.orange,
-                        ),
-                      ),*/
                     ],
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.orange.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
@@ -312,12 +342,20 @@ class _DirectPostsPageState extends State<DirectPostsPage>
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       sliver: BlocBuilder<DirectPostsBloc, DirectPostsState>(
         builder: (context, state) {
+          if (_isOffline && state is! DirectPostsLoaded) {
+            return SliverFillRemaining(
+              hasScrollBody: false,
+              child: _buildOfflineState(),
+            );
+          }
+
           if (state is DirectPostsLoading) {
             return const SliverFillRemaining(child: FeedSkeleton());
           }
           if (state is DirectPostsError) {
             return SliverFillRemaining(
-              child: Center(child: Text(state.message)),
+              hasScrollBody: false,
+              child: _buildOfflineState(),
             );
           }
           if (state is DirectPostsLoaded) {
@@ -345,13 +383,50 @@ class _DirectPostsPageState extends State<DirectPostsPage>
                     ),
                   );
                 },
-                childCount: state.hasMore ? state.posts.length + 1 : state.posts.length,
+                childCount:
+                    state.hasMore ? state.posts.length + 1 : state.posts.length,
               ),
             );
           }
           return const SliverToBoxAdapter(child: SizedBox.shrink());
         },
       ),
+    );
+  }
+
+  Widget _buildOfflineState() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Image.asset(
+          "assets/offline.png",
+          fit: BoxFit.contain,
+          height: 300,
+          width: double.infinity,
+        ),
+        const SizedBox(height: 24),
+        const Text(
+          'Something went wrong',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1A1A2E),
+          ),
+        ),
+
+        const SizedBox(height: 24),
+        ElevatedButton(
+          onPressed: () => _loadData(),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppStylee.primaryColor,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          child: const Text('Retry'),
+        )
+      ],
     );
   }
 }
@@ -416,13 +491,16 @@ class _DirectPostCard extends StatelessWidget {
             const SizedBox(height: 12),
             Text(post.content, style: const TextStyle(fontSize: 15, height: 1.4)),
             const Divider(height: 32),
+
+
             Row(
               children: [
                 Expanded(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.remove_red_eye_outlined, size: 16, color: accent),
+                      Icon(Icons.remove_red_eye_outlined,
+                          size: 16, color: accent),
                       const SizedBox(width: 6),
                       Text(
                         'Reveal Sender',
@@ -443,7 +521,8 @@ class _DirectPostCard extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.reply_outlined, size: 16, color: Colors.blue),
+                        const Icon(Icons.reply_outlined,
+                            size: 16, color: Colors.blue),
                         const SizedBox(width: 6),
                         const Text(
                           'Reply',

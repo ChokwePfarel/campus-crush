@@ -16,6 +16,7 @@ abstract class UserRemoteDataSource {
     required int age,
     required PrivacySettingsModel? privacySettings,
     required bool isVerified,
+    int? coins,
   });
   Future<UserModel> getUserById(String userId);
 }
@@ -70,6 +71,7 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
     required int age,
     required PrivacySettingsModel? privacySettings,
     required bool isVerified,
+    int? coins,
   }) async {
     try {
       final user = client.auth.currentUser;
@@ -86,7 +88,7 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
         'university': university,
         'age': age,
         'is_verified': isVerified,
-
+        'coins': coins,
       };
 
       if (privacySettings != null) {

@@ -71,13 +71,13 @@ class AppSnackBar {
   static _SnackBarTheme _resolveTheme(SnackBarType type) {
     switch (type) {
       case SnackBarType.success:
-        return _SnackBarTheme(color: const Color(0xFF2E7D32), icon: Icons.check_circle_outline);
+        return _SnackBarTheme(color: const Color(0xFF1565C0), icon: Icons.check_circle_outline);
       case SnackBarType.error:
         return _SnackBarTheme(color: const Color(0xFFC62828), icon: Icons.error_outline);
       case SnackBarType.warning:
         return _SnackBarTheme(color: const Color(0xFFE65100), icon: Icons.warning_amber_rounded);
       case SnackBarType.info:
-        return _SnackBarTheme(color: const Color(0xFF1565C0), icon: Icons.info_outline);
+        return _SnackBarTheme(color: const Color(0xFF4015C0), icon: Icons.info_outline);
     }
   }
 }

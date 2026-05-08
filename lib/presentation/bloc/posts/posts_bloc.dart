@@ -1,3 +1,5 @@
+import 'package:dating_app/core/utils/offline_cache.dart';
+import 'package:dating_app/data/models/post_model.dart';
 import 'package:dating_app/domain/repositories/posts_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -26,42 +28,82 @@ class PostBloc extends Bloc<PostEvent, PostState> {
       return;
     }
 
-    try {
-      if (event.isInitial || currentState is! PostsLoaded) {
-        emit(LoadingPosts());
+      //-----------chacking if data is fresh
 
-        final posts = await _postRepository.getPosts(
-          university: event.university,
-          postType: event.postType,
-          locationTag: event.locationTag,
-          offset: 0,
-          limit: _limit,
-        );
+      final bool isFresh = event.isInitial || currentState is! PostsLoaded;
 
-        emit(PostsLoaded(
-          post: posts,
-          hasReachedMax: posts.length < _limit,
-        ));
+      if(isFresh){
+        //SHOW CACHED RIGHT AWAY
+        final cached = OfflineCache.getCachedPosts();
+        if(cached.isNotEmpty){
+          emit(PostsLoaded(post: cached, hasReachedMax: false));
+        } else {
+          emit(LoadingPosts());
+        }
+
+        //FETCH PAGE 1 FROM SERVER
+        try{
+
+          final posts = await _postRepository.getPosts(
+            university: event.university,
+            postType: event.postType,
+            locationTag: event.locationTag,
+            offset: 0,
+            limit: _limit,
+          );
+
+          //Only caching page 1
+
+          final models = posts.whereType<PostModel>().toList();
+          if(models.isNotEmpty){
+            await OfflineCache.cachePosts(models);
+          }
+
+          emit(PostsLoaded(
+            post: models,
+            hasReachedMax: posts.length < _limit
+          ));
+
+        } catch (e){
+          //SERVER FAILED
+          final alreadyShowingCache =
+          state is PostsLoaded && (state as PostsLoaded).post.isNotEmpty;
+          //If not,show the error
+          if(!alreadyShowingCache){
+            emit(PostError(e.toString()));
+          }
+        }
+
       } else {
-        final posts = await _postRepository.getPosts(
-          university: event.university,
-          postType: event.postType,
-          locationTag: event.locationTag,
-          offset: currentState.post.length,
-          limit: _limit,
-        );
 
-        emit(posts.isEmpty
-            ? currentState.copyWith(hasReachedMax: true)
-            : PostsLoaded(
-          post: currentState.post + posts,
-          hasReachedMax: posts.length < _limit,
-        ));
+        final loaded = currentState;
+        try{
+
+          final posts = await _postRepository.getPosts(
+            university: event.university,
+            postType: event.postType,
+            locationTag: event.locationTag,
+            offset: currentState.post.length,
+            limit: _limit,
+          );
+
+          emit(posts.isEmpty
+              ? loaded.copyWith(hasReachedMax: true)
+              : PostsLoaded(
+            post: loaded.post + posts,
+            hasReachedMax: posts.length < _limit,
+          ));
+
+        } catch (e) {
+          //emit(PostError(e.toString()));
+          // Pagination failure — keep the existing list, don't wipe it.
+          // The scroll listener will retry on the next scroll event.
+          emit(loaded.copyWith(hasReachedMax: false));
+
+        }
       }
-    } catch (e) {
-      emit(PostError(e.toString()));
-    }
-  }
+        }
+
 
   Future<void> _onCreatePost(
       CreatePostRequested event,

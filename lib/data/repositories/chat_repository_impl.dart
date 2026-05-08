@@ -1,6 +1,10 @@
+/*
 import 'dart:async';
-import 'package:dating_app/core/constants/message_mock.dart';
+import 'dart:io';
+import 'package:dating_app/core/utils/offline_cache.dart';
 import 'package:dating_app/data/datasources/chat_remote_data_source.dart';
+import 'package:dating_app/data/models/conversation_model.dart';
+import 'package:dating_app/data/models/message_model.dart';
 import 'package:dating_app/domain/entities/conversation_entity.dart';
 import 'package:dating_app/domain/entities/message_entity.dart';
 import 'package:dating_app/domain/repositories/chat_repository.dart';
@@ -11,8 +15,20 @@ class ChatRepositoryImpl implements ChatRepository {
   ChatRepositoryImpl(this._dataSource);
 
   @override
-  Future<List<ConversationEntity>> getConversations(String userId) =>
-      _dataSource.getConversations(userId);
+  Future<List<ConversationEntity>> getConversations(String userId) async {
+    try {
+      final conversations = await _dataSource.getConversations(userId);
+      // Cache conversations for offline use
+      final jsonList = conversations.map((c) => (c as ConversationModel).toJson()).toList();
+      // We need a way to cache conversations specifically. Let's reuse Profiles for now or add to OfflineCache
+      // For now, returning the network result.
+      return conversations;
+    } catch (e) {
+      // In a full implementation, we'd pull from Hive here
+      // return OfflineCache.getCachedConversations();
+      rethrow;
+    }
+  }
 
   @override
   Future<ConversationEntity> getOrCreateConversation({
@@ -25,8 +41,137 @@ class ChatRepositoryImpl implements ChatRepository {
       );
 
   @override
-  Future<List<MessageEntity>> getMessages(String conversationId) =>
-      _dataSource.getMessages(conversationId);
+  Future<List<MessageEntity>> getMessages(String conversationId) async {
+    try {
+      return await _dataSource.getMessages(conversationId);
+    } catch (e) {
+      // Fallback to local queue if network fails
+      return OfflineCache.getQueuedMessages(conversationId);
+    }
+  }
+
+  @override
+  Future<MessageEntity> sendMessage({
+    required String conversationId,
+    required String senderId,
+    required String text,
+  }) =>
+      _dataSource.sendMessage(
+
+        text: text,
+        conversationId: conversationId,
+        senderId: senderId,
+      );
+
+  @override
+  Future<void> markAsRead(String conversationId, String currentUserId) async {
+    try {
+      await _dataSource.markAsRead(conversationId, currentUserId);
+    } catch (_) {
+      // Ignore if offline
+    }
+  }
+
+  @override
+  Stream<MessageEntity> subscribeToMessages(String conversationId) =>
+      _dataSource.subscribeToMessages(conversationId);
+
+  @override
+  Stream<ConversationEntity> subscribeToConversations(String userId) =>
+      _dataSource.subscribeToConversations(userId);
+
+  @override
+  void dispose() => _dataSource.dispose();
+
+  @override
+  Future<int> getUnreadCount(String currentUserId) async {
+     try {
+       return await _dataSource.getUnreadCount(currentUserId);
+     } catch (_) {
+       return 0;
+     }
+  }
+}
+*/
+
+import 'dart:async';
+
+import 'package:dating_app/core/utils/offline_cache.dart';
+import 'package:dating_app/data/datasources/chat_remote_data_source.dart';
+import 'package:dating_app/data/models/conversation_model.dart';
+import 'package:dating_app/data/models/message_model.dart';
+import 'package:dating_app/domain/entities/conversation_entity.dart';
+import 'package:dating_app/domain/entities/message_entity.dart';
+import 'package:dating_app/domain/repositories/chat_repository.dart';
+
+class ChatRepositoryImpl implements ChatRepository {
+  final ChatRemoteDataSource _dataSource;
+
+  ChatRepositoryImpl(this._dataSource);
+
+  // ─── Conversations ─────────────────────────────────────────────────────────
+
+  @override
+  Future<List<ConversationEntity>> getConversations(String userId) async {
+    try {
+      final conversations = await _dataSource.getConversations(userId);
+
+      // Cache the fresh list for offline use
+      final models = conversations.whereType<ConversationModel>().toList();
+      if (models.isNotEmpty) {
+        await OfflineCache.cacheConversations(userId, models);
+      }
+
+      return conversations;
+    } catch (e) {
+      // Network unavailable — serve from cache
+      final cached = OfflineCache.getCachedConversations(userId);
+      if (cached.isNotEmpty) return cached;
+      rethrow; // No cache and no network — surface the error
+    }
+  }
+
+  @override
+  Future<ConversationEntity> getOrCreateConversation({
+    required String currentUserId,
+    required String otherUserId,
+  }) =>
+      _dataSource.getOrCreateConversation(
+        currentUserId: currentUserId,
+        otherUserId:   otherUserId,
+      );
+
+  // ─── Messages ──────────────────────────────────────────────────────────────
+
+  @override
+  Future<List<MessageEntity>> getMessages(String conversationId) async {
+    try {
+      final messages = await _dataSource.getMessages(conversationId);
+
+      // Cache confirmed server messages
+      final models = messages.whereType<MessageModel>().toList();
+      if (models.isNotEmpty) {
+        await OfflineCache.cacheMessageHistory(conversationId, models);
+      }
+
+      return messages;
+    } catch (e) {
+      // Fall back to cached history + queued outbox
+      final cached = OfflineCache.getCachedMessages(conversationId);
+      final queued = OfflineCache.getQueuedMessages(conversationId);
+
+      if (cached.isNotEmpty || queued.isNotEmpty) {
+        final seen   = <String>{};
+        final merged = <MessageEntity>[...cached, ...queued]
+            .where((m) => seen.add(m.id))
+            .toList()
+          ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+        return merged;
+      }
+
+      rethrow;
+    }
+  }
 
   @override
   Future<MessageEntity> sendMessage({
@@ -41,8 +186,15 @@ class ChatRepositoryImpl implements ChatRepository {
       );
 
   @override
-  Future<void> markAsRead(String conversationId, String currentUserId) =>
-      _dataSource.markAsRead(conversationId, currentUserId);
+  Future<void> markAsRead(String conversationId, String currentUserId) async {
+    try {
+      await _dataSource.markAsRead(conversationId, currentUserId);
+    } catch (_) {
+      // Safe to ignore when offline — will be corrected on next fetch
+    }
+  }
+
+  // ─── Streams ───────────────────────────────────────────────────────────────
 
   @override
   Stream<MessageEntity> subscribeToMessages(String conversationId) =>
@@ -52,86 +204,17 @@ class ChatRepositoryImpl implements ChatRepository {
   Stream<ConversationEntity> subscribeToConversations(String userId) =>
       _dataSource.subscribeToConversations(userId);
 
-  @override
-  void dispose() => _dataSource.dispose();
-
-  @override
-  Future<int> getUnreadCount(String currentUserId) =>
-      _dataSource.getUnreadCount(currentUserId);
-}
-
-
-
-// ─── Mock Implementation ─────────────────────────────────────────────────────
-
-class MockChatRepositoryImpl implements ChatRepository {
-  final _messageController = StreamController<MessageEntity>.broadcast();
-  final _conversationController = StreamController<ConversationEntity>.broadcast();
-
-  @override
-  void dispose() {
-    _messageController.close();
-    _conversationController.close();
-  }
-
-  @override
-  Future<List<ConversationEntity>> getConversations(String currentUserId) async {
-    // Return mock data from your constants
-    return ConversationMock.demoConversations;
-  }
-
-  @override
-  Future<List<MessageEntity>> getMessages(String conversationId) async {
-    // Return mock messages
-    return MessageMock.demoMessages;
-  }
-
-  @override
-  Future<ConversationEntity> getOrCreateConversation({
-    required String currentUserId,
-    required String otherUserId,
-  }) async {
-    // Return the first demo conversation as a fallback
-    return ConversationMock.demoConversations.first;
-  }
-
-  @override
-  Future<void> markAsRead(String conversationId, String currentUserId) async {
-    print("Mock: Marked conversation $conversationId as read");
-  }
-
-  @override
-  Future<MessageEntity> sendMessage({
-    required String conversationId,
-    required String senderId,
-    required String text,
-  }) async {
-    final newMessage = MessageEntity(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      conversationId: conversationId,
-      senderId: senderId,
-      text: text,
-      isRead: false,
-      createdAt: DateTime.now(),
-    );
-    
-    // Push to stream so ChatPage UI updates
-    _messageController.add(newMessage);
-    return newMessage;
-  }
-
-  @override
-  Stream<ConversationEntity> subscribeToConversations(String currentUserId) {
-    return _conversationController.stream;
-  }
-
-  @override
-  Stream<MessageEntity> subscribeToMessages(String conversationId) {
-    return _messageController.stream;
-  }
+  // ─── Misc ──────────────────────────────────────────────────────────────────
 
   @override
   Future<int> getUnreadCount(String currentUserId) async {
-    return 0;
+    try {
+      return await _dataSource.getUnreadCount(currentUserId);
+    } catch (_) {
+      return 0;
+    }
   }
+
+  @override
+  void dispose() => _dataSource.dispose();
 }

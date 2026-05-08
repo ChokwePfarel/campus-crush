@@ -90,7 +90,7 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
     }
 
     if (hasLocation) {
-      query = query.eq('location_tag', locationTag!);
+      query = query.eq('location_tag', locationTag);
     }
     // -------------------------------
 

@@ -1,5 +1,5 @@
-import 'dart:async';
 import 'package:dating_app/core/constants/mock_data.dart';
+import 'package:dating_app/core/utils/offline_cache.dart';
 import 'package:dating_app/data/datasources/users_remote_data_source.dart';
 import 'package:dating_app/data/models/user_model.dart';
 import 'package:dating_app/domain/repositories/users_repository.dart';
@@ -16,19 +16,28 @@ class UsersRepositoryImpl implements UsersRepository {
     String? residence,
     required int offset,
     required int limit,
-  }) async {
-    return await remoteDataSource.getUsers(
-      university: university,
-      sex: sex,
-      residence: residence,
-      offset: offset,
-      limit: limit,
-    );
-  }
+  }) =>
+      remoteDataSource.getUsers(
+        university: university,
+        sex: sex,
+        residence: residence,
+        offset: offset,
+        limit: limit,
+      );
 
   @override
   Future<UserModel> getUserById(String userId) async {
-    return await remoteDataSource.getUserById(userId);
+    try {
+      final user = await remoteDataSource.getUserById(userId);
+      // Individual profile cache stays here — this is profile-view caching,
+      // not discovery-list caching, so the bloc doesn't own it.
+      await OfflineCache.cacheProfile(userId, user.toJson());
+      return user;
+    } catch (e) {
+      final cachedJson = OfflineCache.getCachedProfile(userId);
+      if (cachedJson != null) return UserModel.fromJson(cachedJson);
+      rethrow;
+    }
   }
 }
 
@@ -46,17 +55,13 @@ class MockRepositoryImpl implements UsersRepository {
     final filtered = MockData.mockUsers
         .where((u) => u.university == university && u.sex == sex)
         .toList();
-
-    final paginated = filtered.skip(offset).take(limit).toList();
-
-    return paginated;
+    return filtered.skip(offset).take(limit).toList();
   }
 
   @override
   Future<UserModel> getUserById(String userId) async {
-    // Look for the user in MockData.mockUsers
     return MockData.mockUsers.firstWhere(
-      (user) => user.id == userId,
+          (user) => user.id == userId,
       orElse: () => MockData.mockUsers.first,
     );
   }
