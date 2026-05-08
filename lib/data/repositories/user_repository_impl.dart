@@ -32,6 +32,7 @@ class UserRepositoryImpl implements UserRepository {
     required int age,
     PrivacySettingsEntity? privacySettings,
     required bool isVerified,
+    int? coins,
   }) async {
     await remoteDataSource.updateUserData(
       name: name,
@@ -51,6 +52,8 @@ class UserRepositoryImpl implements UserRepository {
             )
           : null,
       isVerified: isVerified,
+      coins: coins,
+
 
     );
   }

@@ -1,4 +1,5 @@
 import 'package:dating_app/core/utils/screen_size.dart';
+import 'package:dating_app/core/utils/snackbar.dart';
 import 'package:dating_app/data/models/user_model.dart';
 import 'package:dating_app/presentation/bloc/coins/coins_bloc.dart';
 import 'package:dating_app/presentation/bloc/coins/coins_event.dart';
@@ -268,9 +269,9 @@ class _SendPostPageState extends State<SendPostPage>
             }
             if (state is PostError && _isSending) {
               setState(() => _isSending = false);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.message), backgroundColor: Colors.redAccent),
-              );
+
+              AppSnackBar.show(context, 'Something went wrong',
+                  type: SnackBarType.error);;
             }
           },
         ),
@@ -937,7 +938,7 @@ class _SendPostPageState extends State<SendPostPage>
           padding: EdgeInsets.zero,
           onPressed: _canSend ? _handleSend : null,
           child: _isSending
-              ? const CupertinoActivityIndicator(color: Colors.white)
+              ? CircularProgressIndicator.adaptive()
               : Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

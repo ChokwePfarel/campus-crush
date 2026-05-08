@@ -79,6 +79,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
         interests:        event.interests,
         age:              event.age,
         privacySettings:  event.privacySettings,
+
       );
 
       emit(UserLoaded(optimistic));
@@ -101,6 +102,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
         age:              event.age,
         privacySettings:  event.privacySettings,
         isVerified:       event.isVerified,
+        coins:            event.coins,
       );
     } catch (e) {
       // Revert — the stream will eventually correct it once reconnected

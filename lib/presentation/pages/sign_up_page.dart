@@ -1,4 +1,5 @@
 import 'package:dating_app/core/utils/purple.dart';
+import 'package:dating_app/core/utils/snackbar.dart';
 import 'package:dating_app/core/utils/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -58,9 +59,9 @@ class _SignUpPageState extends State<SignUpPage> {
               ),
             );
           } else if (state is AuthError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
+            AppSnackBar.show(context, 'Incorrect email or password',
+                type: SnackBarType.warning);
+
           }
         },
         child: SafeArea(
@@ -94,7 +95,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
                     _pillField(
                       controller: _nameController,
-                      hint: 'Full Name',
+                      hint: 'User Name',
                       icon: Icons.person_outline,
                       validator: (val) =>
                           val == null || val.isEmpty ? 'Required' : null,
@@ -189,7 +190,7 @@ class _SignUpPageState extends State<SignUpPage> {
                               }
                             },
                             child: const Text(
-                              'SIGN UP',
+                              'Sign up',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 15,

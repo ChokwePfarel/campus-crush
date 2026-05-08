@@ -1,4 +1,5 @@
 import 'package:dating_app/core/utils/purple.dart';
+import 'package:dating_app/core/utils/snackbar.dart';
 import 'package:dating_app/core/utils/theme.dart';
 import 'package:dating_app/presentation/pages/home_page.dart';
 import 'package:flutter/material.dart';
@@ -55,9 +56,8 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
+            AppSnackBar.show(context, 'Something went wrong, try again later',
+                type: SnackBarType.warning);
           } else if (state is Authenticated) {
             Navigator.pushReplacement(
               context,

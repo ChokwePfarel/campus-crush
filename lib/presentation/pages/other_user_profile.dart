@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
 import 'package:dating_app/core/utils/theme.dart';
 import 'package:dating_app/core/widgets/common/private_account.dart';
@@ -78,9 +77,7 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> {
           body: BlocBuilder<OtherUserBloc, OtherUserState>(
             builder: (context, state) {
               if (state is OtherUserLoading) {
-                return const Center(
-                  child: CircularProgressIndicator.adaptive(),
-                );
+                return Center(child: CircularProgressIndicator.adaptive());
               }
 
               if (state is OtherUserError) {
@@ -106,9 +103,8 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> {
               if (state is OtherUserLoaded) {
                 final user = state.user;
 
-                // --- CHECK PRIVACY SETTINGS ---
                 if (user.privacySettings.isProfilePrivate) {
-                  return PrivateProfilePage();
+                  return const PrivateProfilePage();
                 }
 
                 context.read<ImagesBloc>().add(LoadUserImages(user.id));
@@ -119,7 +115,6 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // ─── Header Image ───
                           Stack(
                             children: [
                               Container(
@@ -156,7 +151,6 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> {
                               ),
                             ],
                           ),
-
                           Padding(
                             padding: EdgeInsets.symmetric(
                               horizontal: SizeConfig.widthPercent(5),
@@ -218,12 +212,9 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> {
                                   ),
                                 ),
                                 SizedBox(height: SizeConfig.heightPercent(3)),
-                                Text(
+                                const Text(
                                   'About Me',
-                                  style: TextStyle(
-                                    fontSize: SizeConfig.widthPercent(5),
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                                 ),
                                 SizedBox(height: SizeConfig.heightPercent(1)),
                                 Text(
@@ -237,12 +228,9 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> {
                                   ),
                                 ),
                                 SizedBox(height: SizeConfig.heightPercent(3)),
-                                 Text(
+                                const Text(
                                   'Interests',
-                                  style: TextStyle(
-                                    fontSize: SizeConfig.widthPercent(5),
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                                 ),
                                 SizedBox(height: SizeConfig.heightPercent(1.5)),
                                 Wrap(
@@ -333,7 +321,9 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> {
                       right: 0,
                       child: BlocBuilder<ConnectivityBloc, ConnectivityState>(
                         builder: (context, connState) {
+                          // Hide buttons if offline
                           if (connState.isOffline) return const SizedBox.shrink();
+
                           return Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [

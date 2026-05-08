@@ -26,6 +26,8 @@ class UpdateUserRequested extends UserEvent {
   final int age;
   final PrivacySettingsEntity? privacySettings;
   final bool isVerified;
+  final int? coins;
+
 
 
   UpdateUserRequested({
@@ -39,5 +41,6 @@ class UpdateUserRequested extends UserEvent {
     required this.age,
     this.privacySettings,
     required this.isVerified,
+    this.coins ,
   });
 }

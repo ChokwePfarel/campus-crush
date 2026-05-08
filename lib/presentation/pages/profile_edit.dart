@@ -33,6 +33,7 @@ class _ProfileEditState extends State<ProfileEdit> {
   late TextEditingController _bioController;
   late TextEditingController _ageController;
   late TextEditingController _residenceController;
+  late TextEditingController _majorController;
   late String _selectedStatus;
   late String _selectedSex;
   late List<String> _interests;
@@ -45,6 +46,7 @@ class _ProfileEditState extends State<ProfileEdit> {
     _bioController = TextEditingController(text: widget.user.bio);
     _ageController = TextEditingController(text: widget.user.age.toString());
     _residenceController = TextEditingController(text: widget.user.residence);
+    _majorController = TextEditingController(text: widget.user.major);
     _selectedStatus = widget.user.status.isNotEmpty
         ? widget.user.status
         : 'Single';
@@ -446,9 +448,17 @@ class _ProfileEditState extends State<ProfileEdit> {
                 ],
               ),
               SizedBox(height: SizeConfig.heightPercent(2)),
+
+              _buildTextField("Course", _majorController,
+                  onChangedCallback: _markAsDirty),
+
+              SizedBox(height: SizeConfig.heightPercent(2)),
+
               _buildTextField("Residence", _residenceController,
                   onChangedCallback: _markAsDirty),
+
               SizedBox(height: SizeConfig.heightPercent(2)),
+
               _buildTextField(
                   "About Me", _bioController, onChangedCallback: _markAsDirty,
                   maxLines: 3),

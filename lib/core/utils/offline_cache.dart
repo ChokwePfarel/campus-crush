@@ -130,7 +130,6 @@ class OfflineCache {
 
   // ─── Outbox Queue ──────────────────────────────────────────────────────────
 
-  /// Persist a pending message so it survives app restarts.
   static Future<void> enqueueMessage(MessageEntity message) async {
     final box  = Hive.box(queuedMessagesBoxName);
     final data = {
@@ -143,8 +142,6 @@ class OfflineCache {
     await box.put(message.id, data);
   }
 
-  /// Queued messages for a specific conversation, returned as [MessageEntity]
-  /// with [MessageStatus.pending].
   static List<MessageEntity> getQueuedMessages(String conversationId) {
     final box = Hive.box(queuedMessagesBoxName);
     return box.values
@@ -153,7 +150,6 @@ class OfflineCache {
         .toList();
   }
 
-  /// All queued messages across every conversation (used for bulk resend).
   static List<MessageEntity> getAllQueuedMessages() {
     final box = Hive.box(queuedMessagesBoxName);
     return box.values

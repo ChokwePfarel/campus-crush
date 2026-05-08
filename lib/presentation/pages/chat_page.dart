@@ -538,6 +538,8 @@ import 'package:dating_app/domain/repositories/chat_repository.dart';
 import 'package:dating_app/presentation/bloc/chat/chat_bloc.dart';
 import 'package:dating_app/presentation/bloc/chat/chat_event.dart';
 import 'package:dating_app/presentation/bloc/chat/chat_state.dart';
+import 'package:dating_app/presentation/bloc/conversation/conversation_bloc.dart';
+import 'package:dating_app/presentation/bloc/conversation/conversation_event.dart';
 import 'package:dating_app/presentation/pages/other_user_profile.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -586,6 +588,13 @@ class _ChatPageState extends State<ChatPage> {
   // Track the message count so we only auto-scroll when new messages arrive,
   // not on every state rebuild.
   int _lastMessageCount = 0;
+
+  @override
+  void initState(){
+    super.initState();
+
+  }
+
 
   @override
   void dispose() {
@@ -645,10 +654,16 @@ class _ChatPageState extends State<ChatPage> {
             currentUserId:  widget.currentUserId,
           ),
         ),
+
       // FIX 1 (cont.): Use Builder so every child widget gets a context
       // that is *below* the BlocProvider and can safely call context.read<ChatBloc>().
       child: Builder(
         builder: (ctx) {
+
+          context.read<ConversationsBloc>().add(
+            RefreshUnreadCount(widget.currentUserId),
+          );
+
           final chatBloc = ctx.read<ChatBloc>();
           return Scaffold(
             backgroundColor: const Color(0xFFF7F7FB),

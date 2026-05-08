@@ -1,6 +1,7 @@
 import 'package:dating_app/core/constants/lists.dart';
 import 'package:dating_app/core/utils/purple.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
+import 'package:dating_app/core/utils/theme.dart';
 import 'package:dating_app/core/widgets/dropdown.dart';
 import 'package:dating_app/presentation/bloc/user/user_bloc.dart';
 import 'package:dating_app/presentation/bloc/user/user_event.dart';
@@ -55,38 +56,33 @@ class _OnboardingPageState extends State<OnboardingPage> {
   void _submit() {
     print("SUBMIT BUTTON CLICKED");
     if (_formKey.currentState!.validate()) {
-
-      print('Bio: ${_bioController.text}');
-      print('Age: ${_ageController.text}');
-      print('Residence: ${_residenceController.text}');
-      print('Interests: $_interests');
-      print('University: $_selectedUniversity');
-      print('Sex: $_selectedSex');
-
+      debugPrint('Onboarding: Submitting user data');
 
       context.read<UserBloc>().add(
         UpdateUserRequested(
           name: widget.userName,
-          sex: _selectedSex.toLowerCase(),
+          sex: _selectedSex,
           bio: _bioController.text.trim(),
           status: 'looking',
           residence: _residenceController.text.trim(),
           university: _selectedUniversity,
           interests: _interests,
-          age: int.parse(_ageController.text),
+          age: int.tryParse(_ageController.text) ?? 0,
           privacySettings: null,
           isVerified: widget.isVerified,
+          coins: 30,
         ),
       );
 
-      //LOAD THE DATA SAVED SO IT CAN BE READY ON UI
+      // Start fresh subscription
       context.read<UserBloc>().add(LoadUserSubscription());
-
 
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const MyHomePage()),
-            (route) => false,
+        (route) => false,
       );
+    } else {
+      debugPrint("Onboarding: Validation failed");
     }
   }
 
@@ -266,17 +262,14 @@ class _OnboardingPageState extends State<OnboardingPage> {
                             height: 52,
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: PurplePalette.primary,
+                                backgroundColor: AppStylee.primaryColor,
                                 foregroundColor: Colors.white,
                                 shape: const StadiumBorder(),
                                 elevation: 0,
                               ),
-                              onPressed: (){
-                                print("BUTTON CLICKED");
-                                _submit();
-                              },
+                              onPressed: _submit,
                               child: const Text(
-                                'FINISH SETUP',
+                                'Done',
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w800,
@@ -301,13 +294,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
   // ── Helpers ──────────────────────────────────────
 
   Widget _blob(double size, Color color, double opacity) => Container(
-    width: size,
-    height: size,
-    decoration: BoxDecoration(
-      color: color.withOpacity(opacity),
-      shape: BoxShape.circle,
-    ),
-  );
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: color.withOpacity(opacity),
+          shape: BoxShape.circle,
+        ),
+      );
 
   Widget _label(String text) => Padding(
     padding: const EdgeInsets.only(bottom: 8),
