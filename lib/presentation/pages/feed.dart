@@ -54,7 +54,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
   void initState() {
     super.initState();
 
-      context.read<UserBloc>().add(LoadUserSubscription());
+    context.read<UserBloc>().add(LoadUserSubscription());
 
     _scrollCtrl.addListener(_scrollListener);
 
@@ -64,8 +64,13 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
 
     _connectivitySub = Connectivity().onConnectivityChanged.listen((results) {
       final offline = results.first == ConnectivityResult.none;
-      if (_isOffline && !offline) _fetchPosts(context, isInitial: true);
-      if (mounted) setState(() => _isOffline = offline);
+      if (mounted) {
+        // If we were offline and now online, refresh the feed
+        if (_isOffline && !offline) {
+          _fetchPosts(context, isInitial: true);
+        }
+        setState(() => _isOffline = offline);
+      }
     });
 
     Future.microtask(() {

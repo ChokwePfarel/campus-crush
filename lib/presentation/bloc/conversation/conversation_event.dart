@@ -1,4 +1,3 @@
-
 import 'package:dating_app/domain/entities/conversation_entity.dart';
 
 abstract class ConversationsEvent {}
@@ -22,8 +21,16 @@ class ConversationUpdated extends ConversationsEvent {
   ConversationUpdated(this.conversation);
 }
 
-
 class RefreshUnreadCount extends ConversationsEvent {
   final String currentUserId;
   RefreshUnreadCount(this.currentUserId);
+}
+
+class MarkConversationAsRead extends ConversationsEvent {
+  final String conversationId;
+  final String currentUserId;
+  MarkConversationAsRead({
+    required this.conversationId,
+    required this.currentUserId,
+  });
 }

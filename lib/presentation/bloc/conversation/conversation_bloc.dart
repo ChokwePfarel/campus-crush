@@ -18,6 +18,7 @@ class ConversationsBloc extends Bloc<ConversationsEvent, ConversationsState> {
     on<OpenOrCreateConversation>(_onOpenOrCreate);
     on<ConversationUpdated>(_onConversationUpdated);
     on<RefreshUnreadCount>(_onRefreshUnreadCount);
+    on<MarkConversationAsRead>(_onMarkAsRead);
   }
 
   Future<void> _onLoad(
@@ -26,35 +27,25 @@ class ConversationsBloc extends Bloc<ConversationsEvent, ConversationsState> {
       ) async {
     debugPrint('ConversationsBloc: _onLoad started for user: ${event.currentUserId}');
     
-    // ── Step 1: Show cached data immediately (zero-wait) ───────────────────
     try {
       final cached = OfflineCache.getCachedConversations(event.currentUserId);
-      debugPrint('ConversationsBloc: Cached conversations found: ${cached.length}');
       if (cached.isNotEmpty) {
         emit(ConversationsLoaded(conversations: cached, unreadCount: 0));
       } else {
-        debugPrint('ConversationsBloc: No cache found, emitting Loading');
         emit(ConversationsLoading());
       }
     } catch (e) {
-      debugPrint('ConversationsBloc: Error reading cache: $e');
       emit(ConversationsLoading());
     }
 
-    // ── Step 2: Fetch from server and merge ────────────────────────────────
     try {
-      debugPrint('ConversationsBloc: Fetching from network...');
       final conversations =
       await _chatRepository.getConversations(event.currentUserId);
-      debugPrint('ConversationsBloc: Network fetch success. Count: ${conversations.length}');
-      
       final unreadCount =
       await _chatRepository.getUnreadCount(event.currentUserId);
 
-      // Persist fresh data for next cold start
       final models = conversations.whereType<ConversationModel>().toList();
       if (models.isNotEmpty) {
-        debugPrint('ConversationsBloc: Caching ${models.length} fresh conversations');
         await OfflineCache.cacheConversations(event.currentUserId, models);
       }
 
@@ -64,23 +55,16 @@ class ConversationsBloc extends Bloc<ConversationsEvent, ConversationsState> {
           unreadCount: unreadCount,
         ),
       );
-      debugPrint('ConversationsBloc: Emitted ConversationsLoaded with fresh data');
 
-      // ── Step 3: Subscribe to real-time updates ─────────────────────────
       await _subscription?.cancel();
       _subscription = _chatRepository
           .subscribeToConversations(event.currentUserId)
           .listen((updated) {
-        debugPrint('ConversationsBloc: Real-time update received for conversation: ${updated.id}');
         add(ConversationUpdated(updated));
         add(RefreshUnreadCount(event.currentUserId));
       });
     } catch (e) {
-      debugPrint('ConversationsBloc: Network fetch error: $e');
-      // Server failed — if we already emitted cache, stay there silently.
-      // Otherwise surface the error.
       if (state is! ConversationsLoaded) {
-        debugPrint('ConversationsBloc: Emitting error because no cache was shown');
         emit(ConversationsError(e.toString()));
       }
     }
@@ -113,7 +97,6 @@ class ConversationsBloc extends Bloc<ConversationsEvent, ConversationsState> {
       return c.id == event.conversation.id ? event.conversation : c;
     }).toList();
 
-    // Sort by most recent message
     updatedList.sort(
           (ConversationEntity a, ConversationEntity b) =>
           (b.lastMessageAt ?? b.createdAt)
@@ -135,9 +118,45 @@ class ConversationsBloc extends Bloc<ConversationsEvent, ConversationsState> {
     } catch (_) {}
   }
 
+  void _onMarkAsRead(
+      MarkConversationAsRead event,
+      Emitter<ConversationsState> emit,
+      ) {
+    final current = state;
+    if (current is! ConversationsLoaded) return;
+
+    final updatedConversations = current.conversations.map((c) {
+      if (c.id == event.conversationId) {
+        // Optimistically set unreadCount to 0 for this conversation
+        if (c is ConversationModel) {
+            // Need a way to copy with unreadCount 0. 
+            // Assuming ConversationModel has copyWith or similar, 
+            // but the Entity doesn't. 
+            // Let's create a new Model instance with 0 unread.
+            return ConversationModel(
+              id: c.id,
+              userOneId: c.userOneId,
+              userTwoId: c.userTwoId,
+              lastMessage: c.lastMessage,
+              lastMessageAt: c.lastMessageAt,
+              createdAt: c.createdAt,
+              otherUserName: c.otherUserName,
+              otherUserImageUrl: c.otherUserImageUrl,
+              otherUserIsVerified: c.otherUserIsVerified,
+              unreadCount: 0,
+            );
+        }
+        return c;
+      }
+      return c;
+    }).toList();
+
+    emit(current.copyWith(conversations: updatedConversations));
+    add(RefreshUnreadCount(event.currentUserId));
+  }
+
   @override
   Future<void> close() {
-    debugPrint('ConversationsBloc: Closing');
     _subscription?.cancel();
     _chatRepository.dispose();
     return super.close();

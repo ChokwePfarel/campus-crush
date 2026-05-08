@@ -32,7 +32,7 @@ class _SplashScreenState extends State<SplashScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
-        child: CachedNetworkImage(imageUrl: 'assets/icon.png', width: 120),
+        child: Image.asset('assets/icon.png', width: 120)
       ),
     );
   }

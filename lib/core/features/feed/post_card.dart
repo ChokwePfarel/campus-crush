@@ -51,6 +51,7 @@ class PostCardState extends State<PostCard> with SingleTickerProviderStateMixin 
   @override
   void initState() {
     super.initState();
+
     Future.delayed(const Duration(milliseconds: 50), () {
       if (mounted) _animCtrl.forward();
     });
@@ -209,7 +210,11 @@ class PostCardState extends State<PostCard> with SingleTickerProviderStateMixin 
                         color: Colors.grey[200],
                         child: const Center(child: CircularProgressIndicator.adaptive()),
                       ),
-                      errorWidget: (context, url, error) => const SizedBox.shrink(),
+                      errorWidget: (context, url, error) => Container(
+                        height: 200,
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.error_outline, color: Colors.grey),
+                      ),
                     ),
                   ),
                 ),
