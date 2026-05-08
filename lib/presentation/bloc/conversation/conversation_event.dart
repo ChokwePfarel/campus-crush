@@ -34,3 +34,8 @@ class MarkConversationAsRead extends ConversationsEvent {
     required this.currentUserId,
   });
 }
+
+class SetActiveConversation extends ConversationsEvent {
+  final String? conversationId;
+  SetActiveConversation(this.conversationId);
+}

@@ -51,7 +51,6 @@ class PostCardState extends State<PostCard> with SingleTickerProviderStateMixin 
   @override
   void initState() {
     super.initState();
-
     Future.delayed(const Duration(milliseconds: 50), () {
       if (mounted) _animCtrl.forward();
     });
@@ -59,10 +58,10 @@ class PostCardState extends State<PostCard> with SingleTickerProviderStateMixin 
     Future.microtask(() {
       if (!mounted) return;
       context.read<LikesBloc>().add(InitializeLikes(
-            postId: widget.post.id,
-            userId: widget.currentUserId,
-            initialCount: widget.post.likeCount,
-          ));
+        postId: widget.post.id,
+        userId: widget.currentUserId,
+        initialCount: widget.post.likeCount,
+      ));
     });
   }
 
@@ -210,11 +209,7 @@ class PostCardState extends State<PostCard> with SingleTickerProviderStateMixin 
                         color: Colors.grey[200],
                         child: const Center(child: CircularProgressIndicator.adaptive()),
                       ),
-                      errorWidget: (context, url, error) => Container(
-                        height: 200,
-                        color: Colors.grey[300],
-                        child: const Icon(Icons.error_outline, color: Colors.grey),
-                      ),
+                      errorWidget: (context, url, error) => const SizedBox.shrink(),
                     ),
                   ),
                 ),
@@ -237,23 +232,23 @@ class PostCardState extends State<PostCard> with SingleTickerProviderStateMixin 
                           onTap: widget.isOffline
                               ? () {}
                               : () {
-                                  HapticFeedback.lightImpact();
-                                  final userState = context.read<UserBloc>().state;
-                                  if (userState is! user_st.UserLoaded) return;
+                            HapticFeedback.lightImpact();
+                            final userState = context.read<UserBloc>().state;
+                            if (userState is! user_st.UserLoaded) return;
 
-                                  if (hasLiked) {
-                                    context.read<LikesBloc>().add(UnlikePost(
-                                          postId: post.id,
-                                          userId: userState.user.id,
-                                        ));
-                                  } else {
-                                    context.read<LikesBloc>().add(LikePost(
-                                          postId: post.id,
-                                          userId: userState.user.id,
-                                          likedByName: userState.user.name,
-                                        ));
-                                  }
-                                },
+                            if (hasLiked) {
+                              context.read<LikesBloc>().add(UnlikePost(
+                                postId: post.id,
+                                userId: userState.user.id,
+                              ));
+                            } else {
+                              context.read<LikesBloc>().add(LikePost(
+                                postId: post.id,
+                                userId: userState.user.id,
+                                likedByName: userState.user.name,
+                              ));
+                            }
+                          },
                         );
                       },
                     ),
