@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
 import 'package:dating_app/core/utils/theme.dart';
 import 'package:dating_app/core/widgets/common/private_account.dart';
@@ -34,6 +35,32 @@ class OtherUserProfilePage extends StatefulWidget {
 }
 
 class _OtherUserProfilePageState extends State<OtherUserProfilePage> {
+
+
+  bool _isOffline = false;
+  StreamSubscription? _connectivitySub;
+
+
+  @override
+  void initState() {
+    super.initState();
+
+    _connectivitySub = Connectivity().onConnectivityChanged.listen((results) {
+      if (mounted) {
+        setState(() {
+          _isOffline = results.first == ConnectivityResult.none;
+        });
+      }
+    });}
+
+    @override
+    void dispose() {
+      _connectivitySub?.cancel();
+
+      super.dispose();
+    }
+
+
   @override
   Widget build(BuildContext context) {
     SizeConfig.init(context);
@@ -321,8 +348,9 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> {
                       right: 0,
                       child: BlocBuilder<ConnectivityBloc, ConnectivityState>(
                         builder: (context, connState) {
+
                           // Hide buttons if offline
-                          if (connState.isOffline) return const SizedBox.shrink();
+                          if (_isOffline) return const SizedBox.shrink();
 
                           return Row(
                             mainAxisAlignment: MainAxisAlignment.center,

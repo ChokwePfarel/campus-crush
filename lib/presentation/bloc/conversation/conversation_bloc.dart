@@ -12,6 +12,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 class ConversationsBloc extends Bloc<ConversationsEvent, ConversationsState> {
   final ChatRepository _chatRepository;
   StreamSubscription? _subscription;
+  String? _activeConversationId;
 
   ConversationsBloc(this._chatRepository) : super(ConversationsInitial()) {
     on<LoadConversations>(_onLoad);
@@ -19,14 +20,13 @@ class ConversationsBloc extends Bloc<ConversationsEvent, ConversationsState> {
     on<ConversationUpdated>(_onConversationUpdated);
     on<RefreshUnreadCount>(_onRefreshUnreadCount);
     on<MarkConversationAsRead>(_onMarkAsRead);
+    on<SetActiveConversation>(_onSetActiveConversation);
   }
 
   Future<void> _onLoad(
-      LoadConversations event,
-      Emitter<ConversationsState> emit,
-      ) async {
-    debugPrint('ConversationsBloc: _onLoad started for user: ${event.currentUserId}');
-    
+    LoadConversations event,
+    Emitter<ConversationsState> emit,
+  ) async {
     try {
       final cached = OfflineCache.getCachedConversations(event.currentUserId);
       if (cached.isNotEmpty) {
@@ -40,9 +40,9 @@ class ConversationsBloc extends Bloc<ConversationsEvent, ConversationsState> {
 
     try {
       final conversations =
-      await _chatRepository.getConversations(event.currentUserId);
+          await _chatRepository.getConversations(event.currentUserId);
       final unreadCount =
-      await _chatRepository.getUnreadCount(event.currentUserId);
+          await _chatRepository.getUnreadCount(event.currentUserId);
 
       final models = conversations.whereType<ConversationModel>().toList();
       if (models.isNotEmpty) {
@@ -71,14 +71,14 @@ class ConversationsBloc extends Bloc<ConversationsEvent, ConversationsState> {
   }
 
   Future<void> _onOpenOrCreate(
-      OpenOrCreateConversation event,
-      Emitter<ConversationsState> emit,
-      ) async {
+    OpenOrCreateConversation event,
+    Emitter<ConversationsState> emit,
+  ) async {
     try {
       emit(ConversationsLoading());
       final conversation = await _chatRepository.getOrCreateConversation(
         currentUserId: event.currentUserId,
-        otherUserId:   event.otherUserId,
+        otherUserId: event.otherUserId,
       );
       emit(ConversationReady(conversation));
     } catch (e) {
@@ -87,18 +87,37 @@ class ConversationsBloc extends Bloc<ConversationsEvent, ConversationsState> {
   }
 
   void _onConversationUpdated(
-      ConversationUpdated event,
-      Emitter<ConversationsState> emit,
-      ) {
+    ConversationUpdated event,
+    Emitter<ConversationsState> emit,
+  ) {
     final current = state;
     if (current is! ConversationsLoaded) return;
 
     final updatedList = current.conversations.map((c) {
-      return c.id == event.conversation.id ? event.conversation : c;
+      if (c.id == event.conversation.id) {
+        // If this conversation is currently open, force unread count to 0
+        if (c.id == _activeConversationId) {
+          final conv = event.conversation;
+          return ConversationModel(
+            id: conv.id,
+            userOneId: conv.userOneId,
+            userTwoId: conv.userTwoId,
+            lastMessage: conv.lastMessage,
+            lastMessageAt: conv.lastMessageAt,
+            createdAt: conv.createdAt,
+            otherUserName: conv.otherUserName,
+            otherUserImageUrl: conv.otherUserImageUrl,
+            otherUserIsVerified: conv.otherUserIsVerified,
+            unreadCount: 0,
+          );
+        }
+        return event.conversation;
+      }
+      return c;
     }).toList();
 
     updatedList.sort(
-          (ConversationEntity a, ConversationEntity b) =>
+      (ConversationEntity a, ConversationEntity b) =>
           (b.lastMessageAt ?? b.createdAt)
               .compareTo(a.lastMessageAt ?? a.createdAt),
     );
@@ -107,9 +126,9 @@ class ConversationsBloc extends Bloc<ConversationsEvent, ConversationsState> {
   }
 
   Future<void> _onRefreshUnreadCount(
-      RefreshUnreadCount event,
-      Emitter<ConversationsState> emit,
-      ) async {
+    RefreshUnreadCount event,
+    Emitter<ConversationsState> emit,
+  ) async {
     final current = state;
     if (current is! ConversationsLoaded) return;
     try {
@@ -119,40 +138,64 @@ class ConversationsBloc extends Bloc<ConversationsEvent, ConversationsState> {
   }
 
   void _onMarkAsRead(
-      MarkConversationAsRead event,
-      Emitter<ConversationsState> emit,
-      ) {
+    MarkConversationAsRead event,
+    Emitter<ConversationsState> emit,
+  ) {
     final current = state;
     if (current is! ConversationsLoaded) return;
 
+    int unreadInThisConv = 0;
     final updatedConversations = current.conversations.map((c) {
       if (c.id == event.conversationId) {
-        // Optimistically set unreadCount to 0 for this conversation
+        unreadInThisConv = c.unreadCount;
         if (c is ConversationModel) {
-            // Need a way to copy with unreadCount 0. 
-            // Assuming ConversationModel has copyWith or similar, 
-            // but the Entity doesn't. 
-            // Let's create a new Model instance with 0 unread.
-            return ConversationModel(
-              id: c.id,
-              userOneId: c.userOneId,
-              userTwoId: c.userTwoId,
-              lastMessage: c.lastMessage,
-              lastMessageAt: c.lastMessageAt,
-              createdAt: c.createdAt,
-              otherUserName: c.otherUserName,
-              otherUserImageUrl: c.otherUserImageUrl,
-              otherUserIsVerified: c.otherUserIsVerified,
-              unreadCount: 0,
-            );
+          return ConversationModel(
+            id: c.id,
+            userOneId: c.userOneId,
+            userTwoId: c.userTwoId,
+            lastMessage: c.lastMessage,
+            lastMessageAt: c.lastMessageAt,
+            createdAt: c.createdAt,
+            otherUserName: c.otherUserName,
+            otherUserImageUrl: c.otherUserImageUrl,
+            otherUserIsVerified: c.otherUserIsVerified,
+            unreadCount: 0,
+          );
         }
-        return c;
       }
       return c;
     }).toList();
 
-    emit(current.copyWith(conversations: updatedConversations));
+    // Optimistically update the total unread count
+    final newTotalUnread = (current.unreadCount - unreadInThisConv).clamp(0, 999);
+
+    emit(current.copyWith(
+      conversations: updatedConversations,
+      unreadCount: newTotalUnread,
+    ));
+    
+    // Background refresh
     add(RefreshUnreadCount(event.currentUserId));
+  }
+
+  void _onSetActiveConversation(
+    SetActiveConversation event,
+    Emitter<ConversationsState> emit,
+  ) {
+    _activeConversationId = event.conversationId;
+    debugPrint('ConversationsBloc: Active conversation set to: $_activeConversationId');
+    
+    // If we just opened a conversation, mark it as read immediately
+    if (_activeConversationId != null) {
+      final current = state;
+      if (current is ConversationsLoaded) {
+        final userId = current.conversations.first.userOneId; // Any valid ID works for event
+        add(MarkConversationAsRead(
+          conversationId: _activeConversationId!,
+          currentUserId: userId,
+        ));
+      }
+    }
   }
 
   @override

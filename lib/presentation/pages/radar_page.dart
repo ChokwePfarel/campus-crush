@@ -70,10 +70,26 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
   )..repeat(reverse: true);
 
 
+  bool _isOffline = false;
+  StreamSubscription? _connectivitySub;
+
+  @override
+  void initState(){
+    super.initState();
+    _connectivitySub = Connectivity().onConnectivityChanged.listen((results) {
+      if (mounted) {
+        setState(() {
+          _isOffline = results.first == ConnectivityResult.none;
+        });
+      }
+    });
+  }
+
   @override
   void dispose() {
     _radarCtrl.dispose();
     _pulseCtrl.dispose();
+    _connectivitySub?.cancel();
     super.dispose();
   }
 
@@ -94,16 +110,20 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
     HapticFeedback.mediumImpact();
 
     if (isOffline) {
-      AppSnackBar.show(context, 'No internet connection',
-          type: SnackBarType.warning);
-      return; // stops here
+      AppSnackBar.show(
+        context,
+        'No internet connection',
+        type: SnackBarType.warning,
+      );
+      return; // stop execution, no navigation
     }
+
     setState(() {
       _selectedLocation = location;
     });
     _fetchSpottedPosts(context);
-
   }
+
 
   void _navigateToSpottedPage(BuildContext context) {
     final userState = context.read<UserBloc>().state;
@@ -374,13 +394,8 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
                   childAspectRatio: 2.6,
                   children: entry.value.map((tag) {
                     return GestureDetector(
-                      onTap: isOffline
-                          ? () => AppSnackBar.show(
-                        context,
-                        'No internet connection',
-                        type: SnackBarType.warning,
-                      )
-                          : () => _selectLocation(context, tag['label']!, isOffline),
+                      onTap: () => _selectLocation(context, tag['label']!, isOffline),
+
                       child: Container(
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.07),

@@ -85,7 +85,9 @@ class _CommentsSheetState extends State<CommentsSheet> {
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
-    return Container(
+    return
+
+      Container(
       height: MediaQuery.of(context).size.height * 0.78,
       decoration: const BoxDecoration(
         color: Colors.white,

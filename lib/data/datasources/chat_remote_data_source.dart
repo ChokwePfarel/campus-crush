@@ -197,12 +197,21 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
                   ),
                   user_two:profiles!conversations_user_two_id_fkey (
                     id, name, profile_image_url, is_verified
+                  ),
+                  messages (
+                    id, is_read, sender_id
                   )
                 ''')
                 .eq('id', payload.newRecord['id'])
                 .single();
 
-            controller.add(ConversationModel.fromJson(updated, currentUserId));
+            // Calculate unread count for the stream update
+            final messages = (updated['messages'] as List? ?? []);
+            final unreadCount = messages
+                .where((m) => m['is_read'] == false && m['sender_id'] != currentUserId)
+                .length;
+
+            controller.add(ConversationModel.fromJson(updated, currentUserId, unreadCount));
           },
         )
         .subscribe();
@@ -210,6 +219,7 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
     return controller.stream;
   }
 
+  @override
   Future<int> getUnreadCount(String currentUserId) async {
     final response = await client.rpc(
       'get_unread_count',

@@ -228,12 +228,8 @@ class _DirectPostsPageState extends State<DirectPostsPage>
           _pendingProfileUserId = null;
           _pendingPostId = null;
           _isCheckingReveal = false;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: Colors.redAccent,
-            ),
-          );
+          AppSnackBar.show(context, state.message,
+              type: SnackBarType.warning);;
         }
       },
       child: FadeTransition(
@@ -376,7 +372,8 @@ class _DirectPostsPageState extends State<DirectPostsPage>
                   return _DirectPostCard(
                     post: post,
                     onTap: () => _handlePostTap(post, currentUserId),
-                    onReplyTap: () => showCommentsSheet(
+                    onReplyTap: () => _isOffline ? AppSnackBar.show(context, 'No internet connection',
+                        type: SnackBarType.warning) : showCommentsSheet(
                       context: context,
                       postId: post.id,
                       commentCount: post.commentCount,

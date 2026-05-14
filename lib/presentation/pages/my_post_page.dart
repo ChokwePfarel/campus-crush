@@ -248,7 +248,11 @@ class _MyPostsPageState extends State<MyPostsPage> {
                 isDeleting: _deletingIds.contains(post.id),
                 onDelete: () => _confirmDelete(context, post),
                 onShowLikes: () => _showLikesList(context, post),
-                onComment: () => showCommentsSheet(
+                onComment: () =>
+
+
+
+                    showCommentsSheet(
                   context: context,
                   postId: post.id,
                   commentCount: post.commentCount,
