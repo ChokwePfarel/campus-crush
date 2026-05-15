@@ -106,10 +106,10 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
     }
   }
 
-  void _selectLocation(BuildContext context, String location, bool isOffline) {
+  void _selectLocation(BuildContext context, String location,) {
     HapticFeedback.mediumImpact();
 
-    if (isOffline) {
+    if (_isOffline) {
       AppSnackBar.show(
         context,
         'No internet connection',
@@ -363,10 +363,6 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
   Widget _buildLocationPicker(BuildContext context) {
     final grouped = LocationTags.grouped;
 
-    return BlocBuilder<ConnectivityBloc, ConnectivityState>(
-      builder: (context, state) {
-        final isOffline = state.isOffline;
-
         return ListView(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
           children: grouped.entries.map((entry) {
@@ -394,7 +390,7 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
                   childAspectRatio: 2.6,
                   children: entry.value.map((tag) {
                     return GestureDetector(
-                      onTap: () => _selectLocation(context, tag['label']!, isOffline),
+                      onTap: () => _selectLocation(context, tag['label']!,),
 
                       child: Container(
                         decoration: BoxDecoration(
@@ -430,8 +426,6 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
             );
           }).toList(),
         );
-      },
-    );
   }
 
 

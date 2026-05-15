@@ -85,14 +85,12 @@ class PostCardState extends State<PostCard> with SingleTickerProviderStateMixin 
       child: SlideTransition(
         position: _slideAnim,
         child: Container(
-          margin: EdgeInsets.only(bottom: SizeConfig.heightPercent(1.8)),
           decoration: BoxDecoration(
             color: post.backgroundColor ?? Colors.white,
-            borderRadius: BorderRadius.circular(SizeConfig.widthPercent(5)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(_isDark ? 0.18 : 0.06),
-                blurRadius: 16,
+                color: Colors.grey,
+                blurRadius: 5,
                 offset: const Offset(0, 4),
               ),
             ],

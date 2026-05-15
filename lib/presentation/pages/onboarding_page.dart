@@ -33,7 +33,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   final List<String> _interests = [];
   String _selectedUniversity = 'University of the Western Cape (UWC)';
-  String _selectedSex = 'male';
+  String _selectedSex = DropDownOptions.sexOptions.first;
 
 
 

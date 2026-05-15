@@ -25,13 +25,29 @@ class _InstaStyleNavState extends State<InstaStyleNav> {
   int _selectedIndex = 0;
   bool _isBottomBarVisible = true;
 
-  void _handleScroll(bool isVisible) {
-    if (_selectedIndex == 0 || _selectedIndex == 1) {
-      if (_isBottomBarVisible != isVisible) {
+  // Track scroll direction
+  double _lastScrollOffset = 0;
+  final double _scrollThreshold = 10; // Minimum scroll distance to trigger hide/show
+
+  void _handleScroll(double offset) {
+    if (_selectedIndex == 0 || _selectedIndex == 1 || _selectedIndex == 3) {
+      final delta = offset - _lastScrollOffset;
+
+      // Scrolling up (negative delta) - hide bar
+      // Scrolling down (positive delta) - show bar
+      if (delta > _scrollThreshold && _isBottomBarVisible) {
+        // Scrolling down - hide
         setState(() {
-          _isBottomBarVisible = isVisible;
+          _isBottomBarVisible = false;
+        });
+      } else if (delta < -_scrollThreshold && !_isBottomBarVisible) {
+        // Scrolling up - show
+        setState(() {
+          _isBottomBarVisible = true;
         });
       }
+
+      _lastScrollOffset = offset;
     }
   }
 
@@ -56,6 +72,10 @@ class _InstaStyleNavState extends State<InstaStyleNav> {
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
+      // Reset scroll tracking when switching tabs
+      _lastScrollOffset = 0;
+      // Ensure bar is visible when switching tabs
+      _isBottomBarVisible = true;
     });
   }
 
@@ -63,93 +83,83 @@ class _InstaStyleNavState extends State<InstaStyleNav> {
   Widget build(BuildContext context) {
     SizeConfig.init(context);
 
-    // Completely hide if Radar Page (index 2) is active
+    // Don't hide bar on Radar page (index 2)
     final bool isRadarPage = _selectedIndex == 2;
 
+    // Also keep bar always visible on Chats page (index 4)
+    final bool keepVisible = isRadarPage || _selectedIndex == 4;
+
     // Effective visibility
-    final bool showBar = !isRadarPage && _isBottomBarVisible;
+    final bool showBar = !keepVisible && _isBottomBarVisible;
     final double bottomPadding = MediaQuery.of(context).padding.bottom;
-    final double barHeight = 50 + bottomPadding;
-    //final double barHeight = showBar ? 55 + bottomPadding : 0;
+    final double barHeight = showBar ? 50 + bottomPadding : 0;
 
     return Scaffold(
-
-      //The coners are blicking white on the black backgroun,
-      //I am matching the screen background with app background color
-
-
       backgroundColor: isRadarPage
           ? Colors.black
           : CupertinoColors.systemBackground,
-
       body: IndexedStack(index: _selectedIndex, children: _pages),
-      bottomNavigationBar: Container(
+      bottomNavigationBar: showBar
+          ? Container(
         decoration: BoxDecoration(
           borderRadius: const BorderRadius.vertical(top: Radius.circular(40)),
-
         ),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          height: barHeight,
-          child: ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(40)),
-            child: Wrap(
-              children: [
-                CupertinoTabBar(
-                  currentIndex: _selectedIndex,
-                  onTap: _onItemTapped,
-                  activeColor: Colors.purple,
-                  inactiveColor: CupertinoColors.systemGrey,
-                  backgroundColor: isRadarPage
-                      ? Colors.black
-                      : CupertinoColors.systemBackground,
-                  border: const Border(
-                    top: BorderSide(color: Color(0xFFE8E8F0), width: 0.5),
-                  ),
-                  items: [
-                    const BottomNavigationBarItem(
-                      icon: Icon(Icons.people),
-                      activeIcon: Icon(Icons.people),
-                    ),
-
-                    const BottomNavigationBarItem(
-                      icon: Icon(CupertinoIcons.chat_bubble_2),
-                      activeIcon: Icon(CupertinoIcons.chat_bubble_2),
-                    ),
-
-                    const BottomNavigationBarItem(
-                      icon: Icon(LucideIcons.radio),
-                      activeIcon: Icon(LucideIcons.radio),
-                    ),
-
-                    const BottomNavigationBarItem(
-                      icon: Icon(CupertinoIcons.suit_heart),
-                      activeIcon: Icon(CupertinoIcons.heart_fill),
-                    ),
-
-                    BottomNavigationBarItem(
-                      icon: BlocBuilder<ConversationsBloc, ConversationsState>(
-                        builder: (context, state) {
-                          final unread = state is ConversationsLoaded
-                              ? state.unreadCount
-                              : 0;
-
-                          return BadgeIcon(
-                            icon: CupertinoIcons.chat_bubble,
-                            activeIcon: CupertinoIcons.chat_bubble_fill,
-                            isActive: _selectedIndex == 4,
-                            badgeCount: unread,
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+        child: ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(40)),
+          child: CupertinoTabBar(
+            currentIndex: _selectedIndex,
+            onTap: _onItemTapped,
+            activeColor: Colors.purple,
+            inactiveColor: CupertinoColors.systemGrey,
+            backgroundColor: isRadarPage
+                ? Colors.black
+                : CupertinoColors.systemBackground,
+            border: const Border(
+              top: BorderSide(color: Color(0xFFE8E8F0), width: 0.5),
             ),
+            items: [
+              const BottomNavigationBarItem(
+                  icon: Icon(Icons.people),
+                  activeIcon: Icon(Icons.people),
+                  label: 'Discover'
+              ),
+              const BottomNavigationBarItem(
+                  icon: Icon(CupertinoIcons.chat_bubble_2),
+                  activeIcon: Icon(CupertinoIcons.chat_bubble_2_fill),
+                  label: 'Feed'
+              ),
+              const BottomNavigationBarItem(
+                  icon: Icon(LucideIcons.radio),
+                  activeIcon: Icon(LucideIcons.radio),
+                  label: 'Radar'
+              ),
+              const BottomNavigationBarItem(
+                  icon: Icon(CupertinoIcons.suit_heart),
+                  activeIcon: Icon(CupertinoIcons.heart_fill),
+                  label: 'For You'
+              ),
+              BottomNavigationBarItem(
+                label: 'Chats',
+                icon: BlocBuilder<ConversationsBloc, ConversationsState>(
+                  builder: (context, state) {
+                    final unread = state is ConversationsLoaded
+                        ? state.unreadCount
+                        : 0;
+
+                    return BadgeIcon(
+                      icon: CupertinoIcons.chat_bubble,
+                      activeIcon: CupertinoIcons.chat_bubble_fill,
+                      isActive: _selectedIndex == 4,
+                      badgeCount: unread,
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
         ),
-      ),
+      )
+          : null, // Return null to hide the bottom bar completely
     );
   }
 }

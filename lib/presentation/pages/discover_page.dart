@@ -180,6 +180,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
                         }
 
                         if (state is users_st.UsersLoaded) {
+
                           return _buildUserList(state.users, state.hasReachedMax);
                         }
 
@@ -202,7 +203,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
       color: Colors.orange.shade800,
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: const Text(
-        'Offline Mode — viewing cached content',
+        'Offline',
         textAlign: TextAlign.center,
         style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
       ),
@@ -210,7 +211,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
   }
 
   Widget _buildUserList(List<dynamic> users, bool hasReachedMax) {
-    if (users.isEmpty) return const Center(child: Text('No students found yet.'));
+    if (users.isEmpty) return const Center(child: Text('Data not available.'));
     return RefreshIndicator(
       onRefresh: () async {
         if (_isOffline) return;

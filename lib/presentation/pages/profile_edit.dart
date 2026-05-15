@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dating_app/core/constants/lists.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
 import 'package:dating_app/core/utils/snackbar.dart';
@@ -39,6 +42,10 @@ class _ProfileEditState extends State<ProfileEdit> {
   late List<String> _interests;
   late bool _isPrivate;
 
+
+  bool _isOffline = false;
+  StreamSubscription? _connectivitySub;
+
   @override
   void initState() {
     super.initState();
@@ -63,7 +70,16 @@ class _ProfileEditState extends State<ProfileEdit> {
     _bioController.addListener(() => _markAsDirty);
     _ageController.addListener(() => _markAsDirty);
     _residenceController.addListener(() => _markAsDirty);*/
-  }
+
+    _connectivitySub = Connectivity().onConnectivityChanged.listen((results) {
+      if (mounted) {
+        setState(() {
+          _isOffline = results.first == ConnectivityResult.none;
+        });
+      }
+  });
+
+        }
 
   @override
   void dispose() {
@@ -514,6 +530,7 @@ class _ProfileEditState extends State<ProfileEdit> {
 
               SizedBox(height: SizeConfig.heightPercent(5)),
 
+
               SizedBox(
                 width: double.infinity,
                 height: SizeConfig.heightPercent(6),
@@ -526,16 +543,17 @@ class _ProfileEditState extends State<ProfileEdit> {
                       ),
                     ),
                   ),
-                  onPressed: _hasChanges ? _saveProfile : null,
-                  child: const Text(
-                    'Save All Changes',
-                    style: TextStyle(
+                  onPressed: !_isOffline && _hasChanges ? _saveProfile : null,
+                  child: Text(
+                    _isOffline ? 'No Internet' : 'Save All Changes',
+                    style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                     ),
-                  ),
+                ),
                 ),
               ),
+
               SizedBox(height: SizeConfig.heightPercent(5)),
             ],
           ),

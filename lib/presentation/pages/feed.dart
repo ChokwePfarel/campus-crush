@@ -128,12 +128,13 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     SizeConfig.init(context);
+
     return BlocProvider(
       create: (context) => PostBloc(context.read<PostRepository>()),
       child: Builder(
         builder: (context) {
           return Scaffold(
-            backgroundColor: const Color(0xFFF4F4F8),
+            backgroundColor: Colors.black,
             body: Column(
               children: [
                 if (_isOffline) _buildOfflineBanner(),
@@ -196,7 +197,6 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                 ),
               ],
             ),
-            floatingActionButton: _isOffline ? null : _buildAnimatedFAB(context),
           );
         },
       ),
@@ -228,12 +228,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
         if (!_isOffline) _fetchPosts(context);
       },
       child: ListView.builder(
-        padding: EdgeInsets.fromLTRB(
-          SizeConfig.widthPercent(3),
-          SizeConfig.heightPercent(0.5),
-          SizeConfig.widthPercent(3),
-          SizeConfig.heightPercent(12),
-        ),
+
         itemCount: hasReachedMax || _isOffline ? posts.length : posts.length + 1,
         itemBuilder: (context, i) {
           if (i >= posts.length) {
@@ -272,7 +267,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
 
   SliverAppBar _buildAppBar() {
     return SliverAppBar(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.black,
       elevation: 0,
       pinned: true,
       floating: true,
@@ -282,7 +277,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
         style: TextStyle(
           fontSize: 22,
           fontWeight: FontWeight.w800,
-          color: Color(0xFF1A1A2E),
+          color: Colors.white,
           letterSpacing: -0.5,
         ),
       ),
@@ -290,60 +285,107 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
         _isOffline
             ? const SizedBox.shrink()
             :
-        IconButton(
-          onPressed: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const MyPostsPage()),
-          ),
-          icon: const Icon(Icons.history_rounded, color: Color(0xFF1A1A2E)),
-        ),
+        GestureDetector(
+
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const MyPostsPage()),
+            ),
+            child: Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: SizeConfig.widthPercent(3),
+                vertical: SizeConfig.heightPercent(1),
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle, // This makes it a perfect circle
+              ),
+
+              child: const Icon(
+                Icons.history_toggle_off,
+                color: Colors.black,
+                size: 20,
+              ),
+            ),)
       ],
     );
   }
 
   Widget _buildFilterBar() {
     return Container(
-      color: Colors.white,
-      padding: EdgeInsets.fromLTRB(
-        SizeConfig.widthPercent(4),
-        0,
-        SizeConfig.widthPercent(4),
-        SizeConfig.heightPercent(1.5),
-      ),
+      color: Colors.black,
       child: Row(
-        children: _filters.map((f) {
-          final type = f['type'];
-          final isActive = _activeFilter == type;
-          final color = type != null ? type.accentColor : const Color(0xFF6C63FF);
+        children: [
+          ..._filters.map((f) {
+            final type = f['type'];
+            final isActive = _activeFilter == type;
+            final color = type != null ? type.accentColor : const Color(0xFF6C63FF);
 
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => _setFilter(type),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin: EdgeInsets.only(right: SizeConfig.widthPercent(1.5)),
-                padding: EdgeInsets.symmetric(vertical: SizeConfig.heightPercent(1)),
-                decoration: BoxDecoration(
-                  color: isActive ? color : const Color(0xFFF4F4F8),
-                  borderRadius: BorderRadius.circular(SizeConfig.widthPercent(3)),
-                ),
-                child: Column(
+            return Expanded(
+              child: GestureDetector(
+                onTap: () => _setFilter(type),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  decoration: BoxDecoration(
+                    color: Colors.transparent,
+                    border: isActive
+                        ? const Border(
+                      bottom: BorderSide(
+                        color: Colors.white,
+                        width: 2.0,
+                      ),
+                    )
+                        : null,
+                  ),
+                  child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-
-                    Text(
-                      f['label'] as String,
-                      style: TextStyle(
-                        fontSize: SizeConfig.widthPercent(2.8),
-                        fontWeight: FontWeight.w700,
-                        color: isActive ? Colors.white : const Color(0xFF8E8E9A),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8), // Add space below text
+                      child: Text(
+                        f['label'] as String,
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: isActive ? Colors.white : const Color(0xFF8E8E9A),
+                        ),
                       ),
                     ),
                   ],
                 ),
+                ),
+              ),
+            );
+          }).toList(),
+
+          // Add icon button at the end of the row
+          GestureDetector(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => BlocProvider.value(
+                  value: context.read<PostBloc>(),
+                  child: const CreatePostScreen(),
+                ),
               ),
             ),
-          );
-        }).toList(),
+            child: Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: SizeConfig.widthPercent(3),
+                vertical: SizeConfig.heightPercent(1),
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle, // This makes it a perfect circle
+              ),
+
+              child: const Icon(
+                Icons.add,
+                color: Colors.black,
+                size: 20,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -367,55 +409,5 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildAnimatedFAB(BuildContext context) {
-    return AnimatedSlide(
-      duration: const Duration(milliseconds: 300),
-      offset: _isFabVisible ? Offset.zero : const Offset(0, 2),
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 300),
-        opacity: _isFabVisible ? 1 : 0,
-        child: GestureDetector(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => BlocProvider.value(
-                value: context.read<PostBloc>(),
-                child: const CreatePostScreen(),
-              ),
-            ),
-          ),
-          child: Container(
-            height: SizeConfig.heightPercent(7),
-            padding: EdgeInsets.symmetric(horizontal: SizeConfig.widthPercent(6)),
-            decoration: BoxDecoration(
-              color: Colors.black,
-              borderRadius: BorderRadius.circular(SizeConfig.heightPercent(3.5)),
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black26,
-                  blurRadius: 10,
-                  offset: Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.add_rounded, color: Colors.white, size: 22),
-                const SizedBox(width: 8),
-                Text(
-                  'New Post',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: SizeConfig.widthPercent(3.8),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+
 }
