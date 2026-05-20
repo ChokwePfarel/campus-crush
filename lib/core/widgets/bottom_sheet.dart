@@ -1,3 +1,4 @@
+import 'package:dating_app/core/utils/comment_skeleton.dart';
 import 'package:dating_app/core/utils/date_utils.dart';
 import 'package:dating_app/domain/entities/comment_entity.dart';
 import 'package:dating_app/presentation/bloc/comments/commenst_event.dart';
@@ -137,7 +138,8 @@ class _CommentsSheetState extends State<CommentsSheet> {
     return BlocBuilder<CommentsBloc, CommentsState>(
       builder: (context, state) {
         if (state is LoadingComments) {
-          return const Center(child: CircularProgressIndicator());
+
+          return CommentSkeletonItem();
         }
         if (state is ErrorComments) {
           return Center(child: Text(state.message));

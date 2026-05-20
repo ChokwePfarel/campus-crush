@@ -9,5 +9,12 @@ abstract class UsersRepository {
     required int limit,
   });
 
+  Future<List<UserModel>> searchUsers({
+    required String university,
+    required String query,
+    required int offset,
+    required int limit,
+  });
+
   Future<UserModel> getUserById(String userId);
 }

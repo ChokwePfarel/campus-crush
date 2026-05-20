@@ -8,16 +8,13 @@ class UserListSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Search bar skeleton
 
-
-        // Vertical list of card skeletons
         Expanded(
           child: ListView.builder(
             itemCount: 6, // number of skeleton cards
             itemBuilder: (context, index) {
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.only(bottom: 5),
                 child: Shimmer(
                   duration: const Duration(seconds: 2),
                   interval: const Duration(milliseconds: 500),
@@ -25,11 +22,10 @@ class UserListSkeleton extends StatelessWidget {
                   colorOpacity: 0.3,
                   enabled: true,
                   child: Container(
-                    height: 200,
-                    decoration: BoxDecoration(
+                    height: 300,
+
                       color: Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
+
                   ),
                 ),
               );

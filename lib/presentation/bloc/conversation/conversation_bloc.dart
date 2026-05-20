@@ -93,8 +93,10 @@ class ConversationsBloc extends Bloc<ConversationsEvent, ConversationsState> {
     final current = state;
     if (current is! ConversationsLoaded) return;
 
-    final updatedList = current.conversations.map((c) {
+    bool found = false;
+    final List<ConversationEntity> updatedList = current.conversations.map((c) {
       if (c.id == event.conversation.id) {
+        found = true;
         // If this conversation is currently open, force unread count to 0
         if (c.id == _activeConversationId) {
           final conv = event.conversation;
@@ -115,6 +117,10 @@ class ConversationsBloc extends Bloc<ConversationsEvent, ConversationsState> {
       }
       return c;
     }).toList();
+
+    if (!found) {
+      updatedList.add(event.conversation);
+    }
 
     updatedList.sort(
       (ConversationEntity a, ConversationEntity b) =>

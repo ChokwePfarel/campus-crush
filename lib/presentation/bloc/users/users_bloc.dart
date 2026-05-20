@@ -6,10 +6,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 class UsersBloc extends Bloc<UsersEvent, UsersState> {
   final UsersRepository _usersRepository;
-  static const int _limit = 10;
+  static const int _limit = 20;
 
   UsersBloc(this._usersRepository) : super(UsersInitial()) {
     on<LoadUsers>(_onLoadUsers);
+    on<SearchUsers>(_onSearchUsers);
   }
 
   Future<void> _onLoadUsers(
@@ -24,11 +25,10 @@ class UsersBloc extends Bloc<UsersEvent, UsersState> {
 
     try {
       if (event.isInitial || currentState is! UsersLoaded) {
-        // --- INSTANT CACHE RENDER ---
         final cached = OfflineCache.getCachedDiscoveryUsers();
-        if (cached.isNotEmpty) {
+        if (cached.isNotEmpty && event.isInitial) {
           emit(UsersLoaded(users: cached, hasReachedMax: false));
-        } else {
+        } else if (currentState is! UsersLoaded) {
           emit(UsersLoading());
         }
         
@@ -64,6 +64,45 @@ class UsersBloc extends Bloc<UsersEvent, UsersState> {
       if (state is! UsersLoaded) {
         emit(UsersError(e.toString()));
       }
+    }
+  }
+
+  Future<void> _onSearchUsers(
+    SearchUsers event,
+    Emitter<UsersState> emit,
+  ) async {
+    final currentState = state;
+
+    if (currentState is UsersLoaded && currentState.hasReachedMax && !event.isInitial) {
+      return;
+    }
+
+    try {
+      if (event.isInitial) {
+        emit(UsersLoading());
+        final users = await _usersRepository.searchUsers(
+          university: event.university,
+          query: event.query,
+          offset: 0,
+          limit: _limit,
+        );
+        emit(UsersLoaded(users: users, hasReachedMax: users.length < _limit));
+      } else if (currentState is UsersLoaded) {
+        final users = await _usersRepository.searchUsers(
+          university: event.university,
+          query: event.query,
+          offset: currentState.users.length,
+          limit: _limit,
+        );
+        emit(users.isEmpty
+            ? currentState.copyWith(hasReachedMax: true)
+            : UsersLoaded(
+                users: currentState.users + users,
+                hasReachedMax: users.length < _limit,
+              ));
+      }
+    } catch (e) {
+      emit(UsersError(e.toString()));
     }
   }
 }

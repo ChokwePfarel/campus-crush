@@ -7,18 +7,19 @@ import 'package:dating_app/presentation/bloc/user/user_event.dart';
 import 'package:dating_app/presentation/bloc/user/user_state.dart';
 import 'package:dating_app/presentation/bloc/users/users_bloc.dart';
 import 'package:dating_app/presentation/bloc/users/users_event.dart';
-import 'package:dating_app/presentation/bloc/users/users_state.dart' as users_st;
+import 'package:dating_app/presentation/bloc/users/users_state.dart'
+    as users_st;
 import 'package:dating_app/presentation/pages/profile_page.dart';
+import 'package:dating_app/presentation/pages/search_page.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/widgets/users_card.dart';
 
 class DiscoverPage extends StatefulWidget {
-  final Function(bool)? onScrollDirectionChanged;
+  final Function(double)? onScroll;
 
-  const DiscoverPage({super.key, this.onScrollDirectionChanged});
+  const DiscoverPage({super.key, this.onScroll});
 
   @override
   State<DiscoverPage> createState() => _DiscoverPageState();
@@ -38,14 +39,17 @@ class _DiscoverPageState extends State<DiscoverPage> {
   void initState() {
     super.initState();
     _scrollController.addListener(_scrollListener);
-    
+
     // Initial check
     Connectivity().checkConnectivity().then((results) {
-      if (mounted) setState(() => _isOffline = results.first == ConnectivityResult.none);
+      if (mounted)
+        setState(() => _isOffline = results.first == ConnectivityResult.none);
     });
 
     // Listen for changes
-    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((results) {
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
+      results,
+    ) {
       final bool offline = results.first == ConnectivityResult.none;
       if (_isOffline && !offline) _triggerLoad(context, isInitial: true);
       if (mounted) setState(() => _isOffline = offline);
@@ -58,7 +62,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
         _currentUniversity = userState.user.university;
         _currentSex = userState.user.sex;
         _triggerLoad(context, isInitial: true);
-      }else {
+      } else {
         // Not loaded yet — BlocListener will handle it when UserLoaded arrives
         // but make sure the subscription is running
         context.read<UserBloc>().add(LoadUserSubscription());
@@ -68,14 +72,14 @@ class _DiscoverPageState extends State<DiscoverPage> {
 
   void _scrollListener() {
     if (!mounted) return;
-    
-    if (_scrollController.position.userScrollDirection == ScrollDirection.reverse) {
-      widget.onScrollDirectionChanged?.call(false);
-    } else if (_scrollController.position.userScrollDirection == ScrollDirection.forward) {
-      widget.onScrollDirectionChanged?.call(true);
+
+    if (_scrollController.hasClients) {
+      widget.onScroll?.call(_scrollController.offset);
     }
 
-    if (!_isOffline && _scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+    if (!_isOffline &&
+        _scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 200) {
       final state = context.read<UsersBloc>().state;
       if (state is users_st.UsersLoaded && !state.hasReachedMax) {
         _triggerLoad(context);
@@ -122,7 +126,8 @@ class _DiscoverPageState extends State<DiscoverPage> {
     return BlocBuilder<UserBloc, UserState>(
       builder: (builderCtx, userState) {
         String profileImg = '';
-        if (userState is UserLoaded) profileImg = userState.user.profileImageUrl;
+        if (userState is UserLoaded)
+          profileImg = userState.user.profileImageUrl;
 
         return Scaffold(
           backgroundColor: Colors.white,
@@ -131,7 +136,8 @@ class _DiscoverPageState extends State<DiscoverPage> {
               if (_isOffline) _buildOfflineBanner(),
               Expanded(
                 child: BlocListener<UserBloc, UserState>(
-                  listenWhen: (previous, current) => previous is! UserLoaded && current is UserLoaded,
+                  listenWhen: (previous, current) =>
+                      previous is! UserLoaded && current is UserLoaded,
                   listener: (listenerCtx, state) {
                     if (state is UserLoaded && mounted) {
                       _currentUniversity = state.user.university;
@@ -151,17 +157,22 @@ class _DiscoverPageState extends State<DiscoverPage> {
                           centerTitle: true,
                           title: _appName(),
                           bottom: PreferredSize(
-                            preferredSize: Size.fromHeight(SizeConfig.heightPercent(8)),
+                            preferredSize: Size.fromHeight(
+                              SizeConfig.heightPercent(8),
+                            ),
                             child: Padding(
                               padding: EdgeInsets.symmetric(
                                 horizontal: SizeConfig.widthPercent(4),
                                 vertical: SizeConfig.heightPercent(1),
                               ),
                               child: Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
-                                  Expanded(child: _searchField()),
-                                  const SizedBox(width: 12),
+
+
                                   _profileButton(profileImg),
+                                  const SizedBox(width: 10),
+                                  _searchField(),
                                 ],
                               ),
                             ),
@@ -180,8 +191,10 @@ class _DiscoverPageState extends State<DiscoverPage> {
                         }
 
                         if (state is users_st.UsersLoaded) {
-
-                          return _buildUserList(state.users, state.hasReachedMax);
+                          return _buildUserList(
+                            state.users,
+                            state.hasReachedMax,
+                          );
                         }
 
                         return const UserListSkeleton();
@@ -205,7 +218,11 @@ class _DiscoverPageState extends State<DiscoverPage> {
       child: const Text(
         'Offline',
         textAlign: TextAlign.center,
-        style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -219,10 +236,17 @@ class _DiscoverPageState extends State<DiscoverPage> {
       },
       child: ListView.builder(
         padding: EdgeInsets.zero,
-        itemCount: hasReachedMax || _isOffline ? users.length : users.length + 1,
+        itemCount: hasReachedMax || _isOffline
+            ? users.length
+            : users.length + 1,
         itemBuilder: (listCtx, index) {
           if (index >= users.length) {
-            return const Center(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator()));
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(8.0),
+                child: CircularProgressIndicator(),
+              ),
+            );
           }
           return UsersCard(user: users[index], isOffline: _isOffline);
         },
@@ -235,49 +259,65 @@ class _DiscoverPageState extends State<DiscoverPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text('Connection Error', style: TextStyle(fontSize: 14, color: Colors.purple)),
+          const Text(
+            'Connection Error',
+            style: TextStyle(fontSize: 14, color: Colors.purple),
+          ),
           const SizedBox(height: 16),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.purple),
             onPressed: () => _triggerLoad(context, isInitial: true),
-            child: const Text('Try again', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          )
+            child: const Text(
+              'Try again',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
   Widget _searchField() {
-    return Container(
-      height: SizeConfig.heightPercent(5),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(SizeConfig.widthPercent(10)),
-      ),
-      child: TextField(
-        onChanged: _onSearchChanged,
-        enabled: !_isOffline,
-        decoration: InputDecoration(
-          hintText: _isOffline ? 'Search disabled offline' : 'Search by Residence',
-          hintStyle: TextStyle(color: Colors.grey, fontSize: SizeConfig.widthPercent(3.5)),
-          prefixIcon: const Icon(Icons.search, color: Colors.grey),
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(vertical: SizeConfig.heightPercent(1.5)),
+    return GestureDetector(
+      onTap: (){
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const SearchPage()),
+        );
+      },
+      child: Container(
+
+
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          shape: BoxShape.circle,
         ),
-      ),
+        child: Padding(
+          padding: const EdgeInsets.all(5.0),
+          child: Icon(Icons.search,size: SizeConfig.widthPercent(9), color: Colors.grey.shade400),
+        ),),
     );
   }
 
   Widget _profileButton(String image) {
     return GestureDetector(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfilePage())),
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const ProfilePage()),
+      ),
       child: CircleAvatar(
-        radius: SizeConfig.widthPercent(5),
+        radius: SizeConfig.widthPercent(6),
         backgroundColor: Colors.grey[200],
-        backgroundImage: !_isOffline && image.isNotEmpty && image.startsWith('http')
+        backgroundImage:
+            !_isOffline && image.isNotEmpty && image.startsWith('http')
             ? NetworkImage(image)
             : const AssetImage('assets/profile_picture.png') as ImageProvider,
-        child: _isOffline || image.isEmpty ? const Icon(Icons.person, color: Colors.grey) : null,
+        child: _isOffline || image.isEmpty
+            ? const Icon(Icons.person, color: Colors.grey)
+            : null,
       ),
     );
   }

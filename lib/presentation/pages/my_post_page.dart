@@ -37,34 +37,40 @@ class _MyPostsPageState extends State<MyPostsPage> {
     }
   }
 
-  int _totalLikes(List<PostModel> posts) => posts.fold(
-    0,
-        (sum, p) => sum + (_liveLikeCounts[p.id] ?? p.likeCount),
-  );
+  int _totalLikes(List<PostModel> posts) =>
+      posts.fold(0, (sum, p) => sum + (_liveLikeCounts[p.id] ?? p.likeCount));
 
   int _totalComments(List<PostModel> posts) =>
       posts.fold(0, (sum, p) => sum + p.commentCount);
 
+
   Future<void> _confirmDelete(BuildContext context, PostModel post) async {
     HapticFeedback.mediumImpact();
 
-    final confirmed = await showCupertinoDialog<bool>(
+    final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => CupertinoAlertDialog(
+      builder: (_) => AlertDialog(
+        backgroundColor: Colors.white,
+
         title: const Text('Delete Post?'),
         content: Text(
           'This ${post.postType.label.toLowerCase()} post will be permanently removed.',
         ),
         actions: [
-          CupertinoDialogAction(
-            isDestructiveAction: true,
+          TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
+            child:  const Text(
+              'Delete',
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+            ),
           ),
-          CupertinoDialogAction(
-            isDefaultAction: true,
+          TextButton(
+
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child:  const Text(
+              'Cancel',
+              style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -93,8 +99,9 @@ class _MyPostsPageState extends State<MyPostsPage> {
       ),
       builder: (sheetContext) {
         return BlocProvider(
-          create: (_) => LikesBloc(pageContext.read<LikesRepository>())
-            ..add(LoadLikes(post.id)),
+          create: (_) =>
+              LikesBloc(pageContext.read<LikesRepository>())
+                ..add(LoadLikes(post.id)),
           child: Container(
             padding: EdgeInsets.all(SizeConfig.widthPercent(5)),
             child: Column(
@@ -138,14 +145,21 @@ class _MyPostsPageState extends State<MyPostsPage> {
                             return ListTile(
                               contentPadding: EdgeInsets.zero,
                               leading: CircleAvatar(
-                                backgroundColor:
-                                Colors.pinkAccent.withOpacity(0.1),
-                                child: const Icon(Icons.favorite,
-                                    color: Colors.pinkAccent, size: 16),
+                                backgroundColor: Colors.pinkAccent.withOpacity(
+                                  0.1,
+                                ),
+                                child: const Icon(
+                                  Icons.favorite,
+                                  color: Colors.pinkAccent,
+                                  size: 16,
+                                ),
                               ),
-                              title: Text(like.likedByName,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w600)),
+                              title: Text(
+                                like.likedByName,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                               subtitle: const Text('Student'),
                             );
                           },
@@ -164,7 +178,6 @@ class _MyPostsPageState extends State<MyPostsPage> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     SizeConfig.init(context);
@@ -173,8 +186,8 @@ class _MyPostsPageState extends State<MyPostsPage> {
 
     return BlocProvider(
       create: (context) =>
-      CurrentUserPostBloc(context.read<CurrentUserPostRepository>())
-        ..add(LoadUserPosts()),
+          CurrentUserPostBloc(context.read<CurrentUserPostRepository>())
+            ..add(LoadUserPosts()),
       child: Scaffold(
         backgroundColor: const Color(0xFFF4F4F8),
         body: BlocBuilder<CurrentUserPostBloc, UserPostState>(
@@ -182,7 +195,9 @@ class _MyPostsPageState extends State<MyPostsPage> {
             // Filter posts here to exclude those being deleted
             List<PostModel> visiblePosts = [];
             if (state is UserPostLoaded) {
-              visiblePosts = state.posts.where((p) => !_deletingIds.contains(p.id)).toList();
+              visiblePosts = state.posts
+                  .where((p) => !_deletingIds.contains(p.id))
+                  .toList();
             }
             return CustomScrollView(
               slivers: [
@@ -190,11 +205,15 @@ class _MyPostsPageState extends State<MyPostsPage> {
                 if (state is UserPostLoaded) ...[
                   _buildPostList(visiblePosts, currentUserId),
                 ] else if (state is UserPostLoading)
-                  const SliverFillRemaining(child: Center(child: CupertinoActivityIndicator()))
+                  const SliverFillRemaining(
+                    child: Center(child: CircularProgressIndicator.adaptive()),
+                  )
                 else if (state is UserPostError)
-                    SliverFillRemaining(child: Center(child: Text(state.message)))
-                  else
-                    const SliverFillRemaining(child: Center(child: Text("No posts found"))),
+                  SliverFillRemaining(child: Center(child: Text(state.message)))
+                else
+                  const SliverFillRemaining(
+                    child: Center(child: Text("No posts found")),
+                  ),
               ],
             );
           },
@@ -211,7 +230,10 @@ class _MyPostsPageState extends State<MyPostsPage> {
       leading: CupertinoButton(
         padding: EdgeInsets.zero,
         onPressed: () => Navigator.of(context).pop(),
-        child: const Icon(CupertinoIcons.chevron_left, color: Color(0xFF1A1A2E)),
+        child: const Icon(
+          CupertinoIcons.chevron_left,
+          color: Color(0xFF1A1A2E),
+        ),
       ),
       title: const Text(
         'My History',
@@ -225,8 +247,6 @@ class _MyPostsPageState extends State<MyPostsPage> {
     );
   }
 
-
-
   SliverPadding _buildPostList(List<PostModel> posts, String currentUserId) {
     return SliverPadding(
       padding: EdgeInsets.fromLTRB(
@@ -236,36 +256,28 @@ class _MyPostsPageState extends State<MyPostsPage> {
         SizeConfig.heightPercent(12),
       ),
       sliver: SliverList(
-        delegate: SliverChildBuilderDelegate(
-              (context, i) {
-            final post = posts[i];
-            return BlocProvider(
-              key: ValueKey(post.id),
-              create: (cardCtx) => LikesBloc(cardCtx.read<LikesRepository>()),
-              child: MyPostItem(
-                post: post,
-                currentUserId: currentUserId,
-                isDeleting: _deletingIds.contains(post.id),
-                onDelete: () => _confirmDelete(context, post),
-                onShowLikes: () => _showLikesList(context, post),
-                onComment: () =>
-
-
-
-                    showCommentsSheet(
-                  context: context,
-                  postId: post.id,
-                  commentCount: post.commentCount,
-                ),
-                onLikeCountChanged: (count) =>
-                    _onLikeCountChanged(post.id, count),
+        delegate: SliverChildBuilderDelegate((context, i) {
+          final post = posts[i];
+          return BlocProvider(
+            key: ValueKey(post.id),
+            create: (cardCtx) => LikesBloc(cardCtx.read<LikesRepository>()),
+            child: MyPostItem(
+              post: post,
+              currentUserId: currentUserId,
+              isDeleting: _deletingIds.contains(post.id),
+              onDelete: () => _confirmDelete(context, post),
+              onShowLikes: () => _showLikesList(context, post),
+              onComment: () => showCommentsSheet(
+                context: context,
+                postId: post.id,
+                commentCount: post.commentCount,
               ),
-            );
-          },
-          childCount: posts.length,
-        ),
+              onLikeCountChanged: (count) =>
+                  _onLikeCountChanged(post.id, count),
+            ),
+          );
+        }, childCount: posts.length),
       ),
     );
   }
 }
-

@@ -168,18 +168,25 @@ class _SignUpPageState extends State<SignUpPage> {
                               elevation: 0,
                             ),
                             onPressed: () {
+                              _verifyEmail();
+
+                              if(!isVerified){
+
+                                AppSnackBar.show(context,'Use your student email', type: SnackBarType.info);
+
+                                return;
+                              }
+
+
                               if (!_agreedToPolicy) {
-                                ScaffoldMessenger.of(context)
-                                    .showSnackBar(const SnackBar(
-                                  content: Text(
-                                      'Please agree to the privacy policy'),
-                                ));
+                                AppSnackBar.show(context, 'Please agree to the privacy policy', type: SnackBarType.info);
+
                                 return;
                               }
                               if (_formKey.currentState!.validate()) {
-                                setState(() {
+                                /*setState(() {
                                   isVerified = _emailEmail();
-                                });
+                                });*/
                                 context.read<AuthBloc>().add(
                                       SignUpRequested(
                                         _emailController.text.trim(),

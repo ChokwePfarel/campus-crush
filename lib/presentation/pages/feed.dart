@@ -24,6 +24,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:dating_app/core/utils/comment_skeleton.dart';
 
 // ─── Filter bar data ──────────────────────────────────────────────────────────
 
@@ -37,7 +38,9 @@ const _filters = [
 
 class FeedScreen extends StatefulWidget {
   final String currentUserId;
-  const FeedScreen({super.key, required this.currentUserId});
+  final Function(double)? onScroll;
+
+  const FeedScreen({super.key, required this.currentUserId, this.onScroll});
 
   @override
   State<FeedScreen> createState() => _FeedScreenState();
@@ -59,7 +62,8 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
     _scrollCtrl.addListener(_scrollListener);
 
     Connectivity().checkConnectivity().then((results) {
-      if (mounted) setState(() => _isOffline = results.first == ConnectivityResult.none);
+      if (mounted)
+        setState(() => _isOffline = results.first == ConnectivityResult.none);
     });
 
     _connectivitySub = Connectivity().onConnectivityChanged.listen((results) {
@@ -84,9 +88,14 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
   void _scrollListener() {
     if (!mounted) return;
 
+    if (_scrollCtrl.hasClients) {
+      widget.onScroll?.call(_scrollCtrl.offset);
+    }
+
     if (_scrollCtrl.position.userScrollDirection == ScrollDirection.reverse) {
       if (_isFabVisible) setState(() => _isFabVisible = false);
-    } else if (_scrollCtrl.position.userScrollDirection == ScrollDirection.forward) {
+    } else if (_scrollCtrl.position.userScrollDirection ==
+        ScrollDirection.forward) {
       if (!_isFabVisible) setState(() => _isFabVisible = true);
     }
 
@@ -102,12 +111,8 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
     final userState = context.read<UserBloc>().state;
 
     if (userState is UserLoaded) {
-
       context.read<PostBloc>().add(
-        LoadPosts(
-          university: userState.user.university,
-          isInitial: isInitial,
-        ),
+        LoadPosts(university: userState.user.university, isInitial: isInitial),
       );
     }
   }
@@ -145,8 +150,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                     },
                     child: NestedScrollView(
                       controller: _scrollCtrl,
-                      headerSliverBuilder: (_, __) => [
-                        _buildAppBar()],
+                      headerSliverBuilder: (_, __) => [_buildAppBar()],
                       body: Column(
                         children: [
                           _buildFilterBar(),
@@ -163,12 +167,16 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                                 if (state is PostError) {
                                   return Center(
                                     child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
                                         const Text('Could not load posts'),
                                         const SizedBox(height: 12),
                                         ElevatedButton(
-                                          onPressed: () => _fetchPosts(context, isInitial: true),
+                                          onPressed: () => _fetchPosts(
+                                            context,
+                                            isInitial: true,
+                                          ),
                                           child: const Text('Retry'),
                                         ),
                                       ],
@@ -180,10 +188,16 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                                   final posts = _activeFilter == null
                                       ? state.post
                                       : state.post
-                                      .where((p) => p.postType == _activeFilter)
-                                      .toList();
+                                            .where(
+                                              (p) =>
+                                                  p.postType == _activeFilter,
+                                            )
+                                            .toList();
 
-                                  return _buildPostList(posts, state.hasReachedMax);
+                                  return _buildPostList(
+                                    posts,
+                                    state.hasReachedMax,
+                                  );
                                 }
 
                                 return const FeedSkeleton();
@@ -209,7 +223,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
       color: Colors.red,
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: const Text(
-        'Offline',
+        'Connection lost',
         textAlign: TextAlign.center,
         style: TextStyle(
           color: Colors.white,
@@ -228,16 +242,16 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
         if (!_isOffline) _fetchPosts(context);
       },
       child: ListView.builder(
-
-        itemCount: hasReachedMax || _isOffline ? posts.length : posts.length + 1,
+        itemCount: hasReachedMax || _isOffline
+            ? posts.length
+            : posts.length + 1,
         itemBuilder: (context, i) {
+
           if (i >= posts.length) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(8.0),
-                child: CircularProgressIndicator.adaptive(),
-              ),
+            return Center(
+              child: const CircularProgressIndicator.adaptive(),
             );
+
           }
           final post = posts[i];
           return BlocProvider(
@@ -284,29 +298,14 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
       actions: [
         _isOffline
             ? const SizedBox.shrink()
-            :
-        GestureDetector(
-
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const MyPostsPage()),
-            ),
-            child: Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: SizeConfig.widthPercent(3),
-                vertical: SizeConfig.heightPercent(1),
+            : IconButton(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const MyPostsPage()),
+                ),
+                icon: Icon(Icons.history,
+                color: Colors.white,),
               ),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle, // This makes it a perfect circle
-              ),
-
-              child: const Icon(
-                Icons.history_toggle_off,
-                color: Colors.black,
-                size: 20,
-              ),
-            ),)
       ],
     );
   }
@@ -319,7 +318,9 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
           ..._filters.map((f) {
             final type = f['type'];
             final isActive = _activeFilter == type;
-            final color = type != null ? type.accentColor : const Color(0xFF6C63FF);
+            final color = type != null
+                ? type.accentColor
+                : const Color(0xFF6C63FF);
 
             return Expanded(
               child: GestureDetector(
@@ -330,28 +331,28 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                     color: Colors.transparent,
                     border: isActive
                         ? const Border(
-                      bottom: BorderSide(
-                        color: Colors.white,
-                        width: 2.0,
-                      ),
-                    )
+                            bottom: BorderSide(color: Colors.white, width: 2.0),
+                          )
                         : null,
                   ),
                   child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8), // Add space below text
-                      child: Text(
-                        f['label'] as String,
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: isActive ? Colors.white : const Color(0xFF8E8E9A),
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        // Add space below text
+                        child: Text(
+                          f['label'] as String,
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: isActive
+                                ? Colors.white
+                                : const Color(0xFF8E8E9A),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -378,11 +379,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                 shape: BoxShape.circle, // This makes it a perfect circle
               ),
 
-              child: const Icon(
-                Icons.add,
-                color: Colors.black,
-                size: 20,
-              ),
+              child: const Icon(Icons.add, color: Colors.black, size: 20),
             ),
           ),
         ],
@@ -409,5 +406,13 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
     );
   }
 
-
+  Widget _buildCommentSkeleton() {
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: 5,
+      separatorBuilder: (_, __) => const SizedBox(height: 16),
+      itemBuilder: (_, __) => const CommentSkeletonItem(),
+    );
+  }
 }

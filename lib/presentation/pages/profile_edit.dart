@@ -13,6 +13,7 @@ import 'package:dating_app/presentation/bloc/auth/auth_bloc.dart';
 import 'package:dating_app/presentation/bloc/auth/auth_event.dart';
 import 'package:dating_app/presentation/bloc/image/image_bloc.dart';
 import 'package:dating_app/presentation/bloc/image/image_event.dart';
+import 'package:dating_app/presentation/bloc/image/image_sate.dart';
 import 'package:dating_app/presentation/bloc/user/user_bloc.dart';
 import 'package:dating_app/presentation/bloc/user/user_event.dart';
 import 'package:dating_app/presentation/pages/login_page.dart';
@@ -91,9 +92,8 @@ class _ProfileEditState extends State<ProfileEdit> {
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    AppSnackBar.show(context, message, type: SnackBarType.error);
+
   }
 
 
@@ -183,7 +183,7 @@ class _ProfileEditState extends State<ProfileEdit> {
       ),
     );
 
-    AppSnackBar.show(context, 'Updating profile...');
+    AppSnackBar.show(context, 'Updating profile...', type: SnackBarType.success);
 
 
     Navigator.of(context).pop();
@@ -338,51 +338,87 @@ class _ProfileEditState extends State<ProfileEdit> {
             children: [
               SizedBox(height: SizeConfig.heightPercent(2)),
               Center(
-                child: Stack(
-                  children: [
-                    CircleAvatar(
-                      radius: SizeConfig.widthPercent(15),
-                      backgroundImage: widget.user.profileImageUrl.isNotEmpty
-                          ? NetworkImage(widget.user.profileImageUrl)
-                          : null,
-                      child: widget.user.profileImageUrl.isEmpty
-                          ? Icon(
-                        Icons.person,
-                        size: SizeConfig.widthPercent(15),
-                      )
-                          : null,
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: CircleAvatar(
-                        radius: 18,
-                        backgroundColor: AppStylee.collor,
-                        child: IconButton(
-                          icon: const Icon(
-                            Icons.camera_alt,
-                            size: 18,
-                            color: Colors.white,
-                          ),
-                          onPressed: () async {
-                            final picker = ImagePicker();
-                            final picked = await picker.pickImage(
-                              source: ImageSource.gallery,
-                              imageQuality: 80,
-                            );
-                            if (picked == null || !context.mounted) return;
+                child: BlocBuilder<ImagesBloc, ImagesState>(
+                  builder: (context, state) {
+                    final bool isUploading = state is ImagesUploading;
+                    String imageUrl = widget.user.profileImageUrl;
 
-                            context.read<ImagesBloc>().add(
-                              UploadProfileImage(
-                                userId: widget.user.id,
-                                image: File(picked.path),
-                              ),
-                            );
-                          },
+                    if (state is ImagesLoaded) {
+                      final profileImg = state.profileImage;
+                      if (profileImg != null) {
+                        imageUrl = profileImg.url;
+                      }
+                    } else if (state is ImagesUploading) {
+                      final profileImg = state.currentImages
+                          .where((i) => i.isProfile)
+                          .firstOrNull;
+                      if (profileImg != null) {
+                        imageUrl = profileImg.url;
+                      }
+                    }
+
+                    return Stack(
+                      children: [
+                        CircleAvatar(
+                          radius: SizeConfig.widthPercent(15),
+                          backgroundImage: imageUrl.isNotEmpty
+                              ? NetworkImage(imageUrl)
+                              : null,
+                          child: imageUrl.isEmpty && !isUploading
+                              ? Icon(
+                                  Icons.person,
+                                  size: SizeConfig.widthPercent(15),
+                                )
+                              : null,
                         ),
-                      ),
-                    ),
-                  ],
+                        if (isUploading)
+                          Positioned.fill(
+                            child: Container(
+                              decoration: const BoxDecoration(
+                                color: Colors.black45,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Center(
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: CircleAvatar(
+                            radius: 18,
+                            backgroundColor: AppStylee.collor,
+                            child: IconButton(
+                              icon: const Icon(
+                                Icons.camera_alt,
+                                size: 18,
+                                color: Colors.white,
+                              ),
+                              onPressed: isUploading ? null : () async {
+                                final picker = ImagePicker();
+                                final picked = await picker.pickImage(
+                                  source: ImageSource.gallery,
+                                  imageQuality: 80,
+                                );
+                                if (picked == null || !context.mounted) return;
+
+                                context.read<ImagesBloc>().add(
+                                  UploadProfileImage(
+                                    userId: widget.user.id,
+                                    image: File(picked.path),
+                                  ),
+                                );
+
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
               SizedBox(height: SizeConfig.heightPercent(1.5)),
@@ -653,3 +689,7 @@ class _ProfileEditState extends State<ProfileEdit> {
     );
   }
 }
+
+
+//https://sites.google.com/view/
+// campuscrushprivacypolicy

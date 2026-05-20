@@ -151,7 +151,7 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
     final user = client.auth.currentUser;
     if (user == null) throw Exception('Not signed in');
 
-    final response = await client.from('posts').select().eq('user_id', user.id);
+    final response = await client.from('posts').select().eq('user_id', user.id).order('created_at', ascending: false);
     return (response as List).map((e) => PostModel.fromJson(e)).toList();
   }
 

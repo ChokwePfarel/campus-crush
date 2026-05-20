@@ -10,6 +10,13 @@ abstract class UsersRemoteDataSource {
     required int limit,
   });
 
+  Future<List<UserModel>> searchUsers({
+    required String university,
+    required String query,
+    required int offset,
+    required int limit,
+  });
+
   Future<UserModel> getUserById(String userId);
 }
 
@@ -30,9 +37,7 @@ class UsersRemoteDataSourceImpl implements UsersRemoteDataSource {
     String targetSex;
     String currentSexLower = sex;
 
-    print("REQUESTING WITH INPUT: $university, $sex, $residence");
-    try{
-
+    try {
       if (currentSexLower == 'LGBTQ') {
         targetSex = 'LGBTQ';
       } else if (currentSexLower == 'Male') {
@@ -58,15 +63,35 @@ class UsersRemoteDataSourceImpl implements UsersRemoteDataSource {
           .range(offset, offset + limit - 1)
           .order('name');
 
-      print('Response: $response');
-
-
       return (response as List).map((e) => UserModel.fromJson(e)).toList();
     } catch (e) {
       print('ERROR: $e');
     }
     return [];
+  }
 
+  @override
+  Future<List<UserModel>> searchUsers({
+    required String university,
+    required String query,
+    required int offset,
+    required int limit,
+  }) async {
+    try {
+      final response = await client
+          .from('profiles')
+          .select()
+          .eq('university', university)
+          .neq('id', client.auth.currentUser?.id ?? '')
+          .or('name.ilike.%$query%,residence.ilike.%$query%')
+          .range(offset, offset + limit - 1)
+          .order('name');
+
+      return (response as List).map((e) => UserModel.fromJson(e)).toList();
+    } catch (e) {
+      print('SEARCH ERROR: $e');
+      return [];
+    }
   }
 
   @override

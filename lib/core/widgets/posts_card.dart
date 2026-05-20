@@ -84,7 +84,7 @@ class PostsCard extends StatelessWidget {
                   children: [
                     IconButton(
                       onPressed: () {},
-                      icon: const Icon(CupertinoIcons.chat_bubble_fill),
+                      icon: const Icon(CupertinoIcons.chat_bubble),
                       color: Colors.white,
                       iconSize: 20,
                     ),

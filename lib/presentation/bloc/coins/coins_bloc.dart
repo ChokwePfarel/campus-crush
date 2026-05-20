@@ -109,6 +109,13 @@ class CoinsBloc extends Bloc<CoinsEvent, CoinsState> {
     try {
       final updated =
       await _coinsRepository.trackFreeDirectPost(event.userId);
+      
+      // Emit CoinsSpent with 0 to signal success to the UI flow
+      emit(CoinsSpent(
+        coins:      updated,
+        coinsSpent: 0,
+      ));
+      
       emit(CoinsLoaded(coins: updated));
     } catch (e) {
       emit(CoinsError(e.toString(), previousCoins: current.coins));

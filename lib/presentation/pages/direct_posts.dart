@@ -26,8 +26,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class DirectPostsPage extends StatefulWidget {
   final String recipientId;
+  final Function(double)? onScroll;
 
-  const DirectPostsPage({super.key, required this.recipientId});
+  const DirectPostsPage({super.key, required this.recipientId, this.onScroll});
 
   @override
   State<DirectPostsPage> createState() => _DirectPostsPageState();
@@ -89,6 +90,8 @@ class _DirectPostsPageState extends State<DirectPostsPage>
 
   void _onScroll() {
     if (!_scrollCtrl.hasClients || !mounted) return;
+
+    widget.onScroll?.call(_scrollCtrl.offset);
 
     if (_scrollCtrl.position.pixels >=
         _scrollCtrl.position.maxScrollExtent * 0.9) {

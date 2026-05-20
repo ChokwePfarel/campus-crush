@@ -174,15 +174,15 @@ class _SendPostPageState extends State<SendPostPage>
     }
 
     if (canPostFree) {
-      _executePost(userState.user.id, userState.user.name, isFree: true);
+      _initiateCoinDeduction(userState.user.id, isFree: true);
     } else if (hasEnough) {
-      _executePost(userState.user.id, userState.user.name, isFree: false);
+      _initiateCoinDeduction(userState.user.id, isFree: false);
     } else {
       _showNotEnoughCoinsDialog();
     }
   }
 
-  void _executePost(String userId, String userName, {required bool isFree}) {
+  void _initiateCoinDeduction(String userId, {required bool isFree}) {
     HapticFeedback.mediumImpact();
     setState(() => _isSending = true);
 
@@ -191,7 +191,9 @@ class _SendPostPageState extends State<SendPostPage>
     } else {
       context.read<CoinsBloc>().add(SpendCoinsOnDirectPost(userId));
     }
+  }
 
+  void _executePostCreation(String userName) {
     context.read<PostBloc>().add(
       CreatePostRequested(
         content: _contentCtrl.text.trim(),
@@ -233,10 +235,10 @@ class _SendPostPageState extends State<SendPostPage>
   void _watchAd() {
     final userState = context.read<UserBloc>().state;
     if (userState is user_st.UserLoaded) {
-      context.read<CoinsBloc>().add(EarnCoinsFromAd(userState.user.id));
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Watching ad... +10 coins earned!')),
-      );
+      // We set _isSending to true so that when CoinsEarned is received,
+      // it automatically proceeds with _handleSend().
+      setState(() => _isSending = true);
+      context.read<CoinsBloc>().add(WatchAdRequested(userState.user.id));
     }
   }
 
@@ -265,13 +267,12 @@ class _SendPostPageState extends State<SendPostPage>
         BlocListener<PostBloc, PostState>(
           listener: (context, state) {
             if (state is PostsLoaded && _isSending) {
+              setState(() => _isSending = false);
               _showSuccessAndPop();
             }
             if (state is PostError && _isSending) {
               setState(() => _isSending = false);
-
-              AppSnackBar.show(context, 'Something went wrong',
-                  type: SnackBarType.error);;
+              AppSnackBar.show(context, 'Something went wrong', type: SnackBarType.error);
             }
           },
         ),
@@ -279,12 +280,29 @@ class _SendPostPageState extends State<SendPostPage>
           listener: (context, state) {
             if (state is CoinsError && _isSending) {
               setState(() => _isSending = false);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.message), backgroundColor: Colors.redAccent),
-              );
+              AppSnackBar.show(context, state.message, type: SnackBarType.error);
             }
+            
+            if (state is CoinsSpent && _isSending) {
+              final userState = context.read<UserBloc>().state;
+              if (userState is user_st.UserLoaded) {
+                _executePostCreation(userState.user.name);
+              } else {
+                setState(() => _isSending = false);
+              }
+            }
+
             if (state is CoinsEarned) {
               if (_isSending) _handleSend();
+            }
+
+            if (state is AdNotReady && _isSending) {
+               setState(() => _isSending = false);
+               AppSnackBar.show(context, 'Ad not ready, try again in a moment', type: SnackBarType.warning);
+            }
+            if (state is AdLimitReached && _isSending) {
+               setState(() => _isSending = false);
+               AppSnackBar.show(context, 'Daily ad limit reached', type: SnackBarType.info);
             }
           },
         ),
@@ -938,7 +956,7 @@ class _SendPostPageState extends State<SendPostPage>
           padding: EdgeInsets.zero,
           onPressed: _canSend ? _handleSend : null,
           child: _isSending
-              ? CircularProgressIndicator.adaptive()
+              ? const CircularProgressIndicator.adaptive()
               : Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

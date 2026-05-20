@@ -145,7 +145,7 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
     final rng = Random(_selectedLocation.hashCode);
 
     // Only show top 5 for radar view
-    final displayPosts = posts.take(5).toList();
+    final displayPosts = posts.take(3).toList();
 
     final positions = <Offset>[];
     final bubbles = <_BubbleData>[];
@@ -153,9 +153,16 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
     for (var i = 0; i < displayPosts.length; i++) {
       Offset pos;
       int attempts = 0;
+
+      // More generous margins to prevent clipping
+      const double leftMargin = 0.15;   // 15% from left edge
+      const double rightMargin = 0.85;  // 85% from left edge (15% from right)
+      const double topMargin = 0.18;    // 18% from top edge
+      const double bottomMargin = 0.82; // 82% from top edge (18% from bottom)
+
       do {
-        final x = 0.1 + rng.nextDouble() * 0.8;
-        final y = 0.12 + rng.nextDouble() * 0.72;
+        final x = leftMargin + rng.nextDouble() * (rightMargin - leftMargin);
+        final y = topMargin + rng.nextDouble() * (bottomMargin - topMargin);
         pos = Offset(x, y);
         attempts++;
       } while (attempts < 30 && positions.any((p) => (p - pos).distance < 0.18));
@@ -543,11 +550,25 @@ class _RadarRings extends StatelessWidget {
   final Animation<double> ctrl;
   final Animation<double> pulse;
   const _RadarRings({required this.ctrl, required this.pulse});
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: Listenable.merge([ctrl, pulse]),
-      builder: (context, child) => CustomPaint(painter: _RadarRingsPainter(progress: ctrl.value, pulse: pulse.value), size: const Size(300, 300)),
+      builder: (context, child) => LayoutBuilder(
+        builder: (context, constraints) {
+          // Use the full available space
+          final size = constraints.biggest;
+          return CustomPaint(
+            painter: _RadarRingsPainter(
+              progress: ctrl.value,
+              pulse: pulse.value,
+              canvasSize: size,
+            ),
+            size: size,
+          );
+        },
+      ),
     );
   }
 }
@@ -555,25 +576,48 @@ class _RadarRings extends StatelessWidget {
 class _RadarRingsPainter extends CustomPainter {
   final double progress;
   final double pulse;
-  _RadarRingsPainter({required this.progress, required this.pulse});
+  final Size canvasSize;
+
+  _RadarRingsPainter({
+    required this.progress,
+    required this.pulse,
+    required this.canvasSize,
+  });
+
   @override
   void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final paint = Paint()..style = PaintingStyle.stroke..strokeWidth = 1;
+    final center = Offset(canvasSize.width / 2, canvasSize.height / 2);
+    final radius = min(canvasSize.width, canvasSize.height) / 2;
+
+    final paint = Paint()..style = PaintingStyle.stroke..strokeWidth = 2;
+
+    // Draw rings
     for (int i = 1; i <= 3; i++) {
-      paint.color = const Color(0xFF2EC4B6).withOpacity(0.1 - (i * 0.02) + (pulse * 0.05));
-      canvas.drawCircle(center, (size.width / 2) * (i / 3), paint);
+      paint.color = const Color(0xFF2EC4B6).withOpacity(0.15 - (i * 0.03) + (pulse * 0.08));
+      canvas.drawCircle(center, radius * (i / 3), paint);
     }
+
+    // Draw sweep gradient
     final sweepPaint = Paint()..shader = SweepGradient(
-      colors: [Colors.transparent, const Color(0xFF2EC4B6).withOpacity(0.3), Colors.transparent],
+      colors: [Colors.transparent, const Color(0xFF2EC4B6).withOpacity(0.25), Colors.transparent],
       stops: const [0.0, 0.5, 1.0],
       transform: GradientRotation(progress * 2 * pi),
-    ).createShader(Rect.fromCircle(center: center, radius: size.width / 2));
-    canvas.drawCircle(center, size.width / 2, sweepPaint..style = PaintingStyle.fill);
+    ).createShader(Rect.fromCircle(center: center, radius: radius));
+
+    canvas.drawCircle(center, radius, sweepPaint..style = PaintingStyle.fill);
   }
+
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    if (oldDelegate is _RadarRingsPainter) {
+      return progress != oldDelegate.progress ||
+          pulse != oldDelegate.pulse ||
+          canvasSize != oldDelegate.canvasSize;
+    }
+    return true;
+  }
 }
+
 
 class _SpottedBubble extends StatefulWidget {
   final _BubbleData data;

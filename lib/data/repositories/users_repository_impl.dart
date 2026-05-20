@@ -26,11 +26,23 @@ class UsersRepositoryImpl implements UsersRepository {
       );
 
   @override
+  Future<List<UserModel>> searchUsers({
+    required String university,
+    required String query,
+    required int offset,
+    required int limit,
+  }) =>
+      remoteDataSource.searchUsers(
+        university: university,
+        query: query,
+        offset: offset,
+        limit: limit,
+      );
+
+  @override
   Future<UserModel> getUserById(String userId) async {
     try {
       final user = await remoteDataSource.getUserById(userId);
-      // Individual profile cache stays here — this is profile-view caching,
-      // not discovery-list caching, so the bloc doesn't own it.
       await OfflineCache.cacheProfile(userId, user.toJson());
       return user;
     } catch (e) {
@@ -54,6 +66,21 @@ class MockRepositoryImpl implements UsersRepository {
   }) async {
     final filtered = MockData.mockUsers
         .where((u) => u.university == university && u.sex == sex)
+        .toList();
+    return filtered.skip(offset).take(limit).toList();
+  }
+
+  @override
+  Future<List<UserModel>> searchUsers({
+    required String university,
+    required String query,
+    required int offset,
+    required int limit,
+  }) async {
+    final filtered = MockData.mockUsers
+        .where((u) => u.university == university && 
+                (u.name.toLowerCase().contains(query.toLowerCase()) || 
+                 u.residence.toLowerCase().contains(query.toLowerCase())))
         .toList();
     return filtered.skip(offset).take(limit).toList();
   }

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dating_app/core/utils/other_user_skeleton.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
 import 'package:dating_app/core/utils/theme.dart';
 import 'package:dating_app/core/widgets/common/private_account.dart';
@@ -104,7 +105,9 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> {
           body: BlocBuilder<OtherUserBloc, OtherUserState>(
             builder: (context, state) {
               if (state is OtherUserLoading) {
-                return Center(child: CircularProgressIndicator.adaptive());
+
+                return OtherUserSkeleton();
+
               }
 
               if (state is OtherUserError) {

@@ -251,7 +251,7 @@ class PostCardState extends State<PostCard> with SingleTickerProviderStateMixin 
                       },
                     ),
                     ActionButton(
-                      icon: CupertinoIcons.chat_bubble_fill,
+                      icon: CupertinoIcons.chat_bubble,
                       label: post.commentCount.toString(),
                       color: widget.isOffline ? Colors.grey : _textColor,
                       onTap: widget.isOffline ? () {} : widget.onComment,
