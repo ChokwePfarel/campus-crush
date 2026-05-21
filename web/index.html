@@ -1,739 +1,570 @@
-Here is an HTML document that creates an account deletion page with a success popup and no debug prints.
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>Delete Account | Permanent Removal</title>
-  <!-- Supabase JS v2 -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Delete Account</title>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- Tabler Icons (clean icon set) -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+
   <style>
-    *,
-    *::before,
-    *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
     }
 
-    body {
-      font-family: system-ui, -apple-system, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
-      background: #f5f5f3;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 1.5rem;
-      color: #1a1a1a;
+    :root{
+      --bg:#f4f4f2;
+      --card:#ffffff;
+      --text:#111;
+      --muted:#666;
+      --border:rgba(0,0,0,0.08);
+      --danger:#c0392b;
+      --danger-dark:#a93226;
+      --input:#f8f8f8;
     }
 
-    /* dark mode support */
-    @media (prefers-color-scheme: dark) {
-      body {
-        background: #1c1c1a;
-        color: #e8e8e4;
-      }
-      .card {
-        background: #2a2a28;
-        border-color: rgba(255, 255, 255, 0.08);
-      }
-      .what-deleted {
-        background: #222220;
-      }
-      .what-deleted p {
-        color: #9ca3af;
-      }
-      .what-deleted li {
-        color: #d4d4d8;
-      }
-      .confirm-row {
-        background: rgba(220, 60, 60, 0.15);
-      }
-      .field label {
-        color: #a1a1aa;
-      }
-      input {
-        background: #222220;
-        border-color: rgba(255, 255, 255, 0.15);
-        color: #f1f1ef;
-      }
-      input::placeholder {
-        color: #5f5f5b;
-      }
-      input:focus {
-        border-color: rgba(255, 255, 255, 0.4);
-        box-shadow: 0 0 0 2px rgba(192, 57, 43, 0.3);
-      }
-      .subtitle {
-        color: #a0a0a0;
-      }
-      .status.error {
-        background: rgba(220, 60, 60, 0.18);
-        color: #ff8a7a;
-      }
-      .popup-success {
-        background: #2a2a28;
-      }
-      .popup-details {
-        background: #1f1f1d;
-      }
-      .popup-success h2 {
-        color: #f0f0ec;
-      }
-      .popup-success p {
-        color: #bcbcb8;
-      }
-      .popup-details strong {
-        color: #e6e6e2;
-      }
-      .countdown-timer {
-        color: #9ca3af;
+    @media (prefers-color-scheme: dark){
+      :root{
+        --bg:#171717;
+        --card:#232323;
+        --text:#f5f5f5;
+        --muted:#a1a1a1;
+        --border:rgba(255,255,255,0.08);
+        --input:#2b2b2b;
       }
     }
 
-    .card {
-      background: #ffffff;
-      border: 1px solid rgba(0, 0, 0, 0.06);
-      border-radius: 28px;
-      padding: 2rem 1.8rem;
-      width: 100%;
-      max-width: 480px;
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.05);
-      transition: all 0.2s;
+    body{
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
     }
 
-    .icon-wrap {
-      width: 56px;
-      height: 56px;
-      border-radius: 56px;
-      background: #fee9e6;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 1rem;
-    }
-    .icon-wrap i {
-      font-size: 28px;
-      color: #c0392b;
+    .card{
+      width:100%;
+      max-width:460px;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:28px;
+      padding:32px;
+      box-shadow:0 10px 35px rgba(0,0,0,0.06);
     }
 
-    h1 {
-      text-align: center;
-      font-size: 1.65rem;
-      font-weight: 600;
-      letter-spacing: -0.3px;
-      margin-bottom: 0.35rem;
+    .icon-wrap{
+      width:68px;
+      height:68px;
+      margin:0 auto 20px;
+      border-radius:50%;
+      background:rgba(192,57,43,0.12);
+      display:flex;
+      align-items:center;
+      justify-content:center;
     }
 
-    .subtitle {
-      text-align: center;
-      font-size: 0.85rem;
-      color: #5e5e5c;
-      line-height: 1.45;
-      margin-bottom: 1.6rem;
+    .icon-wrap i{
+      font-size:34px;
+      color:var(--danger);
     }
 
-    .what-deleted {
-      background: #f8f8f6;
-      border-radius: 20px;
-      padding: 1rem 1.2rem;
-      margin-bottom: 1.8rem;
+    h1{
+      text-align:center;
+      font-size:28px;
+      margin-bottom:10px;
     }
 
-    .what-deleted p {
-      font-size: 0.7rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #8b8b89;
-      margin-bottom: 12px;
+    .subtitle{
+      text-align:center;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.6;
+      margin-bottom:28px;
     }
 
-    .what-deleted ul {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 0.7rem;
+    .warning-box{
+      background:rgba(192,57,43,0.06);
+      border:1px solid rgba(192,57,43,0.15);
+      border-radius:18px;
+      padding:18px;
+      margin-bottom:24px;
     }
 
-    .what-deleted li {
-      font-size: 0.85rem;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 450;
+    .warning-box p{
+      font-size:12px;
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:0.08em;
+      margin-bottom:12px;
+      font-weight:700;
     }
 
-    .what-deleted li i {
-      font-size: 1.1rem;
-      color: #c0392b;
+    .warning-box ul{
+      list-style:none;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
     }
 
-    .field {
-      margin-bottom: 1.2rem;
+    .warning-box li{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-size:14px;
     }
 
-    .field label {
-      display: block;
-      font-size: 0.8rem;
-      font-weight: 500;
-      color: #3a3a3a;
-      margin-bottom: 6px;
+    .warning-box i{
+      color:var(--danger);
+      font-size:18px;
     }
 
-    input[type="email"],
-    input[type="password"] {
-      width: 100%;
-      padding: 12px 14px;
-      font-size: 0.9rem;
-      border: 1px solid #e2e2df;
-      border-radius: 14px;
-      background: #ffffff;
-      outline: none;
-      transition: all 0.2s;
+    .field{
+      margin-bottom:18px;
     }
 
-    input:focus {
-      border-color: #c0392b;
-      box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.1);
+    .field label{
+      display:block;
+      margin-bottom:8px;
+      font-size:14px;
+      font-weight:500;
     }
 
-    .confirm-row {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      background: rgba(192, 57, 43, 0.06);
-      border-radius: 16px;
-      padding: 0.9rem 1rem;
-      margin: 1.2rem 0 1rem;
+    .field input{
+      width:100%;
+      padding:15px 18px;
+      border-radius:16px;
+      border:1px solid var(--border);
+      background:var(--input);
+      color:var(--text);
+      font-size:15px;
+      outline:none;
+      transition:0.2s ease;
     }
 
-    .confirm-row input {
-      width: 18px;
-      height: 18px;
-      accent-color: #c0392b;
-      cursor: pointer;
-      flex-shrink: 0;
-      margin-top: 2px;
+    .field input:focus{
+      border-color:rgba(192,57,43,0.4);
+      box-shadow:0 0 0 4px rgba(192,57,43,0.08);
     }
 
-    .confirm-row label {
-      font-size: 0.85rem;
-      font-weight: 500;
-      color: #c0392b;
-      cursor: pointer;
-      line-height: 1.4;
+    .field input::placeholder{
+      color:#888;
     }
 
-    .btn-delete {
-      width: 100%;
-      padding: 13px 12px;
-      background: #eeeeec;
-      color: #9e9e9a;
-      border: 1px solid #dadad6;
-      border-radius: 40px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      cursor: not-allowed;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      transition: all 0.2s;
-      margin-top: 1.2rem;
+    .confirm-row{
+      display:flex;
+      gap:12px;
+      padding:16px;
+      border-radius:16px;
+      background:rgba(192,57,43,0.08);
+      margin-top:8px;
     }
 
-    .btn-delete.active {
-      background: #c0392b;
-      color: white;
-      border-color: #a93226;
-      cursor: pointer;
-      box-shadow: 0 2px 8px rgba(192, 57, 43, 0.3);
+    .confirm-row input{
+      margin-top:3px;
+      accent-color:var(--danger);
+      width:18px;
+      height:18px;
+      flex-shrink:0;
     }
 
-    .btn-delete.active:hover {
-      background: #a93226;
-      transform: scale(0.98);
+    .confirm-row label{
+      font-size:14px;
+      line-height:1.5;
+      color:var(--danger);
     }
 
-    .status {
-      display: none;
-      text-align: center;
-      font-size: 0.8rem;
-      padding: 0.8rem;
-      border-radius: 32px;
-      margin-top: 1rem;
+    .btn-delete{
+      width:100%;
+      margin-top:24px;
+      border:none;
+      border-radius:18px;
+      padding:16px;
+      background:#d7d7d7;
+      color:#888;
+      font-size:15px;
+      font-weight:600;
+      cursor:not-allowed;
+      transition:0.2s ease;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
     }
 
-    .status.error {
-      display: block;
-      background: #fee9e6;
-      color: #b33a2c;
-      font-weight: 500;
+    .btn-delete.active{
+      background:var(--danger);
+      color:white;
+      cursor:pointer;
     }
 
-    /* loading overlay */
-    .loading-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.65);
-      backdrop-filter: blur(6px);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
+    .btn-delete.active:hover{
+      background:var(--danger-dark);
+      transform:translateY(-1px);
     }
 
-    .loading-overlay.active {
-      display: flex;
+    .status{
+      margin-top:18px;
+      padding:14px;
+      border-radius:14px;
+      display:none;
+      font-size:14px;
+      line-height:1.5;
     }
 
-    .loading-card {
-      background: white;
-      padding: 1.8rem 2rem;
-      border-radius: 36px;
-      text-align: center;
-      min-width: 210px;
-      box-shadow: 0 25px 40px rgba(0, 0, 0, 0.2);
+    .status.error{
+      display:block;
+      background:rgba(192,57,43,0.1);
+      color:var(--danger);
     }
 
-    .spinner-icon {
-      width: 40px;
-      height: 40px;
-      border: 3px solid rgba(0, 0, 0, 0.1);
-      border-top: 3px solid #c0392b;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin: 0 auto 1rem;
+    .spinner{
+      width:18px;
+      height:18px;
+      border:2px solid currentColor;
+      border-top-color:transparent;
+      border-radius:50%;
+      animation:spin 0.8s linear infinite;
+      display:none;
     }
 
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+    .spinner.active{
+      display:inline-block;
     }
 
-    .loading-card p {
-      font-weight: 500;
-      color: #1a1a1a;
-      font-size: 0.9rem;
-    }
-
-    /* SUCCESS POPUP (beautiful modal) */
-    .popup-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(8px);
-      z-index: 2000;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-    }
-
-    .popup-overlay.active {
-      display: flex;
-    }
-
-    .popup-success {
-      background: #ffffff;
-      border-radius: 40px;
-      max-width: 400px;
-      width: 90%;
-      text-align: center;
-      padding: 2rem 1.8rem;
-      animation: slideFadeIn 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-      box-shadow: 0 30px 50px rgba(0, 0, 0, 0.3);
-    }
-
-    @keyframes slideFadeIn {
-      0% {
-        opacity: 0;
-        transform: translateY(24px) scale(0.96);
-      }
-      100% {
-        opacity: 1;
-        transform: translateY(0) scale(1);
+    @keyframes spin{
+      to{
+        transform:rotate(360deg);
       }
     }
 
-    .popup-icon {
-      width: 76px;
-      height: 76px;
-      background: #2e7d32;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 1.2rem;
-      animation: bouncePop 0.5s ease-out;
+    .overlay{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:999;
+      backdrop-filter:blur(4px);
     }
 
-    @keyframes bouncePop {
-      0% {
-        transform: scale(0.2);
-        opacity: 0;
+    .overlay.active{
+      display:flex;
+    }
+
+    .popup{
+      background:var(--card);
+      width:90%;
+      max-width:380px;
+      border-radius:28px;
+      padding:32px;
+      text-align:center;
+      animation:popup 0.25s ease;
+    }
+
+    @keyframes popup{
+      from{
+        opacity:0;
+        transform:translateY(20px);
       }
-      50% {
-        transform: scale(1.1);
-      }
-      100% {
-        transform: scale(1);
-        opacity: 1;
+      to{
+        opacity:1;
+        transform:translateY(0);
       }
     }
 
-    .popup-icon i {
-      font-size: 40px;
-      color: white;
+    .popup-icon{
+      width:80px;
+      height:80px;
+      margin:0 auto 20px;
+      border-radius:50%;
+      background:#4caf50;
+      display:flex;
+      align-items:center;
+      justify-content:center;
     }
 
-    .popup-success h2 {
-      font-size: 1.8rem;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
+    .popup-icon i{
+      color:white;
+      font-size:42px;
     }
 
-    .popup-success p {
-      color: #4b5563;
-      font-size: 0.9rem;
-      line-height: 1.45;
-      margin-bottom: 1.2rem;
+    .popup h2{
+      margin-bottom:12px;
+      font-size:24px;
     }
 
-    .popup-details {
-      background: #f8f8f6;
-      border-radius: 24px;
-      padding: 1rem 1.2rem;
-      text-align: left;
-      margin: 1rem 0;
+    .popup p{
+      color:var(--muted);
+      line-height:1.6;
+      font-size:14px;
     }
 
-    .popup-details p {
-      margin: 0 0 10px 0;
-      font-size: 0.85rem;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    .popup button{
+      margin-top:24px;
+      width:100%;
+      border:none;
+      background:var(--danger);
+      color:white;
+      padding:14px;
+      border-radius:16px;
+      font-size:15px;
+      font-weight:600;
+      cursor:pointer;
     }
 
-    .popup-details p:last-child {
-      margin-bottom: 0;
+    .popup button:hover{
+      background:var(--danger-dark);
     }
 
-    .countdown-timer {
-      font-size: 0.85rem;
-      color: #5f6c80;
-      background: rgba(0, 0, 0, 0.03);
-      display: inline-block;
-      padding: 4px 14px;
-      border-radius: 60px;
-      margin: 0.75rem 0 0.5rem;
-    }
-
-    .popup-button {
-      background: #c0392b;
-      color: white;
-      border: none;
-      padding: 13px 20px;
-      border-radius: 50px;
-      font-weight: 600;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: background 0.2s;
-      width: 100%;
-      margin-top: 0.8rem;
-    }
-
-    .popup-button:hover {
-      background: #9b2e22;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .loading-card {
-        background: #2a2a28;
+    @media(max-width:480px){
+      .card{
+        padding:24px;
+        border-radius:24px;
       }
-      .loading-card p {
-        color: #e8e8e4;
-      }
-      .spinner-icon {
-        border-top-color: #e05a4a;
+
+      h1{
+        font-size:24px;
       }
     }
   </style>
 </head>
+
 <body>
 
-<div class="loading-overlay" id="loadingOverlay">
-  <div class="loading-card">
-    <div class="spinner-icon"></div>
-    <p>Deleting account, please wait...</p>
-  </div>
-</div>
+  <div class="overlay" id="successPopup">
+    <div class="popup">
+      <div class="popup-icon">
+        <i class="ti ti-check"></i>
+      </div>
 
-<!-- SUCCESS MODAL (popup when deletion confirmed) -->
-<div class="popup-overlay" id="successPopup">
-  <div class="popup-success">
-    <div class="popup-icon">
-      <i class="ti ti-check"></i>
+      <h2>Account Deleted</h2>
+
+      <p>
+        Your account and associated data have been permanently removed.
+      </p>
+
+      <button onclick="redirectNow()">
+        Continue
+      </button>
     </div>
-    <h2>Account deleted</h2>
-    <p>Your account and all associated data have been permanently erased.</p>
-    <div class="popup-details">
-      <p><i class="ti ti-trash" style="color:#c0392b;"></i> <strong>Profile & personal data</strong> – removed</p>
-      <p><i class="ti ti-photo-off" style="color:#c0392b;"></i> <strong>Uploads & images</strong> – erased</p>
-      <p><i class="ti ti-database-off" style="color:#c0392b;"></i> <strong>Server records</strong> – fully deleted</p>
+  </div>
+
+  <div class="card">
+
+    <div class="icon-wrap">
+      <i class="ti ti-alert-triangle"></i>
     </div>
-    <div class="countdown-timer" id="countdownTimer">Redirecting in 5 seconds...</div>
-    <button class="popup-button" id="popupCloseBtn">Continue</button>
-  </div>
-</div>
 
-<div class="card">
-  <div class="icon-wrap">
-    <i class="ti ti-alert-triangle-filled"></i>
-  </div>
-  <h1>Delete account</h1>
-  <p class="subtitle">This action is permanent and cannot be reversed. Confirm carefully.</p>
+    <h1>Delete Account</h1>
 
-  <div class="what-deleted">
-    <p>WHAT WILL BE REMOVED</p>
-    <ul>
-      <li><i class="ti ti-user-x"></i> Personal profile & login credentials</li>
-      <li><i class="ti ti-photo-off"></i> All uploaded images & media</li>
-      <li><i class="ti ti-database-off"></i> Associated metadata & activity logs</li>
-    </ul>
-  </div>
+    <p class="subtitle">
+      This action is permanent and cannot be undone.
+    </p>
 
-  <div id="formSection">
+    <div class="warning-box">
+      <p>What will be removed</p>
+
+      <ul>
+        <li><i class="ti ti-user-x"></i> Account profile</li>
+        <li><i class="ti ti-photo-off"></i> Uploaded media</li>
+        <li><i class="ti ti-database-off"></i> Associated server data</li>
+      </ul>
+    </div>
+
     <div class="field">
-  <label for="password">Password</label>
-  <input type="text" id="password" placeholder="Enter your password" autocomplete="off">
-</div>
+      <label>Email Address</label>
+
+      <input
+        type="email"
+        id="email"
+        placeholder="you@example.com"
+        oninput="toggleBtn()"
+      />
+    </div>
+
     <div class="field">
-      <label for="password">Password</label>
-      <input type="text" id="password" placeholder="Enter your password" autocomplete="off">
+      <label>Password</label>
+
+      <input
+        type="password"
+        id="password"
+        placeholder="Enter your password"
+        oninput="toggleBtn()"
+      />
     </div>
 
     <div class="confirm-row">
-      <input type="checkbox" id="confirmCheckbox">
-      <label for="confirmCheckbox">I understand this is permanent and irreversible</label>
+      <input
+        type="checkbox"
+        id="confirm-check"
+        onchange="toggleBtn()"
+      />
+
+      <label for="confirm-check">
+        I understand this action is irreversible.
+      </label>
     </div>
 
-    <button class="btn-delete" id="deleteButton">
+    <button
+      class="btn-delete"
+      id="delete-btn"
+      onclick="deleteAccount()"
+    >
       <i class="ti ti-trash"></i>
-      <span id="btnLabel">Permanently delete my account</span>
+
+      <span id="btn-text">
+        Permanently Delete Account
+      </span>
+
+      <span class="spinner" id="spinner"></span>
     </button>
 
-    <div class="status" id="statusMessage"></div>
-  </div>
-</div>
+    <div class="status" id="status-msg"></div>
 
-<script>
-  // -------------------- SUPABASE CONFIGURATION --------------------
-  const SUPABASE_URL = 'https://wdhzlfqftxytphnohpqb.supabase.co';
-  const SUPABASE_ANON_KEY = 'sb_publishable_YOMbh7gnIrWdBjk4jjIajw_euyagT9S';
-  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  
-  // DOM elements
-  const emailInput = document.getElementById('email');
-  const passwordInput = document.getElementById('password');
-  const checkBox = document.getElementById('confirmCheckbox');
-  const deleteBtn = document.getElementById('deleteButton');
-  const btnLabelSpan = document.getElementById('btnLabel');
-  const statusDiv = document.getElementById('statusMessage');
-  const loadingOverlay = document.getElementById('loadingOverlay');
-  const successPopup = document.getElementById('successPopup');
-  const countdownSpan = document.getElementById('countdownTimer');
-  const formSection = document.getElementById('formSection');
-  
-  let countdownIntervalId = null;
-  
-  // Helper: toggle active state of delete button
-  function updateButtonState() {
-    const email = emailInput.value.trim();
-    const password = passwordInput.value;
-    const isConfirmed = checkBox.checked;
-    
-    if (email && password && isConfirmed) {
-      deleteBtn.classList.add('active');
-    } else {
-      deleteBtn.classList.remove('active');
-    }
-  }
-  
-  // Helper: show error message (no debug logs)
-  function showError(message) {
-    statusDiv.textContent = message;
-    statusDiv.className = 'status error';
-    setTimeout(() => {
-      if (statusDiv.className === 'status error') {
-        statusDiv.style.display = 'none';
-        setTimeout(() => {
-          statusDiv.style.display = '';
-          statusDiv.textContent = '';
-        }, 150);
+  </div>
+
+  <script>
+    const SUPABASE_URL =
+      'https://wdhzlfqftxytphnohpqb.supabase.co';
+
+    const SUPABASE_ANON_KEY =
+      'YOUR_SUPABASE_ANON_KEY';
+
+    const supabaseClient =
+      supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+      );
+
+    function toggleBtn() {
+      const email =
+        document.getElementById('email').value.trim();
+
+      const password =
+        document.getElementById('password').value;
+
+      const checked =
+        document.getElementById('confirm-check').checked;
+
+      const btn =
+        document.getElementById('delete-btn');
+
+      if (email && password && checked) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
       }
-    }, 5000);
-  }
-  
-  function hideError() {
-    statusDiv.className = 'status';
-    statusDiv.textContent = '';
-  }
-  
-  // Loading state management
-  function setLoadingState(isLoading) {
-    if (isLoading) {
-      loadingOverlay.classList.add('active');
-      deleteBtn.disabled = true;
-    } else {
-      loadingOverlay.classList.remove('active');
-      deleteBtn.disabled = false;
-      updateButtonState(); // restore clickability based on fields
     }
-  }
-  
-  // Clean redirect
-  function finalRedirect() {
-    if (countdownIntervalId) clearInterval(countdownIntervalId);
-    window.location.href = '/';
-  }
-  
-  // Show success popup and hide the deletion form
-  function displaySuccessAndRedirect() {
-    // hide the deletion interface so user can't re-trigger
-    if (formSection) formSection.style.display = 'none';
-    // Show the fancy popup
-    successPopup.classList.add('active');
-    
-    let secondsLeft = 10;
-    if (countdownSpan) countdownSpan.textContent = `Redirecting in ${secondsLeft} seconds...`;
-    
-    if (countdownIntervalId) clearInterval(countdownIntervalId);
-    countdownIntervalId = setInterval(() => {
-      secondsLeft--;
-      if (secondsLeft >= 0) {
-        if (countdownSpan) countdownSpan.textContent = `Redirecting in ${secondsLeft} second${secondsLeft !== 1 ? 's' : ''}...`;
-      }
-      if (secondsLeft < 0) {
-        clearInterval(countdownIntervalId);
-        finalRedirect();
-      }
-    }, 1000);
-  }
-  
-  // Manual redirect if user clicks "Continue" button inside popup
-  function attachPopupHandlers() {
-    const closeBtn = document.getElementById('popupCloseBtn');
-    if (closeBtn) {
-      closeBtn.onclick = () => {
-        if (countdownIntervalId) clearInterval(countdownIntervalId);
-        finalRedirect();
-      };
+
+    function showStatus(message) {
+      const status =
+        document.getElementById('status-msg');
+
+      status.className = 'status error';
+      status.textContent = message;
     }
-    // also close if backdrop clicked
-    successPopup.addEventListener('click', (e) => {
-      if (e.target === successPopup) {
-        if (countdownIntervalId) clearInterval(countdownIntervalId);
-        finalRedirect();
+
+    function setLoading(isLoading) {
+      const spinner =
+        document.getElementById('spinner');
+
+      const btn =
+        document.getElementById('delete-btn');
+
+      const text =
+        document.getElementById('btn-text');
+
+      if (isLoading) {
+        spinner.classList.add('active');
+        btn.disabled = true;
+        text.textContent = 'Processing...';
+      } else {
+        spinner.classList.remove('active');
+        btn.disabled = false;
+        text.textContent =
+          'Permanently Delete Account';
       }
-    });
-  }
-  
-  // Main deletion logic (no console.debug or prints)
-  async function performAccountDeletion() {
-    // double-check conditions
-    const email = emailInput.value.trim();
-    const password = passwordInput.value;
-    const isConfirmed = checkBox.checked;
-    
-    if (!email || !password || !isConfirmed) {
-      showError('Please fill in your credentials and confirm the checkbox.');
-      return;
     }
-    
-    hideError();
-    setLoadingState(true);
-    
-    try {
-      // Step 1: sign in with provided credentials
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: password
-      });
-      
-      if (signInError) {
-        setLoadingState(false);
-        if (signInError.message.includes('Invalid login') || signInError.message.includes('Email not confirmed')) {
-          showError('Invalid email or password. Please check your credentials.');
-        } else {
-          showError(`Authentication failed: ${signInError.message}`);
+
+    async function deleteAccount() {
+
+      const btn =
+        document.getElementById('delete-btn');
+
+      if (!btn.classList.contains('active')) {
+        return;
+      }
+
+      const email =
+        document.getElementById('email').value.trim();
+
+      const password =
+        document.getElementById('password').value;
+
+      setLoading(true);
+
+      try {
+
+        const {
+          data: authData,
+          error: authError
+        } =
+        await supabaseClient.auth.signInWithPassword({
+          email,
+          password
+        });
+
+        if (authError) {
+          setLoading(false);
+          return showStatus(authError.message);
         }
-        return;
-      }
-      
-      const userId = signInData?.user?.id;
-      if (!userId) {
-        setLoadingState(false);
-        showError('Unable to retrieve user information. Please try again.');
-        return;
-      }
-      
-      // Step 2: invoke edge function to delete user (backend deletion)
-      const { error: deleteFuncError } = await supabase.functions.invoke('delete-user', {
-        body: { userId: userId }
-      });
-      
-      if (deleteFuncError) {
-        setLoadingState(false);
-        if (deleteFuncError.message.includes('not found') || deleteFuncError.status === 404) {
-          showError('Deletion service not available. Please contact support.');
-        } else {
-          showError(`Account deletion failed: ${deleteFuncError.message}`);
+
+        const {
+          error
+        } =
+        await supabaseClient.functions.invoke(
+          'delete-user',
+          {
+            body: {
+              userId: authData.user.id
+            }
+          }
+        );
+
+        if (error) {
+          setLoading(false);
+          return showStatus(error.message);
         }
-        return;
+
+        await supabaseClient.auth.signOut();
+
+        setLoading(false);
+
+        document
+          .getElementById('successPopup')
+          .classList.add('active');
+
+      } catch (err) {
+
+        setLoading(false);
+
+        showStatus(
+          'Something went wrong. Please try again.'
+        );
       }
-      
-      // Step 3: sign out the user after successful deletion on backend
-      await supabase.auth.signOut();
-      
-      // hide loading, mark success
-      setLoadingState(false);
-      // show success popup and redirect
-      displaySuccessAndRedirect();
-      
-    } catch (err) {
-      setLoadingState(false);
-      let errorMsg = 'Unexpected error occurred. Please try again later.';
-      if (err && err.message) errorMsg = err.message;
-      showError(errorMsg);
     }
-  }
-  
-  // Event binding with no debug logs
-  emailInput.addEventListener('input', updateButtonState);
-  passwordInput.addEventListener('input', updateButtonState);
-  checkBox.addEventListener('change', updateButtonState);
-  
-  deleteBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    if (deleteBtn.classList.contains('active')) {
-      performAccountDeletion();
-    } else {
-      showError('Please fill all fields and confirm the checkbox to proceed.');
+
+    function redirectNow() {
+      window.location.href = '/';
     }
-  });
-  
-  // initial button state check
-  updateButtonState();
-  attachPopupHandlers();
-  
-  
-</script>
+  </script>
+
 </body>
 </html>
-```
