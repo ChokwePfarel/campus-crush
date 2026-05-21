@@ -279,10 +279,11 @@
   </div>
 
   <script>
-    const SUPABASE_URL = process.env.SUPABASE_URL;
-    const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    const SUPABASE_URL = 'https://your-project-id.supabase.co';
+    const SUPABASE_ANON_KEY = 'your-anon-public-key-here';
 
-    supabase = supabase.createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     function toggleBtn() {
       const email = document.getElementById('email').value.trim();
@@ -303,39 +304,29 @@
     }
 
     async function deleteAccount() {
-      const btn = document.getElementById('delete-btn');
-      if (!btn.classList.contains('active')) return;
+  const btn = document.getElementById('delete-btn');
+  if (!btn.classList.contains('active')) return;
 
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
-      const label = document.getElementById('btn-label');
-      const spinner = document.getElementById('spinner');
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
 
-      document.getElementById('status-msg').className = 'status';
+  // 1. Sign in the user first to get their Session/ID
+  const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+  if (authError) return showStatus('error', authError.message);
 
-      btn.classList.remove('active');
-      label.textContent = 'Deleting…';
-      spinner.style.display = 'block';
+  // 2. Invoke the Edge Function
+  // You don't need the service key here; the function will handle it server-side.
+  const { data, error } = await supabase.functions.invoke('delete-user', {
+    body: { userId: authData.user.id }
+  });
 
-      try {
-        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+  if (error) return showStatus('error', error.message);
 
-        const { error: delErr } = await supabaseClient.functions.invoke('delete-user', {
-          body: { userId: data.user.id }
-        });
-        if (delErr) throw delErr;
-
-        document.getElementById('form-section').style.display = 'none';
-        showStatus('success', 'Your account has been deleted. You will be redirected shortly.');
-        setTimeout(() => window.location.reload(), 3000);
-      } catch (err) {
-        showStatus('error', err.message || 'Something went wrong. Please try again.');
-        btn.classList.add('active');
-        label.textContent = 'Permanently delete my account';
-        spinner.style.display = 'none';
-      }
-    }
+  // 3. Success
+  document.getElementById('form-section').style.display = 'none';
+  showStatus('success', 'Your account has been deleted.');
+  setTimeout(() => window.location.reload(), 3000);
+}
   </script>
 </body>
 </html>
