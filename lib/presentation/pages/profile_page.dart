@@ -8,6 +8,7 @@ import 'package:dating_app/presentation/bloc/image/image_sate.dart';
 import 'package:dating_app/presentation/bloc/user/user_bloc.dart';
 import 'package:dating_app/presentation/bloc/user/user_event.dart';
 import 'package:dating_app/presentation/bloc/user/user_state.dart';
+import 'package:dating_app/presentation/pages/full_picture.dart';
 import 'package:dating_app/presentation/pages/full_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -160,19 +161,24 @@ class _ProfilePageState extends State<ProfilePage> {
     return Center(
       child: Stack(
         children: [
-          CircleAvatar(
-            radius: SizeConfig.widthPercent(18),
-            backgroundColor: color.withOpacity(0.1),
-            backgroundImage: user.profileImageUrl.isNotEmpty
-                ? NetworkImage(user.profileImageUrl)
-                : null,
-            child: user.profileImageUrl.isEmpty
-                ? Icon(
-                    Icons.person,
-                    size: SizeConfig.widthPercent(18),
-                    color: color,
-                  )
-                : null,
+          GestureDetector(
+            onTap: (){
+              Navigator.push(context, MaterialPageRoute(builder: (_) => FullPicture(imageUrl: user.profileImageUrl)));
+    },
+            child: CircleAvatar(
+              radius: SizeConfig.widthPercent(18),
+              backgroundColor: color.withOpacity(0.1),
+              backgroundImage: user.profileImageUrl.isNotEmpty
+                  ? NetworkImage(user.profileImageUrl)
+                  : null,
+              child: user.profileImageUrl.isEmpty
+                  ? Icon(
+                      Icons.person,
+                      size: SizeConfig.widthPercent(18),
+                      color: color,
+                    )
+                  : null,
+            ),
           ),
           if (user.isVerified)
             Positioned(

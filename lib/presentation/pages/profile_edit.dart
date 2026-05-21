@@ -691,5 +691,3 @@ class _ProfileEditState extends State<ProfileEdit> {
 }
 
 
-//https://sites.google.com/view/
-// campuscrushprivacypolicy

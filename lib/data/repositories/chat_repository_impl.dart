@@ -141,7 +141,6 @@ class ChatRepositoryImpl implements ChatRepository {
         otherUserId:   otherUserId,
       );
 
-  // ─── Messages ──────────────────────────────────────────────────────────────
 
   @override
   Future<List<MessageEntity>> getMessages(String conversationId) async {
@@ -194,7 +193,6 @@ class ChatRepositoryImpl implements ChatRepository {
     }
   }
 
-  // ─── Streams ───────────────────────────────────────────────────────────────
 
   @override
   Stream<MessageEntity> subscribeToMessages(String conversationId) =>
@@ -204,7 +202,6 @@ class ChatRepositoryImpl implements ChatRepository {
   Stream<ConversationEntity> subscribeToConversations(String userId) =>
       _dataSource.subscribeToConversations(userId);
 
-  // ─── Misc ──────────────────────────────────────────────────────────────────
 
   @override
   Future<int> getUnreadCount(String currentUserId) async {
@@ -213,6 +210,10 @@ class ChatRepositoryImpl implements ChatRepository {
     } catch (_) {
       return 0;
     }
+  }
+
+  Future<void> deleteMessage(String messageId) async {
+    return _dataSource.deleteMessage(messageId);
   }
 
   @override

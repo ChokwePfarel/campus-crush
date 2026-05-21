@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
 import 'package:dating_app/core/utils/users_skeleton.dart';
+import 'package:dating_app/domain/repositories/users_repository.dart';
 import 'package:dating_app/presentation/bloc/user/user_bloc.dart';
 import 'package:dating_app/presentation/bloc/user/user_event.dart';
 import 'package:dating_app/presentation/bloc/user/user_state.dart';
@@ -63,8 +64,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
         _currentSex = userState.user.sex;
         _triggerLoad(context, isInitial: true);
       } else {
-        // Not loaded yet — BlocListener will handle it when UserLoaded arrives
-        // but make sure the subscription is running
         context.read<UserBloc>().add(LoadUserSubscription());
       }
     });
@@ -168,8 +167,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
-
-
                                   _profileButton(profileImg),
                                   const SizedBox(width: 10),
                                   _searchField(),
@@ -282,23 +279,31 @@ class _DiscoverPageState extends State<DiscoverPage> {
 
   Widget _searchField() {
     return GestureDetector(
-      onTap: (){
+      onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const SearchPage()),
+          MaterialPageRoute(
+            builder: (_) => BlocProvider(
+              create: (context) => UsersBloc(context.read<UsersRepository>()),
+              child: const SearchPage(),
+            ),
+          ),
         );
       },
       child: Container(
-
-
         decoration: BoxDecoration(
           color: Colors.grey.shade100,
           shape: BoxShape.circle,
         ),
         child: Padding(
           padding: const EdgeInsets.all(5.0),
-          child: Icon(Icons.search,size: SizeConfig.widthPercent(9), color: Colors.grey.shade400),
-        ),),
+          child: Icon(
+            Icons.search,
+            size: SizeConfig.widthPercent(9),
+            color: Colors.grey.shade400,
+          ),
+        ),
+      ),
     );
   }
 
@@ -313,8 +318,9 @@ class _DiscoverPageState extends State<DiscoverPage> {
         backgroundColor: Colors.grey[200],
         backgroundImage:
             !_isOffline && image.isNotEmpty && image.startsWith('http')
-            ? NetworkImage(image)
-            : const AssetImage('assets/profile_picture.png') as ImageProvider,
+                ? NetworkImage(image)
+                : const AssetImage('assets/profile_picture.png')
+                    as ImageProvider,
         child: _isOffline || image.isEmpty
             ? const Icon(Icons.person, color: Colors.grey)
             : null,

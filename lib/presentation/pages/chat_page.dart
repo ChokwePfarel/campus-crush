@@ -281,7 +281,7 @@ class _ChatPageState extends State<ChatPage> {
             controller: _scrollCtrl,
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             itemCount: items.length,
-            itemBuilder: (_, i) {
+            itemBuilder: (context, i) {
               final item = items[i];
               if (item is DateTime) return _DaySeparator(date: item);
               final msg = item as MessageEntity;
@@ -401,6 +401,36 @@ class _MessageBubble extends StatelessWidget {
     required this.otherUserImageUrl,
   });
 
+  void _showOptions(BuildContext context) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (actionContext) => CupertinoActionSheet(
+        actions: [
+          CupertinoActionSheetAction(
+            isDestructiveAction: true,
+            onPressed: () {
+              context.read<ChatBloc>().add(deleteMessage(messageId: message.id));
+              Navigator.pop(actionContext);
+              HapticFeedback.mediumImpact();
+            },
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(CupertinoIcons.delete, color: CupertinoColors.destructiveRed),
+                SizedBox(width: 8),
+                Text('Delete Message'),
+              ],
+            ),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          child: const Text('Cancel'),
+          onPressed: () => Navigator.pop(actionContext),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -435,67 +465,70 @@ class _MessageBubble extends StatelessWidget {
                 : const SizedBox(width: 36),
           ],
           Flexible(
-            child: Column(
-              crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-              children: [
-                Opacity(
-                  opacity: message.status == MessageStatus.pending ? 0.6 : 1.0,
-                  child: Container(
-                    constraints: BoxConstraints(
-                      maxWidth: MediaQuery.of(context).size.width * 0.72,
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      gradient: isMe
-                          ? const LinearGradient(
-                              colors: [Color(0xFFFF4D6D), Color(0xFF6C63FF)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            )
-                          : null,
-                      color: isMe ? null : Colors.white,
-                      borderRadius: BorderRadius.only(
-                        topLeft: const Radius.circular(18),
-                        topRight: const Radius.circular(18),
-                        bottomLeft: Radius.circular(isMe || !isLastInGroup ? 18 : 4),
-                        bottomRight: Radius.circular(!isMe || !isLastInGroup ? 18 : 4),
+            child: GestureDetector(
+              onLongPress: isMe ? () => _showOptions(context) : null,
+              child: Column(
+                crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                children: [
+                  Opacity(
+                    opacity: message.status == MessageStatus.pending ? 0.6 : 1.0,
+                    child: Container(
+                      constraints: BoxConstraints(
+                        maxWidth: MediaQuery.of(context).size.width * 0.72,
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.06),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        gradient: isMe
+                            ? const LinearGradient(
+                                colors: [Color(0xFFFF4D6D), Color(0xFF6C63FF)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              )
+                            : null,
+                        color: isMe ? null : Colors.white,
+                        borderRadius: BorderRadius.only(
+                          topLeft: const Radius.circular(18),
+                          topRight: const Radius.circular(18),
+                          bottomLeft: Radius.circular(isMe || !isLastInGroup ? 18 : 4),
+                          bottomRight: Radius.circular(!isMe || !isLastInGroup ? 18 : 4),
                         ),
-                      ],
-                    ),
-                    child: Text(
-                      message.text,
-                      style: TextStyle(
-                        fontSize: 15,
-                        height: 1.4,
-                        color: isMe ? Colors.white : const Color(0xFF1A1A2E),
-                      ),
-                    ),
-                  ),
-                ),
-                if (isLastInGroup)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          _formatTime(message.createdAt),
-                          style: TextStyle(fontSize: 11, color: Colors.grey.shade400),
-                        ),
-                        if (isMe) ...[
-                          const SizedBox(width: 4),
-                          _buildStatusIcon(),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.06),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
                         ],
-                      ],
+                      ),
+                      child: Text(
+                        message.text,
+                        style: TextStyle(
+                          fontSize: 15,
+                          height: 1.4,
+                          color: isMe ? Colors.white : const Color(0xFF1A1A2E),
+                        ),
+                      ),
                     ),
                   ),
-              ],
+                  if (isLastInGroup)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _formatTime(message.createdAt),
+                            style: TextStyle(fontSize: 11, color: Colors.grey.shade400),
+                          ),
+                          if (isMe) ...[
+                            const SizedBox(width: 4),
+                            _buildStatusIcon(),
+                          ],
+                        ],
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
           if (isMe) const SizedBox(width: 4),

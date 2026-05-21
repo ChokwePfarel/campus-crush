@@ -34,3 +34,8 @@ class UpdateMessageStatus extends ChatEvent {
   final MessageStatus status;
   UpdateMessageStatus({required this.messageId, required this.status});
 }
+
+class deleteMessage extends ChatEvent {
+  final String messageId;
+  deleteMessage({required this.messageId});
+}

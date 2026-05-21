@@ -28,6 +28,8 @@ abstract class ChatRemoteDataSource {
 
   Future<int> getUnreadCount(String currentUserId);
 
+  Future<void> deleteMessage(String messageId);
+
   void dispose();
 }
 
@@ -177,46 +179,100 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
     return controller.stream;
   }
 
-  @override
+  // lib/data/datasources/chat_remote_data_source.dart  @override
   Stream<ConversationModel> subscribeToConversations(String currentUserId) {
     final controller = StreamController<ConversationModel>.broadcast();
 
     _conversationsChannel = client
         .channel('conversations:$currentUserId')
         .onPostgresChanges(
-          event: PostgresChangeEvent.update,
-          schema: 'public',
-          table: 'conversations',
-          callback: (payload) async {
-            final updated = await client
-                .from('conversations')
-                .select('''
-                  *,
-                  user_one:profiles!conversations_user_one_id_fkey (
-                    id, name, profile_image_url, is_verified
-                  ),
-                  user_two:profiles!conversations_user_two_id_fkey (
-                    id, name, profile_image_url, is_verified
-                  ),
-                  messages (
-                    id, is_read, sender_id
-                  )
-                ''')
-                .eq('id', payload.newRecord['id'])
-                .single();
+      // Listen for ALL changes (INSERT, UPDATE, DELETE) to catch new chats
+      // and summary updates after deletions
+      event: PostgresChangeEvent.all,
+      schema: 'public',
+      table: 'conversations',
+      callback: (payload) async {
+        if (payload.newRecord.isEmpty) return;
 
-            // Calculate unread count for the stream update
-            final messages = (updated['messages'] as List? ?? []);
-            final unreadCount = messages
-                .where((m) => m['is_read'] == false && m['sender_id'] != currentUserId)
-                .length;
+        final String conversationId = payload.newRecord['id'];
 
-            controller.add(ConversationModel.fromJson(updated, currentUserId, unreadCount));
-          },
-        )
+        try {
+          final updated = await client
+              .from('conversations')
+              .select('''
+                    *,
+                    user_one:profiles!conversations_user_one_id_fkey (
+                      id, name, profile_image_url, is_verified
+                    ),
+                    user_two:profiles!conversations_user_two_id_fkey (
+                      id, name, profile_image_url, is_verified
+                    ),
+                    messages (
+                      id, is_read, sender_id
+                    )
+                  ''')
+              .eq('id', conversationId)
+              .single();
+
+          final messages = (updated['messages'] as List? ?? []);
+          final unreadCount = messages
+              .where((m) => m['is_read'] == false && m['sender_id'] != currentUserId)
+              .length;
+
+          controller.add(ConversationModel.fromJson(updated, currentUserId, unreadCount));
+        } catch (e) {
+          print('Realtime Fetch Error: $e');
+        }
+      },
+    )
         .subscribe();
 
     return controller.stream;
+  }
+
+  @override
+  Future<void> deleteMessage(String messageId) async {
+    try {
+      // 1. Get metadata before deletion
+      final messageInfo = await client
+          .from('messages')
+          .select('conversation_id')
+          .eq('id', messageId)
+          .maybeSingle();
+
+      if (messageInfo == null) return;
+      final String conversationId = messageInfo['conversation_id'];
+
+      // 2. Delete the message
+      await client.from('messages').delete().eq('id', messageId);
+
+      // 3. Find the new latest message
+      final latestMessage = await client
+          .from('messages')
+          .select('text, created_at')
+          .eq('conversation_id', conversationId)
+          .order('created_at', ascending: false)
+          .limit(1)
+          .maybeSingle();
+
+      // 4. Update the conversation summary
+      // This update triggers the Realtime listener on the Inbox page
+      final updateData = {
+        'last_message': latestMessage?['text'],
+        'last_message_at': latestMessage?['created_at'],
+      };
+
+      await client
+          .from('conversations')
+          .update(updateData)
+          .eq('id', conversationId)
+          .select(); // Verify RLS allows update
+
+      print('Deletion success: Inbox summary updated for $conversationId');
+    } catch (e) {
+      print('Delete Message Error: $e');
+      rethrow;
+    }
   }
 
   @override
@@ -227,6 +283,7 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
     );
     return response as int;
   }
+
 
   @override
   void dispose() {

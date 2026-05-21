@@ -20,6 +20,8 @@ abstract class ChatRepository {
   void dispose();
 
   Future<int> getUnreadCount(String currentUserId);
+
+  Future<void> deleteMessage(String messageId);
 }
 
 

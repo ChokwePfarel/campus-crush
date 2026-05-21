@@ -176,16 +176,7 @@ class _InboxPageState extends State<InboxPage>
                   builder: (_) => ChatPage(
                     conversation: conv,
                     currentUserId: widget.currentUserId,
-                    /*onProfileTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => OtherUserProfilePage(
-                            userId: otherUserId,
-                          ),
-                        ),
-                      );
-                    },*/
+
                   ),
                 ),
               );

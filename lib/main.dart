@@ -44,6 +44,7 @@ import 'package:dating_app/domain/repositories/coins_repository.dart';
 import 'package:dating_app/presentation/pages/splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -56,12 +57,18 @@ Future<void> main() async {
 
   await HiveInit.init();
 
+  // Load the .env file
+  await dotenv.load(fileName: ".env");
+
 
   try {
+
     await Supabase.initialize(
-      url: 'https://wdhzlfqftxytphnohpqb.supabase.co',
-      anonKey: 'sb_publishable_YOMbh7gnIrWdBjk4jjIajw_euyagT9S',
+      url: dotenv.env['SUPABASE_URL']!,
+      anonKey: dotenv.env['SUPABASE_SERVICE_ROLE_KEY']!,
     );
+
+
   } catch (e) {
     debugPrint('Error initializing Supabase: $e');
   }

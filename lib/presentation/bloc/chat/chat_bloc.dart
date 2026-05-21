@@ -23,9 +23,10 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     on<MessageReceived>(_onMessageReceived);
     on<ResendQueuedMessages>(_onResendQueued);
     on<UpdateMessageStatus>(_onUpdateStatus);
+    on<deleteMessage>(_onDeleteMessage);
 
     _connSubscription = Connectivity().onConnectivityChanged.listen((results) {
-      if (results.first != ConnectivityResult.none) {
+      if (results.isNotEmpty && results.first != ConnectivityResult.none) {
         final current = state;
         if (current is ChatLoaded && _conversationId != null) {
           add(ResendQueuedMessages(conversationId: _conversationId!));
@@ -160,6 +161,27 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     }).toList();
 
     emit(current.copyWith(messages: updated));
+  }
+
+  // ─── Delete Message ────────────────────────────────────────────────────────
+
+  Future<void> _onDeleteMessage(
+      deleteMessage event,
+      Emitter<ChatState> emit,
+      ) async {
+    final current = state;
+    if (current is! ChatLoaded) return;
+
+    // Optimistic UI update
+    final updatedMessages = current.messages.where((m) => m.id != event.messageId).toList();
+    emit(current.copyWith(messages: updatedMessages));
+
+    try {
+      await _chatRepository.deleteMessage(event.messageId);
+    } catch (e) {
+      // Revert or show error if deletion fails
+      // In this case, we just log it or keep the UI snappy
+    }
   }
 
   // ─── Message Received ──────────────────────────────────────────────────────
