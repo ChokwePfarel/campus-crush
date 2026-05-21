@@ -279,53 +279,76 @@
   </div>
 
   <script>
-    
-    const SUPABASE_URL = 'https://your-project-id.supabase.co';
-    const SUPABASE_ANON_KEY = 'your-anon-public-key-here';
+  const SUPABASE_URL = 'https://wdhzlfqftxytphnohpqb.supabase.co';
+const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';
 
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
 
-    function toggleBtn() {
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
-      const checked = document.getElementById('confirm-check').checked;
-      const btn = document.getElementById('delete-btn');
-      if (email && password && checked) {
-        btn.classList.add('active');
-      } else {
-        btn.classList.remove('active');
-      }
-    }
-
-    function showStatus(type, msg) {
-      const el = document.getElementById('status-msg');
-      el.className = 'status ' + type;
-      el.textContent = msg;
-    }
-
-    async function deleteAccount() {
+function toggleBtn() {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const checked = document.getElementById('confirm-check').checked;
   const btn = document.getElementById('delete-btn');
+
+  if (email && password && checked) {
+    btn.classList.add('active');
+  } else {
+    btn.classList.remove('active');
+  }
+}
+
+function showStatus(type, msg) {
+  const el = document.getElementById('status-msg');
+  el.className = 'status ' + type;
+  el.textContent = msg;
+}
+
+async function deleteAccount() {
+  const btn = document.getElementById('delete-btn');
+
   if (!btn.classList.contains('active')) return;
 
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
 
-  // 1. Sign in the user first to get their Session/ID
-  const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
-  if (authError) return showStatus('error', authError.message);
+  // Sign in user
+  const { data: authData, error: authError } =
+    await supabaseClient.auth.signInWithPassword({
+      email,
+      password
+    });
 
-  // 2. Invoke the Edge Function
-  // You don't need the service key here; the function will handle it server-side.
-  const { data, error } = await supabase.functions.invoke('delete-user', {
-    body: { userId: authData.user.id }
-  });
+  if (authError) {
+    return showStatus('error', authError.message);
+  }
 
-  if (error) return showStatus('error', error.message);
+  if (!authData?.user) {
+    return showStatus('error', 'User not found');
+  }
 
-  // 3. Success
+  // Call Edge Function
+  const { data, error } =
+    await supabaseClient.functions.invoke('delete-user', {
+      body: {
+        userId: authData.user.id
+      }
+    });
+
+  if (error) {
+    return showStatus('error', error.message);
+  }
+
+  // Success
   document.getElementById('form-section').style.display = 'none';
+
   showStatus('success', 'Your account has been deleted.');
-  setTimeout(() => window.location.reload(), 3000);
+
+  setTimeout(() => {
+    window.location.reload();
+  }, 3000);
 }
   </script>
 </body>
