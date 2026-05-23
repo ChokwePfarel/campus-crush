@@ -17,6 +17,7 @@ import 'package:dating_app/presentation/bloc/image/image_sate.dart';
 import 'package:dating_app/presentation/bloc/user/user_bloc.dart';
 import 'package:dating_app/presentation/bloc/user/user_event.dart';
 import 'package:dating_app/presentation/pages/login_page.dart';
+import 'package:dating_app/presentation/pages/manage_profile.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -42,7 +43,6 @@ class _ProfileEditState extends State<ProfileEdit> {
   late String _selectedSex;
   late List<String> _interests;
   late bool _isPrivate;
-
 
   bool _isOffline = false;
   StreamSubscription? _connectivitySub;
@@ -78,9 +78,8 @@ class _ProfileEditState extends State<ProfileEdit> {
           _isOffline = results.first == ConnectivityResult.none;
         });
       }
-  });
-
-        }
+    });
+  }
 
   @override
   void dispose() {
@@ -93,42 +92,35 @@ class _ProfileEditState extends State<ProfileEdit> {
 
   void _showError(String message) {
     AppSnackBar.show(context, message, type: SnackBarType.error);
-
   }
-
 
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (ctx) =>
-          AlertDialog(
-            backgroundColor: Colors.white,
-            title: const Text('Log out'),
-            content: const Text('Are you sure you want to sign out?'),
-            actions: [
-              TextButton(
-                child: const Text('Cancel',
-                  style: TextStyle(
-                      color: Colors.grey
-                  ),
-                ),
-                onPressed: () => Navigator.pop(ctx),
-              ),
-              TextButton(
-                child: const Text('Log out',
-                  style: TextStyle(
-                      color: Colors.red
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  context.read<AuthBloc>().add(LogoutRequested());
-
-                  Navigator.pushAndRemoveUntil(context,
-                      MaterialPageRoute(builder: (context) =>
-                      const LoginPage()), (route) => false);})
-            ],
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text('Log out'),
+        content: const Text('Are you sure you want to sign out?'),
+        actions: [
+          TextButton(
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            onPressed: () => Navigator.pop(ctx),
           ),
+          TextButton(
+            child: const Text('Log out', style: TextStyle(color: Colors.red)),
+            onPressed: () {
+              Navigator.pop(ctx);
+              context.read<AuthBloc>().add(LogoutRequested());
+
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginPage()),
+                (route) => false,
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 
@@ -183,8 +175,11 @@ class _ProfileEditState extends State<ProfileEdit> {
       ),
     );
 
-    AppSnackBar.show(context, 'Updating profile...', type: SnackBarType.success);
-
+    AppSnackBar.show(
+      context,
+      'Updating profile...',
+      type: SnackBarType.success,
+    );
 
     Navigator.of(context).pop();
   }
@@ -216,17 +211,17 @@ class _ProfileEditState extends State<ProfileEdit> {
                 children: DropDownOptions.availableInterests
                     .where((i) => !_interests.contains(i))
                     .map((interest) {
-                  return ActionChip(
-                    label: Text(interest),
-                    onPressed: () {
-                      setState(() {
-                        _interests.add(interest);
-                      });
-                      _markAsDirty();
-                      Navigator.pop(context);
-                    },
-                  );
-                })
+                      return ActionChip(
+                        label: Text(interest),
+                        onPressed: () {
+                          setState(() {
+                            _interests.add(interest);
+                          });
+                          _markAsDirty();
+                          Navigator.pop(context);
+                        },
+                      );
+                    })
                     .toList(),
               ),
               SizedBox(height: SizeConfig.heightPercent(4)),
@@ -286,7 +281,7 @@ class _ProfileEditState extends State<ProfileEdit> {
           backgroundColor: Colors.white,
           leading: CupertinoButton(
             padding: EdgeInsets.zero,
-//
+            //
             onPressed: () async {
               if (!_hasChanges) {
                 Navigator.of(context).pop();
@@ -307,8 +302,7 @@ class _ProfileEditState extends State<ProfileEdit> {
               } else if (action == 'SAVE') {
                 _saveProfile();
               }
-            }
-            ,
+            },
 
             //
             child: const Icon(
@@ -323,12 +317,15 @@ class _ProfileEditState extends State<ProfileEdit> {
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
           actions: [
-            IconButton(
+              IconButton(
                 onPressed: () {
-                  _showLogoutDialog(context);
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => SettingsPage())
+                  );
                 },
-                icon: const Icon(
-                  Icons.arrow_forward, color: Colors.red, size: 24,))
+                icon: Icon(Icons.settings, color: Colors.black),
+
+            ),
           ],
         ),
         body: SingleChildScrollView(
@@ -397,22 +394,24 @@ class _ProfileEditState extends State<ProfileEdit> {
                                 size: 18,
                                 color: Colors.white,
                               ),
-                              onPressed: isUploading ? null : () async {
-                                final picker = ImagePicker();
-                                final picked = await picker.pickImage(
-                                  source: ImageSource.gallery,
-                                  imageQuality: 80,
-                                );
-                                if (picked == null || !context.mounted) return;
+                              onPressed: isUploading
+                                  ? null
+                                  : () async {
+                                      final picker = ImagePicker();
+                                      final picked = await picker.pickImage(
+                                        source: ImageSource.gallery,
+                                        imageQuality: 80,
+                                      );
+                                      if (picked == null || !context.mounted)
+                                        return;
 
-                                context.read<ImagesBloc>().add(
-                                  UploadProfileImage(
-                                    userId: widget.user.id,
-                                    image: File(picked.path),
-                                  ),
-                                );
-
-                              },
+                                      context.read<ImagesBloc>().add(
+                                        UploadProfileImage(
+                                          userId: widget.user.id,
+                                          image: File(picked.path),
+                                        ),
+                                      );
+                                    },
                             ),
                           ),
                         ),
@@ -447,8 +446,11 @@ class _ProfileEditState extends State<ProfileEdit> {
               ),
               SizedBox(height: SizeConfig.heightPercent(2)),
 
-              _buildTextField("Full Name", _nameController,
-                  onChangedCallback: _markAsDirty),
+              _buildTextField(
+                "Full Name",
+                _nameController,
+                onChangedCallback: _markAsDirty,
+              ),
 
               SizedBox(height: SizeConfig.heightPercent(2)),
               Row(
@@ -459,7 +461,6 @@ class _ProfileEditState extends State<ProfileEdit> {
                       _ageController,
                       keyboardType: TextInputType.number,
                       onChangedCallback: _markAsDirty,
-
                     ),
                   ),
 
@@ -481,9 +482,9 @@ class _ProfileEditState extends State<ProfileEdit> {
                           labelText: '',
                           items: DropDownOptions.statuses,
                           value:
-                          DropDownOptions.statuses.contains(
-                            widget.user.status,
-                          )
+                              DropDownOptions.statuses.contains(
+                                widget.user.status,
+                              )
                               ? widget.user.status
                               : DropDownOptions.statuses.first,
                           onChanged: (value) {
@@ -496,24 +497,32 @@ class _ProfileEditState extends State<ProfileEdit> {
                       ],
                     ),
                   ),
-
                 ],
               ),
               SizedBox(height: SizeConfig.heightPercent(2)),
 
-              _buildTextField("Course", _majorController,
-                  onChangedCallback: _markAsDirty),
-
-              SizedBox(height: SizeConfig.heightPercent(2)),
-
-              _buildTextField("Residence", _residenceController,
-                  onChangedCallback: _markAsDirty),
+              _buildTextField(
+                "Course",
+                _majorController,
+                onChangedCallback: _markAsDirty,
+              ),
 
               SizedBox(height: SizeConfig.heightPercent(2)),
 
               _buildTextField(
-                  "About Me", _bioController, onChangedCallback: _markAsDirty,
-                  maxLines: 3),
+                "Residence",
+                _residenceController,
+                onChangedCallback: _markAsDirty,
+              ),
+
+              SizedBox(height: SizeConfig.heightPercent(2)),
+
+              _buildTextField(
+                "About Me",
+                _bioController,
+                onChangedCallback: _markAsDirty,
+                maxLines: 3,
+              ),
               SizedBox(height: SizeConfig.heightPercent(3)),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -566,7 +575,6 @@ class _ProfileEditState extends State<ProfileEdit> {
 
               SizedBox(height: SizeConfig.heightPercent(5)),
 
-
               SizedBox(
                 width: double.infinity,
                 height: SizeConfig.heightPercent(6),
@@ -586,7 +594,7 @@ class _ProfileEditState extends State<ProfileEdit> {
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                     ),
-                ),
+                  ),
                 ),
               ),
 
@@ -614,12 +622,13 @@ class _ProfileEditState extends State<ProfileEdit> {
     );
   }
 
-  Widget _buildTextField(String label,
-      TextEditingController controller, {
-        int maxLines = 1,
-        TextInputType keyboardType = TextInputType.text,
-        VoidCallback? onChangedCallback, // new parameter
-      }) {
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller, {
+    int maxLines = 1,
+    TextInputType keyboardType = TextInputType.text,
+    VoidCallback? onChangedCallback, // new parameter
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -648,7 +657,6 @@ class _ProfileEditState extends State<ProfileEdit> {
       ],
     );
   }
-
 
   Widget _buildPrivateAccountSwitch(BuildContext context, bool isPrivate) {
     return Container(
@@ -689,5 +697,3 @@ class _ProfileEditState extends State<ProfileEdit> {
     );
   }
 }
-
-

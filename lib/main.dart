@@ -51,7 +51,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-
   await MobileAds.instance.initialize();
   AdService.instance.loadRewardedAd();
 
@@ -60,15 +59,11 @@ Future<void> main() async {
   // Load the .env file
   await dotenv.load(fileName: ".env");
 
-
   try {
-
     await Supabase.initialize(
       url: dotenv.env['SUPABASE_URL']!,
-      anonKey: dotenv.env['SUPABASE_SERVICE_ROLE_KEY']!,
+      anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
     );
-
-
   } catch (e) {
     debugPrint('Error initializing Supabase: $e');
   }
@@ -124,7 +119,8 @@ Future<void> main() async {
         RepositoryProvider<CurrentUserPostRepository>(
           create: (_) => currentUserPostRepository,
         ),
-        RepositoryProvider<CommentsRepository>(create: (_) => commentsRepository,
+        RepositoryProvider<CommentsRepository>(
+          create: (_) => commentsRepository,
         ),
         RepositoryProvider<LikesRepository>(create: (_) => likesRepository),
         RepositoryProvider<ChatRepository>(create: (_) => chatRepository),
@@ -161,20 +157,15 @@ Future<void> main() async {
           BlocProvider<CoinsBloc>(
             create: (context) => CoinsBloc(context.read<CoinsRepository>()),
           ),
-
           BlocProvider<ImagesBloc>(
             create: (context) => ImagesBloc(context.read<ImagesRepository>()),
           ),
-
           BlocProvider<PostBloc>(
             create: (context) => PostBloc(context.read<PostRepository>()),
           ),
-
-          BlocProvider(
+          BlocProvider<ConnectivityBloc>(
             create: (_) => ConnectivityBloc(),
-            child: MyApp(),
           ),
-
         ],
         child: const MyApp(),
       ),
