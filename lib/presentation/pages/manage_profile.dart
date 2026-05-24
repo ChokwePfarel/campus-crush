@@ -31,7 +31,7 @@ class SettingsPage extends StatelessWidget {
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(builder: (context) => const LoginPage()),
-                    (route) => false,
+                (route) => false,
               );
             },
           ),
@@ -43,23 +43,27 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         leading: CupertinoButton(
           padding: EdgeInsets.zero,
           onPressed: () => Navigator.of(context).pop(),
-          child: const Icon(CupertinoIcons.chevron_left, color: Color(0xFF1A1A2E)),
+          child: const Icon(
+            CupertinoIcons.chevron_left,
+            color: Color(0xFF1A1A2E),
+          ),
         ),
-        title:  const Text(
+        title: const Text(
           'Settings',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
       body: SafeArea(
+
         child: Padding(
           padding: const EdgeInsets.all(15),
           child: Column(
             children: [
-
               SizedBox(height: 30),
 
               // Log Out Button
@@ -69,19 +73,20 @@ class SettingsPage extends StatelessWidget {
                   onPressed: () {
                     _showLogoutDialog(context);
                   },
-                  icon:  Icon(Icons.logout,color: Colors.red.shade900,),
-                  label: Text('Log Out',
-                  style: TextStyle(color: Colors.red.shade900,
-                  fontWeight: FontWeight.bold),),
+                  icon: Icon(Icons.logout, color: Colors.red.shade900),
+                  label: Text(
+                    'Log Out',
+                    style: TextStyle(
+                      color: Colors.red.shade900,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   style: ElevatedButton.styleFrom(
-
                     padding: const EdgeInsets.symmetric(vertical: 14.0),
-                    textStyle: const TextStyle(fontSize: 16,
-                    color: Colors.red),
+                    textStyle: const TextStyle(fontSize: 16, color: Colors.red),
                   ),
                 ),
               ),
-
 
               const Spacer(),
 
@@ -92,19 +97,22 @@ class SettingsPage extends StatelessWidget {
                   onPressed: () {
                     _showDeleteAccountDialog(context);
                   },
-                  icon: const Icon(Icons.delete_forever,color: Colors.white,),
-                  label: const Text('Delete Account',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white
-                      )),
+                  icon: const Icon(Icons.delete_forever, color: Colors.white),
+                  label: const Text(
+                    'Delete Account',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
                   style: ElevatedButton.styleFrom(
                     foregroundColor: Colors.red,
                     backgroundColor: Colors.red.shade900,
-                    padding: const EdgeInsets.symmetric(vertical: 14.0,
+                    padding: const EdgeInsets.symmetric(vertical: 14.0),
+                    textStyle: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.white,
                     ),
-                    textStyle: const TextStyle(fontSize: 16,
-                        color: Colors.white),
                   ),
                 ),
               ),
@@ -153,13 +161,11 @@ class SettingsPage extends StatelessWidget {
             ),
             TextButton(
               onPressed: () {
-
                 Navigator.of(context).pop();
 
                 context.read<AuthBloc>().add(LogoutRequested());
 
                 _launchDelete();
-
               },
               style: TextButton.styleFrom(foregroundColor: Colors.red),
               child: const Text('Delete'),
@@ -171,7 +177,6 @@ class SettingsPage extends StatelessWidget {
   }
 
   Future<void> _launchDelete() async {
-
     const privacyPolicyUrl = 'https://campus-crush-du8m.vercel.app/';
     final Uri uri = Uri.parse(privacyPolicyUrl);
 
@@ -182,14 +187,14 @@ class SettingsPage extends StatelessWidget {
         throw 'Could not launch $privacyPolicyUrl';
       }
     } catch (e) {
-
       // AppSnackBar.show(context, 'Could not open privacy policy: $e', type: SnackBarType.error);
-
     }
   }
+
   /// Launches the privacy policy URL
   Future<void> _launchPrivacyPolicy() async {
-    const privacyPolicyUrl = 'https://sites.google.com/view/campuscrushprivacypolicy';
+    const privacyPolicyUrl =
+        'https://sites.google.com/view/campuscrushprivacypolicy';
     final Uri uri = Uri.parse(privacyPolicyUrl);
 
     try {
@@ -199,10 +204,7 @@ class SettingsPage extends StatelessWidget {
         throw 'Could not launch $privacyPolicyUrl';
       }
     } catch (e) {
-
-       // AppSnackBar.show(context, 'Could not open privacy policy: $e', type: SnackBarType.error);
-
+      // AppSnackBar.show(context, 'Could not open privacy policy: $e', type: SnackBarType.error);
     }
   }
 }
-

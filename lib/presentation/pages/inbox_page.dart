@@ -72,34 +72,59 @@ class _InboxPageState extends State<InboxPage>
   Widget build(BuildContext context) {
     SizeConfig.init(context);
 
-
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7FB),
       body: FadeTransition(
         opacity: _fadeCtrl,
-        child: BlocBuilder<ConversationsBloc, ConversationsState>(
-          builder: (context, state) {
-            if (state is ConversationsLoading) {
-
-              return ChatsSkeleton();
-            }
-
-            if (state is ConversationsError) {
-              return Center(child: Text('Error: ${state.message}'));
-            }
-
-            if (state is ConversationsLoaded) {
-              return CustomScrollView(
-                slivers: [
-                  _buildAppBar(),
-                  //_buildSearchBar(),
-                  _buildList(state.conversations),
-                ],
-              );
-            }
-
-            return const ChatsSkeleton();
+        child: RefreshIndicator(
+          displacement: 100,
+          onRefresh: () async {
+            context.read<ConversationsBloc>().add(LoadConversations(widget.currentUserId));
           },
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              _buildAppBar(),
+              BlocBuilder<ConversationsBloc, ConversationsState>(
+                builder: (context, state) {
+                  if (state is ConversationsLoading) {
+                    return const SliverFillRemaining(
+                      child: ChatsSkeleton(),
+                    );
+                  }
+
+                  if (state is ConversationsError) {
+                    return SliverFillRemaining(
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text('Error: ${state.message}'),
+                            const SizedBox(height: 12),
+                            ElevatedButton(
+                              onPressed: () => context.read<ConversationsBloc>().add(LoadConversations(widget.currentUserId)),
+                              child: const Text('Retry'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  if (state is ConversationsLoaded) {
+                    return _buildList(state.conversations);
+                  }
+
+                  // Fallback for ConversationsInitial or ConversationReady
+                  // This ensures that when a new chat is started, we still see 
+                  // the skeleton and AppBar while the background reload happens.
+                  return const SliverFillRemaining(
+                    child: ChatsSkeleton(),
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -128,30 +153,16 @@ class _InboxPageState extends State<InboxPage>
     );
   }
 
-  // ── Search Bar ─────────────────────────────────────────────────────────────
-
- /* SliverToBoxAdapter _buildSearchBar() {
-    return SliverToBoxAdapter(
-      child: Container(
-        color: Colors.white,
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
-        child: CupertinoSearchTextField(
-          controller: _searchCtrl,
-          placeholder: 'Search conversations...',
-          backgroundColor: const Color(0xFFF4F4F8),
-          onChanged: (v) => setState(() => _query = v),
-        ),
-      ),
-    );
-  }*/
-
   // ── List ───────────────────────────────────────────────────────────────────
 
   Widget _buildList(List<ConversationEntity> all) {
     final filtered = _filter(all);
 
     if (filtered.isEmpty) {
-      return SliverFillRemaining(child: _buildEmpty());
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: _buildEmpty(),
+      );
     }
 
     return SliverList(
@@ -159,16 +170,11 @@ class _InboxPageState extends State<InboxPage>
         (_, i) {
           final conv = filtered[i];
 
-          final otherUserId = conv.userOneId == widget.currentUserId 
-              ? conv.userTwoId 
-              : conv.userOneId;
-
           return _ConversationTile(
             key: ValueKey(conv.id),
             conversation: conv,
             index: i,
             onTap: () {
-
               HapticFeedback.selectionClick();
               Navigator.push(
                 context,
@@ -176,7 +182,6 @@ class _InboxPageState extends State<InboxPage>
                   builder: (_) => ChatPage(
                     conversation: conv,
                     currentUserId: widget.currentUserId,
-
                   ),
                 ),
               );
@@ -349,7 +354,6 @@ class _ConversationTileState extends State<_ConversationTile>
                               ),
                             ),
                           ),
-                          // In _ConversationTile build — replace the time Text with:
                           Row(
                             children: [
                               if (conv.unreadCount > 0)

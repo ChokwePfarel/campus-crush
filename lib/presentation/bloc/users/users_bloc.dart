@@ -1,4 +1,5 @@
 import 'package:dating_app/core/utils/offline_cache.dart';
+import 'package:dating_app/data/models/user_model.dart';
 import 'package:dating_app/domain/repositories/users_repository.dart';
 import 'package:dating_app/presentation/bloc/users/users_event.dart';
 import 'package:dating_app/presentation/bloc/users/users_state.dart';
@@ -25,6 +26,7 @@ class UsersBloc extends Bloc<UsersEvent, UsersState> {
 
     try {
       if (event.isInitial || currentState is! UsersLoaded) {
+        // --- 1. INSTANT CACHE RENDER ---
         final cached = OfflineCache.getCachedDiscoveryUsers();
         if (cached.isNotEmpty && event.isInitial) {
           emit(UsersLoaded(users: cached, hasReachedMax: false));
@@ -32,6 +34,7 @@ class UsersBloc extends Bloc<UsersEvent, UsersState> {
           emit(UsersLoading());
         }
         
+        // --- 2. FETCH FROM SERVER ---
         final users = await _usersRepository.getUsers(
           university: event.university,
           sex: event.sex,
@@ -40,11 +43,17 @@ class UsersBloc extends Bloc<UsersEvent, UsersState> {
           limit: _limit,
         );
         
+        // --- 3. PERSIST TO CACHE (Only Page 1) ---
+        if (users.isNotEmpty && (event.residence == null || event.residence!.isEmpty)) {
+          await OfflineCache.cacheDiscoveryUsers(users);
+        }
+
         emit(UsersLoaded(
           users: users,
           hasReachedMax: users.length < _limit,
         ));
       } else {
+        // Pagination for non-initial loads
         final users = await _usersRepository.getUsers(
           university: event.university,
           sex: event.sex,
@@ -61,6 +70,7 @@ class UsersBloc extends Bloc<UsersEvent, UsersState> {
               ));
       }
     } catch (e) {
+      // If we already have cache data in state, keep it and stay silent
       if (state is! UsersLoaded) {
         emit(UsersError(e.toString()));
       }

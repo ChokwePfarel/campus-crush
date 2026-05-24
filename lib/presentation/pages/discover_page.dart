@@ -64,6 +64,8 @@ class _DiscoverPageState extends State<DiscoverPage> {
         _currentSex = userState.user.sex;
         _triggerLoad(context, isInitial: true);
       } else {
+        // Not loaded yet — BlocListener will handle it when UserLoaded arrives
+        // but make sure the subscription is running
         context.read<UserBloc>().add(LoadUserSubscription());
       }
     });
@@ -167,6 +169,8 @@ class _DiscoverPageState extends State<DiscoverPage> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
+
+
                                   _profileButton(profileImg),
                                   const SizedBox(width: 10),
                                   _searchField(),
@@ -210,10 +214,10 @@ class _DiscoverPageState extends State<DiscoverPage> {
   Widget _buildOfflineBanner() {
     return Container(
       width: double.infinity,
-      color: Colors.orange.shade800,
+      color: Colors.red,
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: const Text(
-        'Offline',
+        'Connnection lost',
         textAlign: TextAlign.center,
         style: TextStyle(
           color: Colors.white,

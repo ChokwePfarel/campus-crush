@@ -75,12 +75,18 @@ class ConversationsBloc extends Bloc<ConversationsEvent, ConversationsState> {
     Emitter<ConversationsState> emit,
   ) async {
     try {
-      emit(ConversationsLoading());
+      // We don't emit Loading here anymore to avoid breaking the background list state
       final conversation = await _chatRepository.getOrCreateConversation(
         currentUserId: event.currentUserId,
         otherUserId: event.otherUserId,
       );
+      
+      // First, signal the UI to navigate
       emit(ConversationReady(conversation));
+      
+      // Then, immediately restore the list state so the Inbox stays functional
+      add(LoadConversations(event.currentUserId));
+
     } catch (e) {
       emit(ConversationsError(e.toString()));
     }

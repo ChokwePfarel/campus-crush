@@ -50,6 +50,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
   String? _activeFilter;
   final _scrollCtrl = ScrollController();
   bool _isFabVisible = true;
+
   bool _isOffline = false;
   StreamSubscription? _connectivitySub;
 

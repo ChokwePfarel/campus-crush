@@ -36,7 +36,14 @@ class PostBloc extends Bloc<PostEvent, PostState> {
       //SHOW CACHED RIGHT AWAY
       final cached = OfflineCache.getCachedPosts();
       if(cached.isNotEmpty){
-        emit(PostsLoaded(post: cached, hasReachedMax: false));
+        // Filter cached posts by type and location if provided
+        final filteredCached = cached.where((p) {
+          final typeMatch = event.postType == null || p.postType == event.postType;
+          final locationMatch = event.locationTag == null || p.locationTag == event.locationTag;
+          return typeMatch && locationMatch;
+        }).toList();
+        
+        emit(PostsLoaded(post: filteredCached, hasReachedMax: false));
       } else {
         emit(LoadingPosts());
       }

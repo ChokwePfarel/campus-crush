@@ -293,6 +293,7 @@ class _SendPostPageState extends State<SendPostPage>
             }
 
             if (state is CoinsEarned) {
+              setState(() => _isSending = false);  // ← ADD THIS LINE
               if (_isSending) _handleSend();
             }
 
@@ -920,7 +921,7 @@ class _SendPostPageState extends State<SendPostPage>
 
   Widget _buildSendButton() {
     return BlocBuilder<CoinsBloc, CoinsState>(builder: (context, state) {
-      bool canPostFree = true; 
+      bool canPostFree = true;
       String label = 'Send for Free';
 
       if (state is CoinsLoaded) {
@@ -1005,72 +1006,99 @@ class _SuccessDialog extends StatefulWidget {
   State<_SuccessDialog> createState() => _SuccessDialogState();
 }
 
-class _SuccessDialogState extends State<_SuccessDialog>
-    with SingleTickerProviderStateMixin {
-  late final _ctrl = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 600),
-  )..forward();
-  late final _scale = Tween<double>(begin: 0.7, end: 1.0).animate(
-    CurvedAnimation(parent: _ctrl, curve: Curves.elasticOut),
-  );
-
+class _SuccessDialogState extends State<_SuccessDialog> {
   @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    // Auto-close after 2 seconds
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        Navigator.of(context).pop();
+        widget.onDone();
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return CupertinoAlertDialog(
-      content: ScaleTransition(
-        scale: _scale,
-        child: Column(
-          children: [
-            SizedBox(height: SizeConfig.heightPercent(1.5)),
-            Text(
-              widget.postType.emoji,
-              style: TextStyle(fontSize: SizeConfig.widthPercent(13)),
+    return AlertDialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Animated checkmark (optional)
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.green.shade50,
+              shape: BoxShape.circle,
             ),
-            SizedBox(height: SizeConfig.heightPercent(1.8)),
-            const Text(
-              'Sent! 🎉',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF1A1A2E),
-              ),
+            padding: const EdgeInsets.all(16),
+            child: Icon(
+              Icons.check_circle,
+              size: 48,
+              color: Colors.green.shade600,
             ),
-            SizedBox(height: SizeConfig.heightPercent(1)),
-            Text(
-              widget.isAnonymous
-                  ? 'Your ${widget.postType.label.toLowerCase()} was sent to ${widget.recipientName} anonymously. They\'ll never know it was you 🎭'
-                  : 'Your ${widget.postType.label.toLowerCase()} was sent to ${widget.recipientName}. They can see it\'s from you 👤',
-              style: TextStyle(
-                fontSize: SizeConfig.widthPercent(3.5),
-                color: const Color(0xFF8E8E9A),
-                height: 1.5,
-              ),
-              textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            _getTitle(),
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
             ),
-            SizedBox(height: SizeConfig.heightPercent(1)),
-          ],
-        ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _getMessage(),
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey.shade600,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          LinearProgressIndicator(
+            backgroundColor: Colors.grey.shade200,
+            valueColor: AlwaysStoppedAnimation(Colors.green.shade400),
+          ),
+        ],
       ),
       actions: [
-        CupertinoDialogAction(
-          isDefaultAction: true,
-          onPressed: widget.onDone,
-          child: Text(
-            'Done',
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+            widget.onDone();
+          },
+          child: const Text(
+            'GOT IT',
             style: TextStyle(
-              color: widget.postType.color,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ),
       ],
     );
+  }
+
+  String _getTitle() {
+    if (widget.isAnonymous) {
+      return '✨ Anonymous Post Sent!';
+    }
+    return '✨ Post Sent!';
+  }
+
+  String _getMessage() {
+    final postTypeText = widget.postType.name.toLowerCase();
+    final recipientDisplay = widget.isAnonymous
+        ? widget.recipientName
+        : '${widget.recipientName} (they can see it\'s you)';
+
+    if (widget.isAnonymous) {
+      return 'Your $postTypeText post has been sent anonymously to $recipientDisplay';
+    }
+    return 'Your $postTypeText post has been sent to $recipientDisplay';
   }
 }

@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
 import 'package:dating_app/data/models/user_model.dart';
 import 'package:dating_app/domain/entities/image_entity.dart';
@@ -24,11 +27,24 @@ class ProfilePage extends StatefulWidget {
   @override
   State<ProfilePage> createState() => _ProfilePageState();
 }
+bool _isOffline = false;
+StreamSubscription? _connectivitySub;
 
 class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
+
+
+    _connectivitySub = Connectivity().onConnectivityChanged.listen((results) {
+      final offline = results.first == ConnectivityResult.none;
+      if (mounted) {
+
+        setState(() => _isOffline = offline);
+      }
+    });
+
+
     // Ensure fresh user data is loaded when page opens
     context.read<UserBloc>().add(LoadUserSubscription());
   }
@@ -88,10 +104,6 @@ class _ProfilePageState extends State<ProfilePage> {
         if (state is UserLoaded) {
           final user = state.user as UserModel;
 
-          return BlocBuilder<ConnectivityBloc, ConnectivityState>(
-            builder: (context, connectivityState) {
-              final isOffline = connectivityState.isOffline;
-
               return Scaffold(
                 backgroundColor: Colors.white,
                 appBar: AppBar(
@@ -105,7 +117,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   title: const Text('My Profile', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
                   centerTitle: true,
                   actions: [
-                    isOffline ? const SizedBox.shrink() :
+                    _isOffline ? const SizedBox.shrink() :
                     IconButton(
                       onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProfileEdit(user: user))),
                       icon: const Icon(Icons.edit, color: Colors.black),
@@ -148,8 +160,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                 ),
               );
-            },
-          );
+
         }
 
         return const Scaffold(body: Center(child: Text("No user data available.")));
