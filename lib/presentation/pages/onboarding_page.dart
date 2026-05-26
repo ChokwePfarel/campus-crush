@@ -1,3 +1,4 @@
+/*
 import 'package:dating_app/core/constants/lists.dart';
 import 'package:dating_app/core/utils/purple.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
@@ -452,4 +453,4 @@ class _OnboardingPageState extends State<OnboardingPage> {
           ),
         ),
       );
-}
+}*/

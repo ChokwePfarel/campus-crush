@@ -11,6 +11,10 @@ abstract class AuthRemoteDataSource {
 
   Future<void> signOut();
 
+  Future<void> sendPasswordResetEmail(String email);
+
+  Future<UserResponse> updatePassword(String newPassword);
+
   Session? get currentSession;
 }
 
@@ -43,7 +47,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         data: {'full_name': name},
       );
     } catch (e) {
-      // Print before throwing, or just throw as the Bloc will handle the error message
       print('Error signing up: $e');
       throw Exception('Error signing up: $e');
     }
@@ -52,6 +55,19 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<void> signOut() async {
     await client.auth.signOut();
+  }
+
+  @override
+  Future<void> sendPasswordResetEmail(String email) async {
+    await client.auth.resetPasswordForEmail(
+      email,
+      redirectTo: 'http://reset-callback',
+    );
+  }
+
+  @override
+  Future<UserResponse> updatePassword(String newPassword) async {
+    return await client.auth.updateUser(UserAttributes(password: newPassword));
   }
 
   @override

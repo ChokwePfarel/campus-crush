@@ -1,6 +1,12 @@
+import 'package:dating_app/core/constants/lists.dart';
 import 'package:dating_app/core/utils/purple.dart';
 import 'package:dating_app/core/utils/snackbar.dart';
 import 'package:dating_app/core/utils/theme.dart';
+import 'package:dating_app/core/widgets/dropdown.dart';
+import 'package:dating_app/presentation/bloc/user/user_bloc.dart';
+import 'package:dating_app/presentation/bloc/user/user_event.dart';
+import 'package:dating_app/presentation/bloc/user/user_state.dart';
+import 'package:dating_app/presentation/pages/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/auth/auth_bloc.dart';
@@ -21,19 +27,70 @@ class _SignUpPageState extends State<SignUpPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  bool _agreedToPolicy = false;
-  bool isVerified = false;
+  String _selectedSex = DropDownOptions.sexOptions.first;
+  String _selectedUniversity = DropDownOptions.universities.first;
 
-  void _verifyEmail() {
-    setState(() {
-      isVerified = _emailEmail(); // Trigger update
-    });
+  bool _agreedToPolicy = false;
+  bool _isVerified = false;
+  bool _obscurePassword = true;
+
+  // Mapping of universities to their expected email domains
+  final Map<String, String> _universityDomains = {
+    'University of the Western Cape (UWC)': '@myuwc.ac.za',
+    'University of Cape Town (UCT)': '@myuct.ac.za',
+    'Stellenbosch University': '@sun.ac.za',
+    'University of the Witwatersrand': '@students.wits.ac.za',
+    'University of Johannesburg': '@student.uj.ac.za',
+    'University of Pretoria': '@tuks.co.za',
+    'University of KwaZulu-Natal': '@stu.ukzn.ac.za',
+    'Rhodes University': '@ruconnect.ru.ac.za',
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    // Re-verify email when text changes
+    _emailController.addListener(_updateVerificationStatus);
   }
 
-  bool _emailEmail() => _emailController.text.trim().endsWith('@myuwc.ac.za');
+  void _updateVerificationStatus() {
+    final status = _checkIfVerified();
+    if (status != _isVerified) {
+      setState(() => _isVerified = status);
+    }
+  }
+
+  bool _checkIfVerified() {
+    final email = _emailController.text.trim().toLowerCase();
+    // Check if the email matches the selected university's domain
+    final expectedDomain = _universityDomains[_selectedUniversity];
+    if (expectedDomain == null) return false;
+    return email.endsWith(expectedDomain);
+  }
+
+  void _createUser() {
+    if (_formKey.currentState!.validate()) {
+      context.read<UserBloc>().add(
+        UpdateUserRequested(
+          name: _nameController.text.trim(),
+          sex: _selectedSex,
+          bio: 'No Bio',
+          status: 'Looking',
+          residence: '',
+          university: _selectedUniversity,
+          interests: ['Music'],
+          age: 0,
+          privacySettings: null,
+          isVerified: _isVerified,
+          coins: 30,
+        ),
+      );
+    }
+  }
 
   @override
   void dispose() {
+    _emailController.removeListener(_updateVerificationStatus);
     _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
@@ -46,24 +103,33 @@ class _SignUpPageState extends State<SignUpPage> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: BlocListener<AuthBloc, AuthState>(
-        listener: (context, state) {
-          if (state is Authenticated) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (_) => OnboardingPage(
-                  userId: state.user.id,
-                  userName: _nameController.text.trim(),
-                  isVerified: isVerified,
-                ),
-              ),
-            );
-          } else if (state is AuthError) {
-            AppSnackBar.show(context, 'Incorrect email or password',
-                type: SnackBarType.warning);
-
-          }
-        },
+      body: MultiBlocListener(
+        listeners: [
+          BlocListener<AuthBloc, AuthState>(
+            listener: (context, state) {
+              if (state is AuthError) {
+                AppSnackBar.show(
+                  context,
+                  'Failed to sign up, please try again',
+                  type: SnackBarType.error,
+                );
+              }
+              if (state is Authenticated) {
+                context.read<UserBloc>().add(LoadUserSubscription());
+                _createUser();
+              }
+            },
+          ),
+          BlocListener<UserBloc, UserState>(
+            listener: (context, state) {
+              if (state is UserLoaded) {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (_) => const MyHomePage()),
+                );
+              }
+            },
+          ),
+        ],
         child: SafeArea(
           child: SingleChildScrollView(
             child: Padding(
@@ -73,7 +139,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(height: screenHeight * 0.15),
+                    SizedBox(height: screenHeight * 0.08),
                     const Text(
                       'Sign Up',
                       style: TextStyle(
@@ -85,31 +151,65 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                     const SizedBox(height: 6),
                     const Text(
-                      "with your student email to get verified",
+                      "Join the community with your student email",
                       style: TextStyle(
                         fontSize: 14,
                         color: PurplePalette.primary,
                       ),
                     ),
+
                     const SizedBox(height: 32),
 
                     _pillField(
                       controller: _nameController,
-                      hint: 'User Name',
+                      hint: 'Display Name',
                       icon: Icons.person_outline,
                       validator: (val) =>
                           val == null || val.isEmpty ? 'Required' : null,
                     ),
+
+                    const SizedBox(height: 13),
+
+                    _label("Where do you study?"),
+
+                    CustomDropdown<String>(
+                      labelText: '',
+                      items: DropDownOptions.universities,
+                      value: _selectedUniversity,
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedUniversity = value!;
+                          _updateVerificationStatus();
+                        });
+                      },
+                    ),
+
+                    const SizedBox(height: 13),
+
+                    _label("Gender"),
+
+                    CustomDropdown<String>(
+                      labelText: '',
+                      items: DropDownOptions.sexOptions,
+                      value: _selectedSex,
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedSex = value!;
+                        });
+                      },
+                    ),
+
                     const SizedBox(height: 13),
 
                     _pillField(
                       controller: _emailController,
-                      hint: 'Email',
+                      hint: 'Student Email',
                       icon: Icons.email_outlined,
                       keyboardType: TextInputType.emailAddress,
-                      validator: (val) => val == null || !val.contains('@')
-                          ? 'Invalid email'
-                          : null,
+                      validator: (val) {
+                        if (val == null || !val.contains('@')) return 'Invalid email';
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 13),
 
@@ -117,24 +217,37 @@ class _SignUpPageState extends State<SignUpPage> {
                       controller: _passwordController,
                       hint: 'Password',
                       icon: Icons.lock_outline,
-                      obscure: false,
+                      obscure: _obscurePassword,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                          color: PurplePalette.placeholder,
+                          size: 20,
+                        ),
+                        onPressed: () {
+                          setState(() => _obscurePassword = !_obscurePassword);
+                        },
+                      ),
                       validator: (val) => val == null || val.length < 6
                           ? 'Min 6 characters'
                           : null,
                     ),
+
                     const SizedBox(height: 10),
 
-                    // Privacy policy checkbox
                     Row(
                       children: [
-                        Checkbox(
-                          value: _agreedToPolicy,
-                          onChanged: (v) =>
-                              setState(() => _agreedToPolicy = v ?? false),
-                          activeColor: PurplePalette.primary,
-                          materialTapTargetSize:
-                              MaterialTapTargetSize.shrinkWrap,
+                        SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: Checkbox(
+                            value: _agreedToPolicy,
+                            onChanged: (v) =>
+                                setState(() => _agreedToPolicy = v ?? false),
+                            activeColor: PurplePalette.primary,
+                          ),
                         ),
+                        const SizedBox(width: 8),
                         const Text(
                           'I agree with the privacy policy',
                           style: TextStyle(
@@ -145,16 +258,14 @@ class _SignUpPageState extends State<SignUpPage> {
                       ],
                     ),
 
-                    SizedBox(height: screenHeight * 0.2),
+                    const SizedBox(height: 40),
 
                     BlocBuilder<AuthBloc, AuthState>(
                       builder: (context, state) {
                         if (state is AuthLoading) {
-                          return  SizedBox(
-                            height: 52,
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                  color: AppStylee.primaryColor),
+                          return const Center(
+                            child: CircularProgressIndicator(
+                              color: PurplePalette.primary,
                             ),
                           );
                         }
@@ -168,32 +279,33 @@ class _SignUpPageState extends State<SignUpPage> {
                               elevation: 0,
                             ),
                             onPressed: () {
-                              _verifyEmail();
-
-                              if(!isVerified){
-
-                                AppSnackBar.show(context,'Use your student email', type: SnackBarType.info);
-
-                                return;
-                              }
-
-
                               if (!_agreedToPolicy) {
-                                AppSnackBar.show(context, 'Please agree to the privacy policy', type: SnackBarType.info);
-
+                                AppSnackBar.show(
+                                  context,
+                                  'Please agree to the privacy policy',
+                                  type: SnackBarType.info,
+                                );
                                 return;
                               }
+
+                              if (!_isVerified) {
+                                final domain = _universityDomains[_selectedUniversity] ?? "correct student domain";
+                                AppSnackBar.show(
+                                  context,
+                                  'Exclusive to students. Please use your $domain email.',
+                                  type: SnackBarType.info,
+                                );
+                                return;
+                              }
+
                               if (_formKey.currentState!.validate()) {
-                                /*setState(() {
-                                  isVerified = _emailEmail();
-                                });*/
                                 context.read<AuthBloc>().add(
-                                      SignUpRequested(
-                                        _emailController.text.trim(),
-                                        _passwordController.text.trim(),
-                                        _nameController.text.trim(),
-                                      ),
-                                    );
+                                  SignUpRequested(
+                                    _emailController.text.trim(),
+                                    _passwordController.text.trim(),
+                                    _nameController.text.trim(),
+                                  ),
+                                );
                               }
                             },
                             child: const Text(
@@ -211,13 +323,9 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                     const SizedBox(height: 16),
 
-                    // OR divider
                     Row(
                       children: [
-                        Expanded(
-                          child: Divider(
-                              color: PurplePalette.fieldBorder, thickness: 1),
-                        ),
+                        const Expanded(child: Divider(color: PurplePalette.fieldBorder, thickness: 1)),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 14),
                           child: Text(
@@ -228,10 +336,7 @@ class _SignUpPageState extends State<SignUpPage> {
                             ),
                           ),
                         ),
-                        Expanded(
-                          child: Divider(
-                              color: PurplePalette.fieldBorder, thickness: 1),
-                        ),
+                        const Expanded(child: Divider(color: PurplePalette.fieldBorder, thickness: 1)),
                       ],
                     ),
 
@@ -243,7 +348,9 @@ class _SignUpPageState extends State<SignUpPage> {
                           text: TextSpan(
                             text: 'Already have an account? ',
                             style: const TextStyle(
-                                fontSize: 12, color: Colors.black),
+                              fontSize: 12,
+                              color: Colors.black,
+                            ),
                             children: [
                               TextSpan(
                                 text: 'Sign in',
@@ -257,7 +364,7 @@ class _SignUpPageState extends State<SignUpPage> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 32), // Bottom padding for scroll
+                    const SizedBox(height: 32),
                   ],
                 ),
               ),
@@ -268,12 +375,25 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 
+  Widget _label(String text) => Padding(
+    padding: const EdgeInsets.only(bottom: 8, left: 4),
+    child: Text(
+      text,
+      style: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w700,
+        color: PurplePalette.deep,
+      ),
+    ),
+  );
+
   Widget _pillField({
     required TextEditingController controller,
     required String hint,
     required IconData icon,
     TextInputType keyboardType = TextInputType.text,
     bool obscure = false,
+    Widget? suffixIcon,
     String? Function(String?)? validator,
   }) {
     return TextFormField(
@@ -284,26 +404,35 @@ class _SignUpPageState extends State<SignUpPage> {
       style: const TextStyle(fontSize: 14, color: PurplePalette.deep),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle:
-            const TextStyle(color: PurplePalette.placeholder, fontSize: 14),
+        hintStyle: const TextStyle(
+          color: PurplePalette.placeholder,
+          fontSize: 14,
+        ),
         prefixIcon: Icon(icon, size: 18, color: PurplePalette.placeholder),
+        suffixIcon: suffixIcon,
         filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(vertical: 14),
+        fillColor: PurplePalette.fieldBg,
+        contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide:
-              const BorderSide(color: PurplePalette.fieldBorder, width: 1.5),
+          borderSide: const BorderSide(
+            color: PurplePalette.fieldBorder,
+            width: 1.5,
+          ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide:
-              const BorderSide(color: PurplePalette.fieldBorder, width: 1.5),
+          borderSide: const BorderSide(
+            color: PurplePalette.fieldBorder,
+            width: 1.5,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide:
-              const BorderSide(color: PurplePalette.primary, width: 1.5),
+          borderSide: const BorderSide(
+            color: PurplePalette.primary,
+            width: 1.5,
+          ),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),

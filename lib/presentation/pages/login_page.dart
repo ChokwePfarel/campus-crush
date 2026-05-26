@@ -2,6 +2,7 @@ import 'package:dating_app/core/utils/purple.dart';
 import 'package:dating_app/core/utils/snackbar.dart';
 import 'package:dating_app/core/utils/theme.dart';
 import 'package:dating_app/presentation/pages/home_page.dart';
+import 'package:dating_app/presentation/pages/resert_password_request.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/auth/auth_bloc.dart';
@@ -56,7 +57,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthError) {
-            AppSnackBar.show(context, 'Something went wrong, try again later',
+            AppSnackBar.show(context, 'Incorrect email or password',
                 type: SnackBarType.warning);
           } else if (state is Authenticated) {
             Navigator.pushReplacement(
@@ -133,7 +134,10 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                             Align(
                               alignment: Alignment.centerRight,
                               child: TextButton(
-                                onPressed: () {},
+                                onPressed: () {
+                                  Navigator.push(context,
+                                  MaterialPageRoute(builder: (_) => const RequestPasswordReset()));
+                                },
                                 child: Text(
                                   'Forgot password?',
                                   style: TextStyle(
@@ -187,7 +191,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                           ),
                                         )
                                             : const Text(
-                                          'Sign In',
+                                          'Log In',
                                           style: TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.w700,

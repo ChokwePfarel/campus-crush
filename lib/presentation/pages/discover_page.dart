@@ -245,7 +245,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
             return const Center(
               child: Padding(
                 padding: EdgeInsets.all(8.0),
-                child: CircularProgressIndicator(),
+                child: CircularProgressIndicator.adaptive(),
               ),
             );
           }

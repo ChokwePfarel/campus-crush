@@ -27,6 +27,7 @@ class ProfilePage extends StatefulWidget {
   @override
   State<ProfilePage> createState() => _ProfilePageState();
 }
+
 bool _isOffline = false;
 StreamSubscription? _connectivitySub;
 
@@ -35,15 +36,12 @@ class _ProfilePageState extends State<ProfilePage> {
   void initState() {
     super.initState();
 
-
     _connectivitySub = Connectivity().onConnectivityChanged.listen((results) {
       final offline = results.first == ConnectivityResult.none;
       if (mounted) {
-
         setState(() => _isOffline = offline);
       }
     });
-
 
     // Ensure fresh user data is loaded when page opens
     context.read<UserBloc>().add(LoadUserSubscription());
@@ -94,7 +92,9 @@ class _ProfilePageState extends State<ProfilePage> {
       },
       builder: (context, state) {
         if (state is UserInitial || state is UserLoading) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator.adaptive()));
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator.adaptive()),
+          );
         }
 
         if (state is UserError) {
@@ -104,66 +104,104 @@ class _ProfilePageState extends State<ProfilePage> {
         if (state is UserLoaded) {
           final user = state.user as UserModel;
 
-              return Scaffold(
-                backgroundColor: Colors.white,
-                appBar: AppBar(
-                  backgroundColor: Colors.white,
-                  leading: CupertinoButton(
-                    padding: EdgeInsets.zero,
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Icon(CupertinoIcons.chevron_left, color: Color(0xFF1A1A2E)),
-                  ),
-                  elevation: 0,
-                  title: const Text('My Profile', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-                  centerTitle: true,
-                  actions: [
-                    _isOffline ? const SizedBox.shrink() :
-                    IconButton(
-                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProfileEdit(user: user))),
-                      icon: const Icon(Icons.edit, color: Colors.black),
-                    )
+          return Scaffold(
+            backgroundColor: Colors.white,
+            appBar: AppBar(
+              backgroundColor: Colors.white,
+              leading: CupertinoButton(
+                padding: EdgeInsets.zero,
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Icon(
+                  CupertinoIcons.chevron_left,
+                  color: Color(0xFF1A1A2E),
+                ),
+              ),
+              elevation: 0,
+              title: const Text(
+                'My Profile',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              centerTitle: true,
+              actions: [
+                _isOffline
+                    ? const SizedBox.shrink()
+                    : IconButton(
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ProfileEdit(user: user),
+                          ),
+                        ),
+                        icon: const Icon(Icons.edit, color: Colors.black),
+                      ),
+              ],
+            ),
+            body: RefreshIndicator(
+              onRefresh: () async {
+                context.read<UserBloc>().add(LoadUserSubscription());
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.symmetric(
+                  horizontal: SizeConfig.widthPercent(5),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: SizeConfig.heightPercent(2)),
+                    _buildProfileHeader(user, color),
+                    SizedBox(height: SizeConfig.heightPercent(2.5)),
+                    Text(
+                      "${user.name}, ${user.age}",
+                      style: TextStyle(
+                        fontSize: SizeConfig.widthPercent(6),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      user.status,
+                      style: TextStyle(
+                        fontSize: SizeConfig.widthPercent(4.5),
+                        color: color,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      'Residence: ${user.residence}',
+                      style: TextStyle(
+                        fontSize: SizeConfig.widthPercent(3.5),
+                        color: Colors.grey,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    SizedBox(height: SizeConfig.heightPercent(2.5)),
+                    _verificationRow(user),
+                    SizedBox(height: SizeConfig.heightPercent(3)),
+                    _buildSectionTitle('About Me'),
+                    SizedBox(height: SizeConfig.heightPercent(1)),
+                    _buildBioCard(user.bio),
+                    SizedBox(height: SizeConfig.heightPercent(3)),
+                    _buildSectionTitle('Interests'),
+                    SizedBox(height: SizeConfig.heightPercent(1)),
+                    _buildInterestsCard(user.interests, color),
+                    SizedBox(height: SizeConfig.heightPercent(3)),
+                    _buildPhotosHeader(user.id, color),
+                    SizedBox(height: SizeConfig.heightPercent(1.5)),
+                    _buildPhotosGrid(),
+                    SizedBox(height: SizeConfig.heightPercent(5)),
                   ],
                 ),
-                body: RefreshIndicator(
-                  onRefresh: () async {
-                    context.read<UserBloc>().add(LoadUserSubscription());
-                  },
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: EdgeInsets.symmetric(horizontal: SizeConfig.widthPercent(5)),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(height: SizeConfig.heightPercent(2)),
-                        _buildProfileHeader(user, color),
-                        SizedBox(height: SizeConfig.heightPercent(2.5)),
-                        Text("${user.name}, ${user.age}", style: TextStyle(fontSize: SizeConfig.widthPercent(6), fontWeight: FontWeight.bold)),
-                        Text(user.status, style: TextStyle(fontSize: SizeConfig.widthPercent(4.5), color: color, fontWeight: FontWeight.w600)),
-                        Text(user.university, style: TextStyle(fontSize: SizeConfig.widthPercent(3.5), color: Colors.grey, fontWeight: FontWeight.w500)),
-                        SizedBox(height: SizeConfig.heightPercent(2.5)),
-                        _verificationRow(user),
-                        SizedBox(height: SizeConfig.heightPercent(3)),
-                        _buildSectionTitle('About Me'),
-                        SizedBox(height: SizeConfig.heightPercent(1)),
-                        _buildBioCard(user.bio),
-                        SizedBox(height: SizeConfig.heightPercent(3)),
-                        _buildSectionTitle('Interests'),
-                        SizedBox(height: SizeConfig.heightPercent(1)),
-                        _buildInterestsCard(user.interests, color),
-                        SizedBox(height: SizeConfig.heightPercent(3)),
-                        _buildPhotosHeader(user.id, color),
-                        SizedBox(height: SizeConfig.heightPercent(1.5)),
-                        _buildPhotosGrid(),
-                        SizedBox(height: SizeConfig.heightPercent(5)),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-
+              ),
+            ),
+          );
         }
 
-        return const Scaffold(body: Center(child: Text("No user data available.")));
+        return const Scaffold(
+          body: Center(child: Text("No user data available.")),
+        );
       },
     );
   }
@@ -173,9 +211,14 @@ class _ProfilePageState extends State<ProfilePage> {
       child: Stack(
         children: [
           GestureDetector(
-            onTap: (){
-              Navigator.push(context, MaterialPageRoute(builder: (_) => FullPicture(imageUrl: user.profileImageUrl)));
-    },
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => FullPicture(imageUrl: user.profileImageUrl),
+                ),
+              );
+            },
             child: CircleAvatar(
               radius: SizeConfig.widthPercent(18),
               backgroundColor: color.withOpacity(0.1),

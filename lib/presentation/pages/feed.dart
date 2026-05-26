@@ -4,6 +4,7 @@ import 'package:dating_app/core/features/feed/post_card.dart';
 import 'package:dating_app/core/utils/date_utils.dart';
 import 'package:dating_app/core/utils/feed_skeleton.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
+import 'package:dating_app/core/utils/users_skeleton.dart';
 import 'package:dating_app/core/widgets/bottom_sheet.dart';
 import 'package:dating_app/data/models/post_model.dart';
 import 'package:dating_app/domain/repositories/likes_repository.dart';
@@ -162,7 +163,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                                 // offline fallback internally — the UI just
                                 // renders whatever state it receives.
                                 if (state is LoadingPosts) {
-                                  return const FeedSkeleton();
+                                  return const UserListSkeleton();
                                 }
 
                                 if (state is PostError) {

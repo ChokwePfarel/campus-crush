@@ -94,36 +94,6 @@ class _ProfileEditState extends State<ProfileEdit> {
     AppSnackBar.show(context, message, type: SnackBarType.error);
   }
 
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: const Text('Log out'),
-        content: const Text('Are you sure you want to sign out?'),
-        actions: [
-          TextButton(
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
-            onPressed: () => Navigator.pop(ctx),
-          ),
-          TextButton(
-            child: const Text('Log out', style: TextStyle(color: Colors.red)),
-            onPressed: () {
-              Navigator.pop(ctx);
-              context.read<AuthBloc>().add(LogoutRequested());
-
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginPage()),
-                (route) => false,
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
   void _saveProfile() {
     final name = _nameController.text.trim();
     final bio = _bioController.text.trim();

@@ -1,4 +1,3 @@
-
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../domain/repositories/auth_repository.dart';
 import 'auth_event.dart';
@@ -12,6 +11,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<LoginRequested>(_onLoginRequested);
     on<SignUpRequested>(_onSignUpRequested);
     on<LogoutRequested>(_onLogoutRequested);
+    on<SendPasswordResetRequested>(_onSendPasswordResetRequested);
+    on<UpdatePasswordRequested>(_onUpdatePasswordRequested);
   }
 
   Future<void> _onAuthCheckRequested(
@@ -27,13 +28,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _onLoginRequested(
-      LoginRequested event,
-      Emitter<AuthState> emit,
-      ) async {
+    LoginRequested event,
+    Emitter<AuthState> emit,
+  ) async {
     emit(AuthLoading());
     try {
       final response = await _authRepository.login(event.email, event.password);
-      final user = response.user; // ← same fix
+      final user = response.user;
       if (user != null) {
         emit(Authenticated(user));
       } else {
@@ -45,13 +46,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _onSignUpRequested(
-      SignUpRequested event,
-      Emitter<AuthState> emit,
-      ) async {
+    SignUpRequested event,
+    Emitter<AuthState> emit,
+  ) async {
     emit(AuthLoading());
     try {
-      final response = await _authRepository.signUp(event.email, event.password, event.name);
-      final user = response.user; // ← use the response directly
+      final response =
+          await _authRepository.signUp(event.email, event.password, event.name);
+      final user = response.user;
       if (user != null) {
         emit(Authenticated(user));
       } else {
@@ -59,7 +61,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
     } catch (e) {
       emit(AuthError(e.toString()));
-
     }
   }
 
@@ -71,6 +72,36 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       await _authRepository.logout();
       emit(Unauthenticated());
+    } catch (e) {
+      emit(AuthError(e.toString()));
+    }
+  }
+
+  Future<void> _onSendPasswordResetRequested(
+    SendPasswordResetRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      await _authRepository.sendPasswordResetEmail(event.email);
+      emit(Unauthenticated()); // Or a specific state like PasswordResetEmailSent
+    } catch (e) {
+      emit(AuthError(e.toString()));
+    }
+  }
+
+  Future<void> _onUpdatePasswordRequested(
+    UpdatePasswordRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      final response = await _authRepository.updatePassword(event.newPassword);
+      if (response.user != null) {
+        emit(Authenticated(response.user!));
+      } else {
+        emit(AuthError("Failed to update password."));
+      }
     } catch (e) {
       emit(AuthError(e.toString()));
     }

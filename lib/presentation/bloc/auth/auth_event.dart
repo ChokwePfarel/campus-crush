@@ -1,3 +1,4 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 abstract class AuthEvent {}
 
@@ -18,3 +19,12 @@ class SignUpRequested extends AuthEvent {
 
 class LogoutRequested extends AuthEvent {}
 
+class SendPasswordResetRequested extends AuthEvent {
+  final String email;
+  SendPasswordResetRequested(this.email);
+}
+
+class UpdatePasswordRequested extends AuthEvent {
+  final String newPassword;
+  UpdatePasswordRequested(this.newPassword);
+}
