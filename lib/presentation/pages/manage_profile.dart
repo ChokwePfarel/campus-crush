@@ -1,6 +1,8 @@
 import 'package:dating_app/core/utils/snackbar.dart';
 import 'package:dating_app/presentation/bloc/auth/auth_bloc.dart';
 import 'package:dating_app/presentation/bloc/auth/auth_event.dart';
+import 'package:dating_app/presentation/bloc/user/user_bloc.dart';
+import 'package:dating_app/presentation/bloc/user/user_event.dart';
 import 'package:dating_app/presentation/pages/login_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -26,6 +28,8 @@ class SettingsPage extends StatelessWidget {
             child: const Text('Log out', style: TextStyle(color: Colors.red)),
             onPressed: () {
               Navigator.pop(ctx);
+              context.read<UserBloc>().add(ResetUser());
+
               context.read<AuthBloc>().add(LogoutRequested());
 
               Navigator.pushAndRemoveUntil(

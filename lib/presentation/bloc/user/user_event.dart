@@ -44,3 +44,6 @@ class UpdateUserRequested extends UserEvent {
     this.coins ,
   });
 }
+
+//WHEN LOGG OUT
+class ResetUser extends UserEvent {}

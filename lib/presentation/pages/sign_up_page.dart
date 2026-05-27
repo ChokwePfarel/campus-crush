@@ -115,7 +115,9 @@ class _SignUpPageState extends State<SignUpPage> {
                 );
               }
               if (state is Authenticated) {
+
                 context.read<UserBloc>().add(LoadUserSubscription());
+
                 _createUser();
               }
             },

@@ -20,7 +20,8 @@ class PostModel extends PostEntity {
     super.likeCount = 0,
     super.commentCount = 0,
     required super.authorName,
-  });
+    super.profileImageUrl,
+    super.isVerified,  });
 
   factory PostModel.fromJson(Map<String, dynamic> json) {
     return PostModel(
@@ -49,6 +50,13 @@ class PostModel extends PostEntity {
       authorName: json['profiles'] != null 
           ? json['profiles']['name'] ?? '' 
           : (json['author_name'] ?? ''),
+
+      profileImageUrl: json['profiles'] != null
+          ? json['profiles']['profile_image_url']
+          : null,
+      isVerified: json['profiles'] != null
+          ? json['profiles']['is_verified'] ?? false
+          : false,
     );
   }
 
@@ -71,6 +79,9 @@ class PostModel extends PostEntity {
       'like_count': likeCount,
       'comment_count': commentCount,
       'author_name': authorName,
+
+      'profile_image_url': profileImageUrl,
+      'is_verified': isVerified,
     };
   }
 }

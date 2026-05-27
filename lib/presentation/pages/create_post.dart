@@ -92,8 +92,11 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     setState(() => _isPosting = true);
 
     // Spotted posts usually expire after 24 hours
+   ///Without .toUtc(), the stored time will be 2 hours ahead of local time (SAST),
+    /// which is actually 4 hours ahead of UTC — so posts would expire 4 hours after
+    /// creation instead of 2.
     final DateTime? expiresAt = _postType == PostType.spotted
-        ? DateTime.now().add(const Duration(hours: 24))
+        ? DateTime.now().toUtc().add(const Duration(hours: 2))
         : null;
 
     context.read<PostBloc>().add(CreatePostRequested(

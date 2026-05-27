@@ -93,12 +93,13 @@ class _ProfilePageState extends State<ProfilePage> {
       builder: (context, state) {
         if (state is UserInitial || state is UserLoading) {
           return const Scaffold(
+            backgroundColor: Colors.white,
             body: Center(child: CircularProgressIndicator.adaptive()),
           );
         }
 
         if (state is UserError) {
-          return Scaffold(body: Center(child: Text('Error: ${state.message}')));
+          return Scaffold(body: Center(child: Text(' ${state.message}')));
         }
 
         if (state is UserLoaded) {

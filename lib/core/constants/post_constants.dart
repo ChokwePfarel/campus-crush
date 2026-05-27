@@ -48,11 +48,11 @@ extension PostTypeExt on PostType {
       case PostType.general:
         return const Color(0xFF000000);
       case PostType.crush:
-        return const Color(0xFFFF4D6D);
+        return const Color(0xFF000000);
       case PostType.confession:
-        return const Color(0xFFFF9F1C);
+        return const Color(0xFF000000);
       case PostType.spotted:
-        return const Color(0xFF2EC4B6);
+        return const Color(0xFF000000);
     }
   }
 }

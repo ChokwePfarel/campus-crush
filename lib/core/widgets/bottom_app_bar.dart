@@ -139,11 +139,13 @@ class _InstaStyleNavState extends State<InstaStyleNav> {
                 activeIcon: Icon(LucideIcons.radio),
                 label: 'Radar'
             ),
+
             const BottomNavigationBarItem(
                 icon: Icon(CupertinoIcons.suit_heart),
                 activeIcon: Icon(CupertinoIcons.heart_fill),
                 label: 'For You'
             ),
+
             BottomNavigationBarItem(
               label: 'Chats',
               icon: BlocBuilder<ConversationsBloc, ConversationsState>(

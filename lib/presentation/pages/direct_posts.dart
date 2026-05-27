@@ -16,6 +16,7 @@ import 'package:dating_app/presentation/bloc/coins/coins_state.dart';
 import 'package:dating_app/presentation/bloc/direct_posts/direct_posts_bloc.dart';
 import 'package:dating_app/presentation/bloc/direct_posts/direct_posts_event.dart';
 import 'package:dating_app/presentation/bloc/direct_posts/direct_posts_state.dart';
+import 'package:dating_app/presentation/pages/Notification_Page.dart';
 import 'package:dating_app/presentation/pages/other_user_profile.dart';
 import 'package:dating_app/presentation/pages/send_post_page.dart';
 import 'package:flutter/cupertino.dart';
@@ -71,12 +72,8 @@ class _DirectPostsPageState extends State<DirectPostsPage>
   }
 
   void _loadData() {
-    context.read<DirectPostsBloc>().add(
-          LoadDirectPosts(widget.recipientId),
-        );
-    context.read<CoinsBloc>().add(
-          LoadCoins(widget.recipientId),
-        );
+    context.read<DirectPostsBloc>().add(LoadDirectPosts(widget.recipientId));
+    context.read<CoinsBloc>().add(LoadCoins(widget.recipientId));
   }
 
   @override
@@ -96,27 +93,27 @@ class _DirectPostsPageState extends State<DirectPostsPage>
     if (_scrollCtrl.position.pixels >=
         _scrollCtrl.position.maxScrollExtent * 0.9) {
       context.read<DirectPostsBloc>().add(
-            LoadMoreDirectPosts(widget.recipientId),
-          );
+        LoadMoreDirectPosts(widget.recipientId),
+      );
     }
   }
 
   Future<void> _onRefresh() async {
     if (!mounted) return;
-    context.read<DirectPostsBloc>().add(
-          RefreshDirectPosts(widget.recipientId),
-        );
+    context.read<DirectPostsBloc>().add(RefreshDirectPosts(widget.recipientId));
   }
 
   void _handlePostTap(PostModel post, String currentUserId) {
     if (!mounted) return;
 
     if (_isOffline) {
-      AppSnackBar.show(context, 'No internet connection',
-          type: SnackBarType.warning);
+      AppSnackBar.show(
+        context,
+        'No internet connection',
+        type: SnackBarType.warning,
+      );
       return; // stops here
     }
-
 
     if (!post.isAnonymous) {
       _navigateToProfile(post.userId);
@@ -130,8 +127,8 @@ class _DirectPostsPageState extends State<DirectPostsPage>
 
     HapticFeedback.selectionClick();
     context.read<CoinsBloc>().add(
-          CheckHasRevealed(userId: currentUserId, postId: post.id),
-        );
+      CheckHasRevealed(userId: currentUserId, postId: post.id),
+    );
   }
 
   void _showRevealDialog(
@@ -142,8 +139,11 @@ class _DirectPostsPageState extends State<DirectPostsPage>
     if (!mounted) return;
 
     if (_isOffline) {
-      AppSnackBar.show(context, 'No internet connection',
-          type: SnackBarType.warning);
+      AppSnackBar.show(
+        context,
+        'No internet connection',
+        type: SnackBarType.warning,
+      );
 
       return; // stops here
     }
@@ -164,8 +164,8 @@ class _DirectPostsPageState extends State<DirectPostsPage>
             _pendingProfileUserId = post.userId;
             _pendingPostId = post.id;
             context.read<CoinsBloc>().add(
-                  SpendCoinsOnReveal(userId: currentUserId, postId: post.id),
-                );
+              SpendCoinsOnReveal(userId: currentUserId, postId: post.id),
+            );
           } else {
             _navigateToProfile(post.userId);
           }
@@ -209,8 +209,9 @@ class _DirectPostsPageState extends State<DirectPostsPage>
             // Not revealed yet. Show dialog.
             final directPostsState = context.read<DirectPostsBloc>().state;
             if (directPostsState is DirectPostsLoaded) {
-              final post = directPostsState.posts
-                  .firstWhere((p) => p.id == _pendingPostId);
+              final post = directPostsState.posts.firstWhere(
+                (p) => p.id == _pendingPostId,
+              );
               _showRevealDialog(context, post, currentUserId!);
             }
           }
@@ -218,8 +219,8 @@ class _DirectPostsPageState extends State<DirectPostsPage>
 
         if (state is CoinsEarned && _pendingPostId != null) {
           context.read<CoinsBloc>().add(
-                SpendCoinsOnReveal(userId: currentUserId!, postId: _pendingPostId!),
-              );
+            SpendCoinsOnReveal(userId: currentUserId!, postId: _pendingPostId!),
+          );
         }
         if (state is CoinsSpent && _pendingProfileUserId != null) {
           HapticFeedback.mediumImpact();
@@ -231,8 +232,8 @@ class _DirectPostsPageState extends State<DirectPostsPage>
           _pendingProfileUserId = null;
           _pendingPostId = null;
           _isCheckingReveal = false;
-          AppSnackBar.show(context, state.message,
-              type: SnackBarType.warning);;
+          AppSnackBar.show(context, state.message, type: SnackBarType.warning);
+          ;
         }
       },
       child: FadeTransition(
@@ -275,6 +276,18 @@ class _DirectPostsPageState extends State<DirectPostsPage>
         preferredSize: const Size.fromHeight(0.5),
         child: Container(height: 0.5, color: const Color(0xFFEEEEF4)),
       ),
+
+      actions: [
+        IconButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => NotificationPage()),
+            );
+          },
+          icon: Icon(Icons.notifications),
+        ),
+      ],
     );
   }
 
@@ -375,16 +388,22 @@ class _DirectPostsPageState extends State<DirectPostsPage>
                   return _DirectPostCard(
                     post: post,
                     onTap: () => _handlePostTap(post, currentUserId),
-                    onReplyTap: () => _isOffline ? AppSnackBar.show(context, 'No internet connection',
-                        type: SnackBarType.warning) : showCommentsSheet(
-                      context: context,
-                      postId: post.id,
-                      commentCount: post.commentCount,
-                    ),
+                    onReplyTap: () => _isOffline
+                        ? AppSnackBar.show(
+                            context,
+                            'No internet connection',
+                            type: SnackBarType.warning,
+                          )
+                        : showCommentsSheet(
+                            context: context,
+                            postId: post.id,
+                            commentCount: post.commentCount,
+                          ),
                   );
                 },
-                childCount:
-                    state.hasMore ? state.posts.length + 1 : state.posts.length,
+                childCount: state.hasMore
+                    ? state.posts.length + 1
+                    : state.posts.length,
               ),
             );
           }
@@ -425,7 +444,7 @@ class _DirectPostsPageState extends State<DirectPostsPage>
             ),
           ),
           child: const Text('Retry'),
-        )
+        ),
       ],
     );
   }
@@ -489,9 +508,11 @@ class _DirectPostCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            Text(post.content, style: const TextStyle(fontSize: 15, height: 1.4)),
+            Text(
+              post.content,
+              style: const TextStyle(fontSize: 15, height: 1.4),
+            ),
             const Divider(height: 32),
-
 
             Row(
               children: [
@@ -499,8 +520,11 @@ class _DirectPostCard extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.remove_red_eye_outlined,
-                          size: 16, color: accent),
+                      Icon(
+                        Icons.remove_red_eye_outlined,
+                        size: 16,
+                        color: accent,
+                      ),
                       const SizedBox(width: 6),
                       Text(
                         'Reveal Sender',
@@ -521,8 +545,11 @@ class _DirectPostCard extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.reply_outlined,
-                            size: 16, color: Colors.blue),
+                        const Icon(
+                          Icons.reply_outlined,
+                          size: 16,
+                          color: Colors.blue,
+                        ),
                         const SizedBox(width: 6),
                         const Text(
                           'Reply',

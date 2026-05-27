@@ -1,3 +1,4 @@
+import 'package:hive_flutter/adapters.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 abstract class AuthRemoteDataSource {
@@ -55,6 +56,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<void> signOut() async {
     await client.auth.signOut();
+    await Hive.deleteFromDisk(); // wipes all boxes
   }
 
   @override

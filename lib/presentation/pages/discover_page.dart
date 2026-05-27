@@ -3,6 +3,8 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
 import 'package:dating_app/core/utils/users_skeleton.dart';
 import 'package:dating_app/domain/repositories/users_repository.dart';
+import 'package:dating_app/presentation/bloc/auth/auth_bloc.dart';
+import 'package:dating_app/presentation/bloc/auth/auth_event.dart';
 import 'package:dating_app/presentation/bloc/user/user_bloc.dart';
 import 'package:dating_app/presentation/bloc/user/user_event.dart';
 import 'package:dating_app/presentation/bloc/user/user_state.dart';
@@ -10,6 +12,7 @@ import 'package:dating_app/presentation/bloc/users/users_bloc.dart';
 import 'package:dating_app/presentation/bloc/users/users_event.dart';
 import 'package:dating_app/presentation/bloc/users/users_state.dart'
     as users_st;
+import 'package:dating_app/presentation/pages/login_page.dart';
 import 'package:dating_app/presentation/pages/profile_page.dart';
 import 'package:dating_app/presentation/pages/search_page.dart';
 import 'package:flutter/material.dart';
@@ -70,6 +73,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
       }
     });
   }
+
 
   void _scrollListener() {
     if (!mounted) return;
@@ -284,6 +288,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
   Widget _searchField() {
     return GestureDetector(
       onTap: () {
+
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -313,10 +318,21 @@ class _DiscoverPageState extends State<DiscoverPage> {
 
   Widget _profileButton(String image) {
     return GestureDetector(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const ProfilePage()),
-      ),
+      onTap: (){
+
+        Navigator.push(context, MaterialPageRoute(builder:
+        (context) => const ProfilePage()));
+
+        /*context.read<UserBloc>().add(ResetUser());
+
+        context.read<AuthBloc>().add(LogoutRequested());
+
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+              (route) => false,
+        );*/
+      },
       child: CircleAvatar(
         radius: SizeConfig.widthPercent(6),
         backgroundColor: Colors.grey[200],

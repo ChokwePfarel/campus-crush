@@ -248,12 +248,8 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
             ? posts.length
             : posts.length + 1,
         itemBuilder: (context, i) {
-
           if (i >= posts.length) {
-            return Center(
-              child: const CircularProgressIndicator.adaptive(),
-            );
-
+            return Center(child: const CircularProgressIndicator.adaptive());
           }
           final post = posts[i];
           return BlocProvider(
@@ -305,8 +301,7 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
                   context,
                   MaterialPageRoute(builder: (_) => const MyPostsPage()),
                 ),
-                icon: Icon(Icons.history,
-                color: Colors.white,),
+                icon: Icon(Icons.history, color: Colors.white),
               ),
       ],
     );
@@ -408,13 +403,4 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildCommentSkeleton() {
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: 5,
-      separatorBuilder: (_, __) => const SizedBox(height: 16),
-      itemBuilder: (_, __) => const CommentSkeletonItem(),
-    );
-  }
 }

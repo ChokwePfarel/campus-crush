@@ -25,9 +25,9 @@ abstract class PostRemoteDataSource {
 
   Future<void> deletePost(String postId);
 
-
   Future<List<PostModel>> getCurrentUserPost();
 
+  Future<List<PostModel>> getUserPostById(String userId);
 
   Future<List<PostModel>> getDirectPostsPaginated({
     required String recipientId,
@@ -35,10 +35,7 @@ abstract class PostRemoteDataSource {
   });
 
   Stream<List<PostModel>> watchNewDirectPosts(String recipientId);
-
 }
-
-
 
 //----------------------------------------------------------------------------
 class PostRemoteDataSourceImpl implements PostRemoteDataSource {
@@ -54,61 +51,98 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
     required int offset,
     required int limit,
   }) async {
-
-    print('university: $university');
-    print('postType: $postType');
-    print('locationTag: $locationTag');
-
-
-    var query = client.from('posts').select('''
-    *,
-    profiles:user_id (
-      id,
-      name,
-      profile_image_url,
-      is_verified,
-      privacy_settings
-    )
-  ''');
-
-    if (university != null && university.isNotEmpty) {
-      query = query.eq('university', university);
-    }
-
-    // --- LOGIC FOR SPOTTED POSTS ---
-    bool hasLocation = locationTag != null && locationTag.isNotEmpty;
-
-    if (postType != null && postType.isNotEmpty) {
-      // If user specifically requested 'spotted' but has no location,
-      // you might want to return an empty list or force a different type.
-      // Here, we proceed with the requested type.
-      query = query.eq('post_type', postType);
-    } else if (!hasLocation) {
-      // If no specific postType is requested AND no location is provided,
-      // explicitly exclude 'spotted' posts.
-      query = query.neq('post_type', 'spotted');
-    }
-
-    if (hasLocation) {
-      query = query.eq('location_tag', locationTag);
-    }
-    // -------------------------------
-
-    query = query.eq('is_normal_post', true);
-
-    query = query.or(
-      'expires_at.is.null,expires_at.gt.${DateTime.now().toUtc().toIso8601String()}',
+    print(
+      'DEBUG: getPosts starting with Params: university=$university, type=$postType, location=$locationTag',
     );
 
-    final response = await query
-        .range(offset, offset + limit - 1)
-        .order('created_at', ascending: false);
+    try {
+      final selectString = '''
+        *,
+        profiles (
+          id, name, profile_image_url, is_verified, privacy_settings
+        )
+      ''';
 
-    return (response as List).map((e) => PostModel.fromJson(e)).toList();
+      var query = client.from('posts').select(selectString);
+      query = _applyFilters(query, university, postType, locationTag);
+
+      final response = await query
+          .range(offset, offset + limit - 1)
+          .order('created_at', ascending: false);
+
+      print('DEBUG: Successfully fetched ${(response as List).length} posts');
+      return response.map((e) => PostModel.fromJson(e)).toList();
+    } on PostgrestException catch (e) {
+      print('DEBUG: PostgresException in getPosts: ${e.message}');
+
+      // Fallback: If joining fails, try fetching posts without the profiles join
+      // but STILL apply all other filters (university, postType, expires_at, etc.)
+      print('DEBUG: Attempting filtered fallback (no profiles join)...');
+      try {
+        var fallbackQuery = client.from('posts').select('*');
+        fallbackQuery = _applyFilters(
+          fallbackQuery,
+          university,
+          postType,
+          locationTag,
+        );
+
+        final fallbackRes = await fallbackQuery
+            .range(offset, offset + limit - 1)
+            .order('created_at', ascending: false);
+
+        // Remove the (as List) cast — fallbackRes is already List<Map<String, dynamic>>
+        return fallbackRes.map((e) => PostModel.fromJson(e)).toList();
+      } catch (fallbackError) {
+        print('DEBUG: Filtered fallback failed: $fallbackError');
+      }
+      rethrow;
+    } catch (e) {
+      print('DEBUG: Unexpected error in getPosts: $e');
+      rethrow;
+    }
   }
 
+  /// Helper to apply common filters to any query on the 'posts' table
+  /// The raw PostgrestFilterBuilder without a type parameter defaults to dynamic,
+  /// which is incompatible with the typed
+  /// PostgrestFilterBuilder<PostgrestList> that .select() returns.
 
+  PostgrestFilterBuilder<PostgrestList> _applyFilters(
+    PostgrestFilterBuilder<PostgrestList> query,
+    String? university,
+    String? postType,
+    String? locationTag,
+  ) {
+    var q = query;
 
+    if (university != null && university.isNotEmpty) {
+      q = q.eq('university', university);
+    }
+
+    if (postType != null && postType.isNotEmpty) {
+      q = q.eq('post_type', postType);
+    } else if (locationTag == null || locationTag.isEmpty) {
+      q = q.neq('post_type', 'spotted');
+    }
+
+    if (locationTag != null && locationTag.isNotEmpty) {
+      q = q.eq('location_tag', locationTag);
+    }
+
+    q = q.eq('is_normal_post', true);
+
+    q = q.or(
+      'expires_at.is.null,expires_at.gt.${DateTime.now().toUtc().toIso8601String()}',
+    );
+    print(
+      'DEBUG: expires_at filter time: ${DateTime.now().toUtc().toIso8601String()}',
+    );
+    print('DEBUG: Local time: ${DateTime.now()}');
+    print('DEBUG: UTC time: ${DateTime.now().toUtc()}');
+    print('DEBUG: UTC offset: ${DateTime.now().timeZoneOffset}');
+    return q;
+  }
 
   @override
   Future<void> createPost({
@@ -136,7 +170,7 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
       'recipient_id': recipientId,
       'is_normal_post': isNormalPost,
       'location_tag': locationTag,
-      'author_name' : authorName,
+      'author_name': authorName,
       'expires_at': expiresAt?.toIso8601String(),
     });
   }
@@ -151,28 +185,59 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
     final user = client.auth.currentUser;
     if (user == null) throw Exception('Not signed in');
 
-    final response = await client.from('posts').select().eq('user_id', user.id).order('created_at', ascending: false);
+    final response = await client
+        .from('posts')
+        .select()
+        .eq('user_id', user.id)
+        .order('created_at', ascending: false);
     return (response as List).map((e) => PostModel.fromJson(e)).toList();
   }
 
+  @override
+  Future<List<PostModel>> getUserPostById(String userId) async {
+    try {
+      final response = await client
+          .from('posts')
+          .select('''
+          *,
+          profiles!posts_user_id_fkey (
+            id,
+            name,
+            profile_image_url,
+            is_verified,
+            privacy_settings
+          )
+        ''')
+          .eq('user_id', userId)
+          .eq('is_normal_post', true)
+          .order('created_at', ascending: false);
 
+      return (response as List).map((e) => PostModel.fromJson(e)).toList();
+    } catch (e) {
+      final fallback = await client
+          .from('posts')
+          .select()
+          .eq('user_id', userId)
+          .eq('is_normal_post', true)
+          .order('created_at', ascending: false);
+      return (fallback as List).map((e) => PostModel.fromJson(e)).toList();
+    }
+  }
 
-//-----------------------------------------------------------------------
-
-
-  /// Fetches a page of direct posts (cursor-based pagination)
   Future<List<PostModel>> getDirectPostsPaginated({
     required String recipientId,
-    DateTime? before, // cursor: fetch posts older than this timestamp
+    DateTime? before,
     int limit = 20,
   }) async {
-
     final query = client
         .from('posts')
         .select()
         .eq('recipient_id', recipientId)
         .eq('is_normal_post', false)
-        .lt('created_at', before?.toIso8601String() ?? DateTime.now().toIso8601String())
+        .lt(
+          'created_at',
+          before?.toIso8601String() ?? DateTime.now().toIso8601String(),
+        )
         .order('created_at', ascending: false)
         .limit(limit);
 
@@ -180,19 +245,22 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
     return data.map((e) => PostModel.fromJson(e)).toList();
   }
 
-  /// Streams real-time new direct posts.
-  /// .stream() only supports ONE .eq() filter — so we filter
-  /// is_normal_post client-side after the stream emits.
   Stream<List<PostModel>> watchNewDirectPosts(String recipientId) {
     return client
         .from('posts')
         .stream(primaryKey: ['id'])
-        .eq('recipient_id', recipientId)   // ✅ only one .eq() allowed
+        .eq('recipient_id', recipientId)
         .order('created_at', ascending: false)
         .limit(1)
-        .map((data) => data
-        .where((e) => e['is_normal_post'] == false) // ✅ second filter client-side
-        .map((e) => PostModel.fromJson(e))
-        .toList());
+        .map(
+          (data) => data
+              .where((e) => e['is_normal_post'] == false)
+              .map((e) => PostModel.fromJson(e))
+              .toList(),
+        );
   }
+
+  //Fetch A single posts by Id
+
+
 }

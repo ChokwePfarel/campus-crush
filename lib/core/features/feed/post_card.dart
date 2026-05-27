@@ -113,25 +113,12 @@ class PostCardState extends State<PostCard> with SingleTickerProviderStateMixin 
                   },
                   child: Row(
                     children: [
-                      Container(
-                        width: SizeConfig.widthPercent(10),
-                        height: SizeConfig.widthPercent(10),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: post.isAnonymous
-                              ? const Color(0xFF8E8E9A).withOpacity(0.15)
-                              : accent.withOpacity(0.12),
-                          border: Border.all(
-                            color: post.isAnonymous ? Colors.transparent : accent.withOpacity(0.3),
-                            width: 1.5,
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            post.isAnonymous ? '🎭' : '👤',
-                            style: TextStyle(fontSize: SizeConfig.widthPercent(5)),
-                          ),
-                        ),
+                      CircleAvatar(
+                        backgroundColor: const Color(0xFF2EC4B6).withOpacity(0.1),
+                        backgroundImage: (post.profileImageUrl != null &&
+                            post.profileImageUrl!.startsWith('http') && !post.isAnonymous)
+                            ? NetworkImage(post.profileImageUrl!)
+                            : const AssetImage('assets/profile_picture.png'),
                       ),
                       SizedBox(width: SizeConfig.widthPercent(2.5)),
                       Expanded(

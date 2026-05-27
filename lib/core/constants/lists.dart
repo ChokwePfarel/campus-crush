@@ -1,4 +1,3 @@
-import 'dart:ui';
 
 enum PostType { general, crush, confession, spotted }
 
@@ -16,44 +15,22 @@ extension PostTypeExt on PostType {
     }
   }
 
-  String get emoji {
-    switch (this) {
-      case PostType.general:
-        return '💬';
-      case PostType.crush:
-        return '💘';
-      case PostType.confession:
-        return '🤫';
-      case PostType.spotted:
-        return '📡';
-    }
-  }
+
 
   String get hint {
     switch (this) {
       case PostType.general:
         return "What's on your mind?";
       case PostType.crush:
-        return "Tell us about your crush... 💘";
+        return "Tell us about your crush...";
       case PostType.confession:
-        return "Confess something... we won't judge 🤫";
+        return "Confess something... we won't judge ";
       case PostType.spotted:
         return "Describe what you're wearing today...";
     }
   }
 
-  Color get color {
-    switch (this) {
-      case PostType.general:
-        return const Color(0xFF000000);
-      case PostType.crush:
-        return const Color(0xFFFF4D6D);
-      case PostType.confession:
-        return const Color(0xFFFF9F1C);
-      case PostType.spotted:
-        return const Color(0xFF2EC4B6);
-    }
-  }
+
 }
 
 class DropDownOptions {

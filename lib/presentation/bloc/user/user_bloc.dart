@@ -15,6 +15,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     on<LoadUserSubscription>(_onLoadUserSubscription);
     on<UserUpdated>(_onUserUpdated);
     on<UpdateUserRequested>(_onUpdateUserRequested);
+    on<ResetUser>(_onResetUser);
   }
 
   Future<void> _onLoadUserSubscription(
@@ -114,5 +115,14 @@ class UserBloc extends Bloc<UserEvent, UserState> {
   Future<void> close() {
     _userSubscription?.cancel();
     return super.close();
+  }
+
+  Future<void> _onResetUser(
+      ResetUser event,
+      Emitter<UserState> emit,
+      ) async {
+    await _userSubscription?.cancel();
+    _userSubscription = null;
+    emit(UserInitial());
   }
 }

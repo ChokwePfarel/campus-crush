@@ -157,7 +157,10 @@ class _SpottedListTile extends StatelessWidget {
             children: [
               CircleAvatar(
                 backgroundColor: const Color(0xFF2EC4B6).withOpacity(0.1),
-                child: Text(post.isAnonymous ? '🎭' : '👤'),
+                backgroundImage: (post.profileImageUrl != null &&
+                    post.profileImageUrl!.startsWith('http') && !post.isAnonymous)
+                    ? NetworkImage(post.profileImageUrl!)
+                    : const AssetImage('assets/profile_picture.png'),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -175,6 +178,7 @@ class _SpottedListTile extends StatelessWidget {
                   ],
                 ),
               ),
+              post.isAnonymous ? const SizedBox() :
               CupertinoButton(
                 padding: EdgeInsets.zero,
                 onPressed: () {

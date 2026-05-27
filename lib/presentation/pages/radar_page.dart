@@ -71,9 +71,14 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
   bool _isOffline = false;
   StreamSubscription? _connectivitySub;
 
+  late final PostBloc _postBloc; // Stable bloc instance
+
   @override
   void initState() {
     super.initState();
+    //Initialting bloc once
+    _postBloc = PostBloc(context.read<PostRepository>());
+
     _connectivitySub = Connectivity().onConnectivityChanged.listen((results) {
       if (mounted) {
         setState(() {
@@ -85,16 +90,17 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    _postBloc.close(); // Clean up bloc
     _radarCtrl.dispose();
     _pulseCtrl.dispose();
     _connectivitySub?.cancel();
     super.dispose();
   }
 
-  void _fetchSpottedPosts(BuildContext context) {
+  void _fetchSpottedPosts() {
     final userState = context.read<UserBloc>().state;
     if (userState is user_st.UserLoaded) {
-      context.read<PostBloc>().add(
+      _postBloc.add(
         LoadPosts(
           university: userState.user.university,
           postType: 'spotted',
@@ -105,22 +111,21 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
     }
   }
 
-  void _selectLocation(BuildContext context, String location) {
+  void _selectLocation(String location) {
     HapticFeedback.mediumImpact();
-
     if (_isOffline) {
       AppSnackBar.show(
         context,
         'No internet connection',
         type: SnackBarType.warning,
       );
-      return; // stop execution, no navigation
+      return;
     }
 
     setState(() {
       _selectedLocation = location;
     });
-    _fetchSpottedPosts(context);
+    _fetchSpottedPosts();
   }
 
   void _navigateToSpottedPage(BuildContext context) {
@@ -184,8 +189,8 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     SizeConfig.init(context);
 
-    return BlocProvider(
-      create: (context) => PostBloc(context.read<PostRepository>()),
+    return BlocProvider.value(
+      value: _postBloc,
       child: Builder(
         builder: (context) {
           return Scaffold(
@@ -217,9 +222,31 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
   Widget _buildRadarContent(BuildContext context) {
     return BlocBuilder<PostBloc, PostState>(
       builder: (context, state) {
-        if (state is LoadingPosts) {
+        // Handle loading and initial states
+        if (state is LoadingPosts || state is PostInitial) {
           return const Center(
             child: CircularProgressIndicator(color: Color(0xFF2EC4B6)),
+          );
+        }
+
+        // Handle error states
+        if (state is PostError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                const SizedBox(height: 16),
+                Text(
+                  'Error: ${state.message}',
+                  style: const TextStyle(color: Colors.white),
+                ),
+                TextButton(
+                  onPressed: _fetchSpottedPosts,
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
           );
         }
         if (state is PostsLoaded) {
@@ -438,7 +465,7 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
               childAspectRatio: 2.6,
               children: entry.value.map((tag) {
                 return GestureDetector(
-                  onTap: () => _selectLocation(context, tag['label']!),
+                  onTap: () => _selectLocation(tag['label']!),
 
                   child: Container(
                     decoration: BoxDecoration(
@@ -537,7 +564,9 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        post.isAnonymous ? 'Anonymous Student' : 'Student',
+                        post.isAnonymous
+                            ? 'Anonymous Student'
+                            : post.authorName,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 18,
@@ -566,36 +595,39 @@ class _RadarPageState extends State<RadarPage> with TickerProviderStateMixin {
               ),
             ),
             const SizedBox(height: 32),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              OtherUserProfilePage(userId: post.userId),
+
+            post.isAnonymous
+                ? const SizedBox()
+                : Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    OtherUserProfilePage(userId: post.userId),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2EC4B6),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: const Text(
+                            'Say Hi',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                         ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2EC4B6),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
                       ),
-                    ),
-                    child: const Text(
-                      'Say Hi',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
+                    ],
                   ),
-                ),
-              ],
-            ),
           ],
         ),
       ),
@@ -796,18 +828,18 @@ class _SpottedBubbleState extends State<_SpottedBubble>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircleAvatar(
-                    radius: widget.data.size * 0.25,
-                    backgroundColor: Colors.white10,
-                    child: Text(
-                      widget.data.post.isAnonymous ? '🎭' : '👤',
-                      style: TextStyle(fontSize: widget.data.size * 0.3),
-                    ),
-                  ),
+              CircleAvatar(
+              radius: widget.data.size * 0.25,
+                backgroundColor: Colors.white10,
+                backgroundImage: (widget.data.post.profileImageUrl != null &&
+                    widget.data.post.profileImageUrl!.startsWith('http') && !widget.data.post.isAnonymous)
+                    ? NetworkImage(widget.data.post.profileImageUrl!)
+                    : const AssetImage('assets/profile_picture.png'),
+              ),
                   const SizedBox(height: 4),
                   Text(
                     widget.data.post.isAnonymous
-                        ? '???'
+                        ? 'Anonymous'
                         : (widget.data.post.authorName.split(' ').first),
                     style: TextStyle(
                       color: Colors.white,

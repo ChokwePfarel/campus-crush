@@ -18,6 +18,9 @@ class PostEntity {
   final int likeCount;
   final int commentCount;
   final String authorName;
+  final String? profileImageUrl;
+  final bool isVerified;
+
 
   PostEntity({
     required this.id,
@@ -37,5 +40,8 @@ class PostEntity {
     this.likeCount = 0,
     this.commentCount = 0,
     required this.authorName,
+
+    this.profileImageUrl,
+    this.isVerified = false,
   });
 }
