@@ -390,15 +390,15 @@
     </div>
 
     <div class="field">
-      <label>Password</label>
-
-      <input
-        type="password"
-        id="password"
-        placeholder="Enter your password"
-        oninput="toggleBtn()"
-      />
-    </div>
+  <label>Password</label>
+  <input
+    type="password"
+    id="password"
+    placeholder="Enter your password"
+    oninput="toggleBtn()"
+  />
+  <button type="button" onclick="togglePassword()">Show</button>
+</div>
 
     <div class="confirm-row">
       <input
@@ -492,6 +492,18 @@
           'Permanently Delete Account';
       }
     }
+
+     function togglePassword() {
+    const input = document.getElementById('password');
+    const btn = event.target;
+    if (input.type === 'password') {
+      input.type = 'text';
+      btn.textContent = 'Hide';
+    } else {
+      input.type = 'password';
+      btn.textContent = 'Show';
+    }
+  }
 
     async function deleteAccount() {
 
