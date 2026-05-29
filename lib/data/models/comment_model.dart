@@ -11,6 +11,11 @@ class CommentModel extends CommentEntity {
     required super.createdAt,
     super.parentCommentId,
     super.replies = const [],
+
+    // ADD THESE:
+    super.postAuthorId,
+    super.parentCommentAuthorId,
+
   });
 
   factory CommentModel.fromJson(Map<String, dynamic> json) {
@@ -27,6 +32,11 @@ class CommentModel extends CommentEntity {
                 .map((e) => CommentModel.fromJson(e))
                 .toList()
           : const [],
+
+      // ADD THESE:
+      postAuthorId: json['post_author_id'],
+      parentCommentAuthorId: json['parent_comment_author_id'],
+
     );
   }
 
@@ -39,6 +49,9 @@ class CommentModel extends CommentEntity {
       'text': text,
       'parent_comment_id': parentCommentId,
       'created_at': createdAt.toIso8601String(),
+
+      'post_author_id': postAuthorId,        // to detect: someone commented on my post
+      'parent_comment_author_id': parentCommentAuthorId,  // to detect: someone replied to my comment
 
     };
   }

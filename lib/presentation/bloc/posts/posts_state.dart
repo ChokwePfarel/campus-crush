@@ -28,6 +28,12 @@ class PostsLoaded extends PostState {
     );
   }}
 
+class OnePostLoaded extends PostState {
+  final PostModel post;
+  OnePostLoaded(this.post);
+
+}
+
 class PostError extends PostState {
   final String message;
 

@@ -1,5 +1,7 @@
-import 'package:dating_app/core/utils/burg_icon.dart';
+import 'package:dating_app/core/utils/notification_badge.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
+import 'package:dating_app/presentation/bloc/comments/comments_bloc.dart';
+import 'package:dating_app/presentation/bloc/comments/comments_state.dart';
 import 'package:dating_app/presentation/bloc/conversation/conversation_bloc.dart';
 import 'package:dating_app/presentation/bloc/conversation/conversation_state.dart';
 
@@ -64,7 +66,7 @@ class _InstaStyleNavState extends State<InstaStyleNav> {
         Supabase.instance.client.auth.currentUser?.id ?? '';
 
     _pages = [
-      const DiscoverPage(),
+      DiscoverPage(currentUserId: currentUserId,),
       FeedScreen(currentUserId: currentUserId),
       const RadarPage(),
       DirectPostsPage(recipientId: currentUserId),
@@ -140,10 +142,20 @@ class _InstaStyleNavState extends State<InstaStyleNav> {
                 label: 'Radar'
             ),
 
-            const BottomNavigationBarItem(
-                icon: Icon(CupertinoIcons.suit_heart),
-                activeIcon: Icon(CupertinoIcons.heart_fill),
-                label: 'For You'
+            BottomNavigationBarItem(
+              icon: BlocBuilder<CommentsBloc, CommentsState>(
+                builder: (context, state) => NotificationIcon(
+                  icon: CupertinoIcons.heart,
+                  showDot: state.showRedDot,
+                ),
+              ),
+              activeIcon: BlocBuilder<CommentsBloc, CommentsState>(
+                builder: (context, state) => NotificationIcon(
+                  icon: CupertinoIcons.heart_fill,
+                  showDot: state.showRedDot,
+                ),
+              ),
+              label: 'For You',
             ),
 
             BottomNavigationBarItem(

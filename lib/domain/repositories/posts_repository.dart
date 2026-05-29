@@ -34,4 +34,6 @@ abstract class PostRepository {
 
   Stream<List<PostModel>> watchNewDirectPosts(String recipientId);
 
+  Future<PostModel> getOnePostById(String postId);
+
 }

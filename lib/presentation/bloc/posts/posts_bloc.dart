@@ -14,12 +14,13 @@ class PostBloc extends Bloc<PostEvent, PostState> {
     on<LoadPosts>(_onLoadPosts);
     on<CreatePostRequested>(_onCreatePost);
     on<DeletePostRequested>(_onDeletePost);
+    on<GetOnePostById>(_onGetOnePostById);
   }
 
   Future<void> _onLoadPosts(
-      LoadPosts event,
-      Emitter<PostState> emit,
-      ) async {
+    LoadPosts event,
+    Emitter<PostState> emit,
+  ) async {
     final currentState = state;
 
     if (currentState is PostsLoaded &&
@@ -28,29 +29,23 @@ class PostBloc extends Bloc<PostEvent, PostState> {
       return;
     }
 
-    //-----------chacking if data is fresh
-
     final bool isFresh = event.isInitial || currentState is! PostsLoaded;
 
-    if(isFresh){
-      //SHOW CACHED RIGHT AWAY
+    if (isFresh) {
       final cached = OfflineCache.getCachedPosts();
-      if(cached.isNotEmpty){
-        // Filter cached posts by type and location if provided
+      if (cached.isNotEmpty) {
         final filteredCached = cached.where((p) {
           final typeMatch = event.postType == null || p.postType == event.postType;
           final locationMatch = event.locationTag == null || p.locationTag == event.locationTag;
           return typeMatch && locationMatch;
         }).toList();
-        
+
         emit(PostsLoaded(post: filteredCached, hasReachedMax: false));
       } else {
         emit(LoadingPosts());
       }
 
-      //FETCH PAGE 1 FROM SERVER
-      try{
-
+      try {
         final posts = await _postRepository.getPosts(
           university: event.university,
           postType: event.postType,
@@ -59,58 +54,39 @@ class PostBloc extends Bloc<PostEvent, PostState> {
           limit: _limit,
         );
 
-        //Only caching page 1
-
         final models = posts.whereType<PostModel>().toList();
-        if(models.isNotEmpty){
+        if (models.isNotEmpty) {
           await OfflineCache.cachePosts(models);
         }
 
-        emit(PostsLoaded(
-            post: models,
-            hasReachedMax: posts.length < _limit
-        ));
-
-      } catch (e){
-        //SERVER FAILED
+        emit(PostsLoaded(post: models, hasReachedMax: posts.length < _limit));
+      } catch (e) {
         final alreadyShowingCache =
             state is PostsLoaded && (state as PostsLoaded).post.isNotEmpty;
-        //If not,show the error
-        if(!alreadyShowingCache){
+        if (!alreadyShowingCache) {
           emit(PostError(e.toString()));
         }
       }
+    } else    try {
+      final posts = await _postRepository.getPosts(
+        university: event.university,
+        postType: event.postType,
+        locationTag: event.locationTag,
+        offset: currentState.post.length,
+        limit: _limit,
+      );
 
-    } else {
-
-      final loaded = currentState;
-      try{
-
-        final posts = await _postRepository.getPosts(
-          university: event.university,
-          postType: event.postType,
-          locationTag: event.locationTag,
-          offset: currentState.post.length,
-          limit: _limit,
-        );
-
-        emit(posts.isEmpty
-            ? loaded.copyWith(hasReachedMax: true)
-            : PostsLoaded(
-          post: loaded.post + posts,
-          hasReachedMax: posts.length < _limit,
-        ));
-
-      } catch (e) {
-        //emit(PostError(e.toString()));
-        // Pagination failure — keep the existing list, don't wipe it.
-        // The scroll listener will retry on the next scroll event.
-        emit(loaded.copyWith(hasReachedMax: false));
-
-      }
+      emit(posts.isEmpty
+          ? currentState.copyWith(hasReachedMax: true)
+          : PostsLoaded(
+              post: currentState.post + posts,
+              hasReachedMax: posts.length < _limit,
+            ));
+    } catch (e) {
+      emit(currentState.copyWith(hasReachedMax: false));
     }
-  }
 
+  }
 
   Future<void> _onCreatePost(
       CreatePostRequested event,
@@ -141,19 +117,32 @@ class PostBloc extends Bloc<PostEvent, PostState> {
   }
 
   Future<void> _onDeletePost(
-      DeletePostRequested event,
-      Emitter<PostState> emit,
-      ) async {
+    DeletePostRequested event,
+    Emitter<PostState> emit,
+  ) async {
     try {
       await _postRepository.deletePost(event.postId);
       if (state is PostsLoaded) {
         final currentPosts = (state as PostsLoaded).post;
-        final updatedPosts =
-        currentPosts.where((p) => p.id != event.postId).toList();
+        final updatedPosts = currentPosts.where((p) => p.id != event.postId).toList();
         emit((state as PostsLoaded).copyWith(post: updatedPosts));
       }
     } catch (e) {
       emit(PostError(e.toString()));
     }
   }
+
+  Future<void> _onGetOnePostById(
+    GetOnePostById event,
+    Emitter<PostState> emit,
+  ) async {
+    try {
+      final post = await _postRepository.getOnePostById(event.postId);
+      emit(OnePostLoaded(post));
+    } catch (e) {
+      emit(PostError(e.toString()));
+    }
+  }
+
+
 }

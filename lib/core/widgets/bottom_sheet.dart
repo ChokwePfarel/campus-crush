@@ -74,6 +74,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
             repliersName: userState.user.name,
             text: text,
             parentCommentId: _replyingTo?.id,
+
           ));
 
       _inputCtrl.clear();
@@ -134,35 +135,35 @@ class _CommentsSheetState extends State<CommentsSheet> {
     );
   }
 
-  Widget _buildBody() {
-    return BlocBuilder<CommentsBloc, CommentsState>(
-      builder: (context, state) {
-        if (state is LoadingComments) {
+    Widget _buildBody() {
+      return BlocBuilder<CommentsBloc, CommentsState>(
+        builder: (context, state) {
+          if (state is LoadingComments) {
 
-          return CommentSkeletonItem();
-        }
-        if (state is ErrorComments) {
-          return Center(child: Text(state.message));
-        }
-        if (state is CommentsLoaded) {
-          if (state.comments.isEmpty) return const Center(child: Text("No comments yet."));
+            return CommentSkeletonItem();
+          }
+          if (state is ErrorComments) {
+            return Center(child: Text(state.message));
+          }
+          if (state is CommentsLoaded) {
+            if (state.comments.isEmpty) return const Center(child: Text("No comments yet."));
 
-          final topLevel =
-              state.comments.where((c) => c.parentCommentId == null).toList();
+            final topLevel =
+                state.comments.where((c) => c.parentCommentId == null).toList();
 
-          return ListView.builder(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            itemCount: topLevel.length,
-            itemBuilder: (_, i) => _CommentTile(
-              comment: topLevel[i],
-              onReply: (c) => setState(() => _replyingTo = c),
-            ),
-          );
-        }
-        return const SizedBox();
-      },
-    );
-  }
+            return ListView.builder(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              itemCount: topLevel.length,
+              itemBuilder: (_, i) => _CommentTile(
+                comment: topLevel[i],
+                onReply: (c) => setState(() => _replyingTo = c),
+              ),
+            );
+          }
+          return const SizedBox();
+        },
+      );
+    }
 
   Widget _buildReplyBanner() {
     return Container(
@@ -226,6 +227,7 @@ class _CommentTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isAnonymous = comment.repliersName == 'Anonymous';
+    final isTopLevel = comment.parentCommentId == null; // ← Only top-level comments can be replied to
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -271,14 +273,16 @@ class _CommentTile extends StatelessWidget {
                   Text(DateUtilsHelper.timeAgo(comment.createdAt),
                       style: const TextStyle(fontSize: 12, color: Colors.grey)),
                   const SizedBox(width: 16),
-                  GestureDetector(
-                    onTap: () => onReply(comment),
-                    child: const Text('Reply',
-                        style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF6C63FF))),
-                  ),
+                  // Only show Reply button for top-level comments
+                  if (isTopLevel)
+                    GestureDetector(
+                      onTap: () => onReply(comment),
+                      child: const Text('Reply',
+                          style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF6C63FF))),
+                    ),
                 ],
               ),
             ],

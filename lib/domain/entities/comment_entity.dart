@@ -8,6 +8,11 @@ class CommentEntity {
   final String? parentCommentId; // null if top-level
   final List<CommentEntity> replies; // optional, for UI convenience
 
+  // ADD THESE:
+  final String? postAuthorId;
+  final String? parentCommentAuthorId;
+
+
   CommentEntity({
     required this.id,
     required this.repliersName,
@@ -17,5 +22,9 @@ class CommentEntity {
     required this.createdAt,
     this.parentCommentId,
     this.replies = const [],
+
+    // ADD THESE:
+    this.postAuthorId,
+    this.parentCommentAuthorId,
   });
 }

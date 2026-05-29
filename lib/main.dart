@@ -164,9 +164,7 @@ Future<void> main() async {
           BlocProvider<PostBloc>(
             create: (context) => PostBloc(context.read<PostRepository>()),
           ),
-          BlocProvider<ConnectivityBloc>(
-            create: (_) => ConnectivityBloc(),
-          ),
+          BlocProvider<ConnectivityBloc>(create: (_) => ConnectivityBloc()),
         ],
         child: const MyApp(),
       ),

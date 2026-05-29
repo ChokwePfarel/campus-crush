@@ -48,3 +48,33 @@ class BadgeIcon extends StatelessWidget {
     );
   }
 }
+
+class NotificationIcon extends StatelessWidget {
+  final IconData icon;
+  final bool showDot;
+
+  const NotificationIcon({required this.icon, required this.showDot});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Icon(icon),
+        if (showDot)
+          Positioned(
+            top: -2,
+            right: -4,
+            child: Container(
+              width: 8,
+              height: 8,
+              decoration: const BoxDecoration(
+                color: Colors.red,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}

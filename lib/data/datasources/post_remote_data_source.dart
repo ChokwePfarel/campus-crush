@@ -35,6 +35,8 @@ abstract class PostRemoteDataSource {
   });
 
   Stream<List<PostModel>> watchNewDirectPosts(String recipientId);
+
+  Future<PostModel> getOnePostById(String postId);
 }
 
 //----------------------------------------------------------------------------
@@ -75,9 +77,6 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
     } on PostgrestException catch (e) {
       print('DEBUG: PostgresException in getPosts: ${e.message}');
 
-      // Fallback: If joining fails, try fetching posts without the profiles join
-      // but STILL apply all other filters (university, postType, expires_at, etc.)
-      print('DEBUG: Attempting filtered fallback (no profiles join)...');
       try {
         var fallbackQuery = client.from('posts').select('*');
         fallbackQuery = _applyFilters(
@@ -91,7 +90,6 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
             .range(offset, offset + limit - 1)
             .order('created_at', ascending: false);
 
-        // Remove the (as List) cast — fallbackRes is already List<Map<String, dynamic>>
         return fallbackRes.map((e) => PostModel.fromJson(e)).toList();
       } catch (fallbackError) {
         print('DEBUG: Filtered fallback failed: $fallbackError');
@@ -104,10 +102,6 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
   }
 
   /// Helper to apply common filters to any query on the 'posts' table
-  /// The raw PostgrestFilterBuilder without a type parameter defaults to dynamic,
-  /// which is incompatible with the typed
-  /// PostgrestFilterBuilder<PostgrestList> that .select() returns.
-
   PostgrestFilterBuilder<PostgrestList> _applyFilters(
     PostgrestFilterBuilder<PostgrestList> query,
     String? university,
@@ -135,12 +129,6 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
     q = q.or(
       'expires_at.is.null,expires_at.gt.${DateTime.now().toUtc().toIso8601String()}',
     );
-    print(
-      'DEBUG: expires_at filter time: ${DateTime.now().toUtc().toIso8601String()}',
-    );
-    print('DEBUG: Local time: ${DateTime.now()}');
-    print('DEBUG: UTC time: ${DateTime.now().toUtc()}');
-    print('DEBUG: UTC offset: ${DateTime.now().timeZoneOffset}');
     return q;
   }
 
@@ -212,7 +200,7 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
           .eq('is_normal_post', true)
           .order('created_at', ascending: false);
 
-      return (response as List).map((e) => PostModel.fromJson(e)).toList();
+      return response.map((e) => PostModel.fromJson(e)).toList();
     } catch (e) {
       final fallback = await client
           .from('posts')
@@ -220,7 +208,7 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
           .eq('user_id', userId)
           .eq('is_normal_post', true)
           .order('created_at', ascending: false);
-      return (fallback as List).map((e) => PostModel.fromJson(e)).toList();
+      return fallback.map((e) => PostModel.fromJson(e)).toList();
     }
   }
 
@@ -260,7 +248,24 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
         );
   }
 
-  //Fetch A single posts by Id
+  @override
+  Future<PostModel> getOnePostById(String postId) async {
+    try {
+      final response = await client
+          .from('posts')
+          .select('''
+            *,
+            profiles!posts_user_id_fkey (
+              id, name, profile_image_url, is_verified, privacy_settings
+            )
+          ''')
+          .eq('id', postId)
+          .single();
 
-
+      return PostModel.fromJson(response);
+    } catch (e) {
+      print('DEBUG: Error fetching single post by ID: $e');
+      rethrow;
+    }
+  }
 }

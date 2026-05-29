@@ -1,4 +1,4 @@
-// lib/presentation/bloc/comments_bloc/comments_event.dart
+import 'package:dating_app/domain/entities/comment_entity.dart';
 
 abstract class CommentsEvent {}
 
@@ -29,3 +29,14 @@ class DeleteComment extends CommentsEvent {
   DeleteComment({required this.commentId, this.parentCommentId});
 }
 
+class WatchUserNotifications extends CommentsEvent {
+  final String userId;
+  WatchUserNotifications(this.userId);
+}
+
+class MarkNotificationsAsRead extends CommentsEvent {}
+
+class NewNotificationReceived extends CommentsEvent {
+  final CommentEntity comment;
+  NewNotificationReceived(this.comment);
+}

@@ -34,7 +34,8 @@ class PostCard extends StatefulWidget {
   State<PostCard> createState() => PostCardState();
 }
 
-class PostCardState extends State<PostCard> with SingleTickerProviderStateMixin {
+class PostCardState extends State<PostCard>
+    with SingleTickerProviderStateMixin {
   late final _animCtrl = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 400),
@@ -57,11 +58,13 @@ class PostCardState extends State<PostCard> with SingleTickerProviderStateMixin 
 
     Future.microtask(() {
       if (!mounted) return;
-      context.read<LikesBloc>().add(InitializeLikes(
-        postId: widget.post.id,
-        userId: widget.currentUserId,
-        initialCount: widget.post.likeCount,
-      ));
+      context.read<LikesBloc>().add(
+        InitializeLikes(
+          postId: widget.post.id,
+          userId: widget.currentUserId,
+          initialCount: widget.post.likeCount,
+        ),
+      );
     });
   }
 
@@ -72,7 +75,9 @@ class PostCardState extends State<PostCard> with SingleTickerProviderStateMixin 
   }
 
   bool get _isDark => widget.post.backgroundColor != null;
+
   Color get _textColor => _isDark ? Colors.white : const Color(0xFF1A1A2E);
+
   Color get _subtextColor => _isDark ? Colors.white60 : const Color(0xFF8E8E9A);
 
   @override
@@ -107,16 +112,21 @@ class PostCardState extends State<PostCard> with SingleTickerProviderStateMixin 
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => OtherUserProfilePage(userId: post.userId),
+                        builder: (_) =>
+                            OtherUserProfilePage(userId: post.userId),
                       ),
                     );
                   },
                   child: Row(
                     children: [
                       CircleAvatar(
-                        backgroundColor: const Color(0xFF2EC4B6).withOpacity(0.1),
-                        backgroundImage: (post.profileImageUrl != null &&
-                            post.profileImageUrl!.startsWith('http') && !post.isAnonymous)
+                        backgroundColor: const Color(
+                          0xFF2EC4B6,
+                        ).withOpacity(0.1),
+                        backgroundImage:
+                            (post.profileImageUrl != null &&
+                                post.profileImageUrl!.startsWith('http') &&
+                                !post.isAnonymous)
                             ? NetworkImage(post.profileImageUrl!)
                             : const AssetImage('assets/profile_picture.png'),
                       ),
@@ -150,7 +160,9 @@ class PostCardState extends State<PostCard> with SingleTickerProviderStateMixin 
                         ),
                         decoration: BoxDecoration(
                           color: accent.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(SizeConfig.widthPercent(1.5)),
+                          borderRadius: BorderRadius.circular(
+                            SizeConfig.widthPercent(1.5),
+                          ),
                         ),
                         child: Text(
                           post.postType.label,
@@ -185,16 +197,21 @@ class PostCardState extends State<PostCard> with SingleTickerProviderStateMixin 
                 Padding(
                   padding: EdgeInsets.only(bottom: SizeConfig.heightPercent(2)),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(SizeConfig.widthPercent(2)),
+                    borderRadius: BorderRadius.circular(
+                      SizeConfig.widthPercent(2),
+                    ),
                     child: CachedNetworkImage(
                       imageUrl: post.imageUrl!,
                       fit: BoxFit.cover,
                       placeholder: (context, url) => Container(
                         height: 200,
                         color: Colors.grey[200],
-                        child: const Center(child: CircularProgressIndicator.adaptive()),
+                        child: const Center(
+                          child: CircularProgressIndicator.adaptive(),
+                        ),
                       ),
-                      errorWidget: (context, url, error) => const SizedBox.shrink(),
+                      errorWidget: (context, url, error) =>
+                          const SizedBox.shrink(),
                     ),
                   ),
                 ),
@@ -208,32 +225,44 @@ class PostCardState extends State<PostCard> with SingleTickerProviderStateMixin 
                     BlocBuilder<LikesBloc, LikesState>(
                       builder: (context, state) {
                         final hasLiked = state is LikesLoaded && state.hasLiked;
-                        final count = state is LikesLoaded ? state.likeCount : post.likeCount;
+                        final count = state is LikesLoaded
+                            ? state.likeCount
+                            : post.likeCount;
 
                         return ActionButton(
-                          icon: hasLiked ? Icons.favorite : Icons.favorite_border,
+                          icon: hasLiked
+                              ? Icons.favorite
+                              : Icons.favorite_border,
                           label: count.toString(),
-                          color: hasLiked ? Colors.pink : (widget.isOffline ? Colors.grey : _textColor),
+                          color: hasLiked
+                              ? Colors.pink
+                              : (widget.isOffline ? Colors.grey : _textColor),
                           onTap: widget.isOffline
                               ? () {}
                               : () {
-                            HapticFeedback.lightImpact();
-                            final userState = context.read<UserBloc>().state;
-                            if (userState is! user_st.UserLoaded) return;
+                                  HapticFeedback.lightImpact();
+                                  final userState = context
+                                      .read<UserBloc>()
+                                      .state;
+                                  if (userState is! user_st.UserLoaded) return;
 
-                            if (hasLiked) {
-                              context.read<LikesBloc>().add(UnlikePost(
-                                postId: post.id,
-                                userId: userState.user.id,
-                              ));
-                            } else {
-                              context.read<LikesBloc>().add(LikePost(
-                                postId: post.id,
-                                userId: userState.user.id,
-                                likedByName: userState.user.name,
-                              ));
-                            }
-                          },
+                                  if (hasLiked) {
+                                    context.read<LikesBloc>().add(
+                                      UnlikePost(
+                                        postId: post.id,
+                                        userId: userState.user.id,
+                                      ),
+                                    );
+                                  } else {
+                                    context.read<LikesBloc>().add(
+                                      LikePost(
+                                        postId: post.id,
+                                        userId: userState.user.id,
+                                        likedByName: userState.user.name,
+                                      ),
+                                    );
+                                  }
+                                },
                         );
                       },
                     ),

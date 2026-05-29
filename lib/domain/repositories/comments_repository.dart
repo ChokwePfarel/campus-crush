@@ -9,8 +9,11 @@ abstract class CommentsRepository {
     required String repliersName,
     required String text,
     String? parentCommentId,
+
   });
   Future<void> deleteComment(String commentId);
+
+  Stream<CommentEntity> watchUserNotifications(String userId);
 }
 
 

@@ -82,4 +82,10 @@ class PostRepositoryImp implements PostRepository {
   Stream<List<PostModel>> watchNewDirectPosts(String recipientId) {
     return remoteDataSource.watchNewDirectPosts(recipientId);
   }
+
+
+  @override
+    Future<PostModel> getOnePostById(String postId) async {
+    return await remoteDataSource.getOnePostById(postId);
+  }
 }

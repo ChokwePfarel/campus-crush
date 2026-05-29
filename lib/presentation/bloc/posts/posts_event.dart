@@ -47,3 +47,8 @@ class DeletePostRequested extends PostEvent {
 
   DeletePostRequested({required this.postId});
 }
+
+class GetOnePostById extends PostEvent{
+  final String postId;
+  GetOnePostById({required this.postId});
+}

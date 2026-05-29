@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dating_app/core/utils/date_utils.dart';
 import 'package:dating_app/core/utils/feed_skeleton.dart';
+import 'package:dating_app/core/utils/notification_badge.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
 import 'package:dating_app/core/utils/snackbar.dart';
 import 'package:dating_app/core/utils/theme.dart';
@@ -13,6 +14,8 @@ import 'package:dating_app/domain/entities/coins_entity.dart';
 import 'package:dating_app/presentation/bloc/coins/coins_bloc.dart';
 import 'package:dating_app/presentation/bloc/coins/coins_event.dart';
 import 'package:dating_app/presentation/bloc/coins/coins_state.dart';
+import 'package:dating_app/presentation/bloc/comments/comments_bloc.dart';
+import 'package:dating_app/presentation/bloc/comments/comments_state.dart';
 import 'package:dating_app/presentation/bloc/direct_posts/direct_posts_bloc.dart';
 import 'package:dating_app/presentation/bloc/direct_posts/direct_posts_event.dart';
 import 'package:dating_app/presentation/bloc/direct_posts/direct_posts_state.dart';
@@ -239,7 +242,7 @@ class _DirectPostsPageState extends State<DirectPostsPage>
       child: FadeTransition(
         opacity: _fadeCtrl,
         child: Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: Colors.grey.shade300,
           body: RefreshIndicator(
             onRefresh: _onRefresh,
             displacement: 100,
@@ -285,7 +288,12 @@ class _DirectPostsPageState extends State<DirectPostsPage>
               MaterialPageRoute(builder: (context) => NotificationPage()),
             );
           },
-          icon: Icon(Icons.notifications),
+          icon: BlocBuilder<CommentsBloc, CommentsState>(
+            builder: (context, state) => NotificationIcon(
+              icon: CupertinoIcons.bell_fill,
+              showDot: state.showRedDot,
+            ),
+          ),
         ),
       ],
     );
@@ -351,7 +359,7 @@ class _DirectPostsPageState extends State<DirectPostsPage>
 
   SliverPadding _buildBody(String currentUserId) {
     return SliverPadding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: const EdgeInsets.fromLTRB(8, 12, 8, 0),
       sliver: BlocBuilder<DirectPostsBloc, DirectPostsState>(
         builder: (context, state) {
           if (_isOffline && state is! DirectPostsLoaded) {
@@ -496,14 +504,14 @@ class _DirectPostCard extends StatelessWidget {
                       ),
                       Text(
                         'Sent you a ${post.postType.label}',
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                     ],
                   ),
                 ),
                 Text(
                   DateUtilsHelper.timeAgo(post.createdAt),
-                  style: TextStyle(fontSize: 11, color: Colors.grey[400]),
+                  style: TextStyle(fontSize: 11, color: Colors.grey),
                 ),
               ],
             ),

@@ -5,6 +5,8 @@ import 'package:dating_app/core/utils/users_skeleton.dart';
 import 'package:dating_app/domain/repositories/users_repository.dart';
 import 'package:dating_app/presentation/bloc/auth/auth_bloc.dart';
 import 'package:dating_app/presentation/bloc/auth/auth_event.dart';
+import 'package:dating_app/presentation/bloc/comments/commenst_event.dart';
+import 'package:dating_app/presentation/bloc/comments/comments_bloc.dart';
 import 'package:dating_app/presentation/bloc/user/user_bloc.dart';
 import 'package:dating_app/presentation/bloc/user/user_event.dart';
 import 'package:dating_app/presentation/bloc/user/user_state.dart';
@@ -22,8 +24,9 @@ import '../../core/widgets/users_card.dart';
 
 class DiscoverPage extends StatefulWidget {
   final Function(double)? onScroll;
+  final String currentUserId;
 
-  const DiscoverPage({super.key, this.onScroll});
+  const DiscoverPage({super.key, this.onScroll, required this.currentUserId});
 
   @override
   State<DiscoverPage> createState() => _DiscoverPageState();
@@ -42,6 +45,11 @@ class _DiscoverPageState extends State<DiscoverPage> {
   @override
   void initState() {
     super.initState();
+
+    context.read<CommentsBloc>().add(
+      WatchUserNotifications(widget.currentUserId)
+    );
+
     _scrollController.addListener(_scrollListener);
 
     // Initial check
@@ -106,14 +114,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
     );
   }
 
-  void _onSearchChanged(String value) {
-    _currentSearch = value;
-    if (_debounce?.isActive ?? false) _debounce!.cancel();
-    _debounce = Timer(const Duration(milliseconds: 500), () {
-      if (!mounted) return;
-      _triggerLoad(context, isInitial: true);
-    });
-  }
 
   @override
   void dispose() {
@@ -221,7 +221,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
       color: Colors.red,
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: const Text(
-        'Connnection lost',
+        'Connection lost',
         textAlign: TextAlign.center,
         style: TextStyle(
           color: Colors.white,
