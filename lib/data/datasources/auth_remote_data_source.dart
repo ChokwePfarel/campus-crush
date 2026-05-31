@@ -63,8 +63,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   Future<void> sendPasswordResetEmail(String email) async {
     await client.auth.resetPasswordForEmail(
       email,
-      redirectTo: 'http://reset-callback',
-    );
+      redirectTo: 'datingapp://reset-callback',    );
   }
 
   @override

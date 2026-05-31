@@ -57,8 +57,11 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthError) {
-            AppSnackBar.show(context, 'Incorrect email or password',
-                type: SnackBarType.warning);
+            AppSnackBar.show(
+              context,
+              'Incorrect email or password',
+              type: SnackBarType.warning,
+            );
           } else if (state is Authenticated) {
             Navigator.pushReplacement(
               context,
@@ -116,7 +119,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                               obscure: _obscurePassword,
                               suffix: GestureDetector(
                                 onTap: () => setState(
-                                      () => _obscurePassword = !_obscurePassword,
+                                  () => _obscurePassword = !_obscurePassword,
                                 ),
                                 child: Icon(
                                   _obscurePassword
@@ -135,8 +138,13 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                               alignment: Alignment.centerRight,
                               child: TextButton(
                                 onPressed: () {
-                                  Navigator.push(context,
-                                  MaterialPageRoute(builder: (_) => const RequestPasswordReset()));
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const RequestPasswordReset(),
+                                    ),
+                                  );
                                 },
                                 child: Text(
                                   'Forgot password?',
@@ -162,42 +170,46 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                       height: 54,
                                       child: ElevatedButton(
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: AppStylee.primaryColor,
+                                          backgroundColor:
+                                              AppStylee.primaryColor,
                                           foregroundColor: Colors.white,
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(16),
+                                            borderRadius: BorderRadius.circular(
+                                              16,
+                                            ),
                                           ),
                                           elevation: 0,
                                         ),
                                         onPressed: isLoading
                                             ? null
                                             : () {
-                                          context.read<AuthBloc>().add(
-                                            LoginRequested(
-                                              _emailController.text
-                                                  .trim(),
-                                              _passwordController.text
-                                                  .trim(),
-                                            ),
-                                          );
-                                        },
+                                                context.read<AuthBloc>().add(
+                                                  LoginRequested(
+                                                    _emailController.text
+                                                        .trim(),
+                                                    _passwordController.text
+                                                        .trim(),
+                                                  ),
+                                                );
+                                              },
                                         child: isLoading
                                             ? const SizedBox(
-                                          width: 22,
-                                          height: 22,
-                                          child: CircularProgressIndicator(
-                                            color: Colors.white,
-                                            strokeWidth: 2.5,
-                                          ),
-                                        )
+                                                width: 22,
+                                                height: 22,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      color: Colors.white,
+                                                      strokeWidth: 2.5,
+                                                    ),
+                                              )
                                             : const Text(
-                                          'Log In',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w700,
-                                            letterSpacing: 0.3,
-                                          ),
-                                        ),
+                                                'Log In',
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w700,
+                                                  letterSpacing: 0.3,
+                                                ),
+                                              ),
                                       ),
                                     );
                                   },
@@ -210,12 +222,14 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                   children: [
                                     Expanded(
                                       child: Divider(
-                                          color: PurplePalette.fieldBorder,
-                                          thickness: 1),
+                                        color: PurplePalette.fieldBorder,
+                                        thickness: 1,
+                                      ),
                                     ),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(
-                                          horizontal: 14),
+                                        horizontal: 14,
+                                      ),
                                       child: Text(
                                         'or',
                                         style: TextStyle(
@@ -226,8 +240,9 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                     ),
                                     Expanded(
                                       child: Divider(
-                                          color: PurplePalette.fieldBorder,
-                                          thickness: 1),
+                                        color: PurplePalette.fieldBorder,
+                                        thickness: 1,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -239,7 +254,8 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                   onTap: () => Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                        builder: (_) => const SignUpPage()),
+                                      builder: (_) => const SignUpPage(),
+                                    ),
                                   ),
                                   child: RichText(
                                     text: TextSpan(
@@ -261,10 +277,8 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                   ),
                                 ),
                                 const SizedBox(height: 16),
-
                               ],
                             ),
-
                           ],
                         ),
                       ),
@@ -278,8 +292,6 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       ),
     );
   }
-
-
 
   Widget _inputField({
     required TextEditingController controller,

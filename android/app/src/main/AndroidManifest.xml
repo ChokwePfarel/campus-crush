@@ -31,7 +31,7 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="http" android:host="reset-callback" />
+                <data android:scheme="datingapp" android:host="reset-callback" />
             </intent-filter>
         </activity>
         <meta-data

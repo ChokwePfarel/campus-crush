@@ -1,3 +1,4 @@
+import 'package:app_links/app_links.dart';
 import 'package:dating_app/core/services/ad_service.dart';
 import 'package:dating_app/core/utils/offline_cache.dart';
 import 'package:dating_app/data/datasources/auth_remote_data_source.dart';
@@ -179,13 +180,43 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
+
 class _MyAppState extends State<MyApp> {
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+  late AppLinks _appLinks;
 
   @override
   void initState() {
     super.initState();
+    _initDeepLinks();
     _setupAuthStateListener();
+  }
+
+  Future<void> _initDeepLinks() async {
+    _appLinks = AppLinks();
+
+    // 1. Handle link when the app is already running in the background
+    _appLinks.uriLinkStream.listen((uri) {
+      _handleIncomingLink(uri);
+    });
+
+    // 2. Handle link when the app is launched from a terminated state
+    final initialUri = await _appLinks.getInitialLink();
+    if (initialUri != null) {
+      _handleIncomingLink(initialUri);
+    }
+  }
+
+  void _handleIncomingLink(Uri uri) {
+    // Supabase sends the reset token as a hash fragment (e.g., #access_token=...)
+    // This allows the Supabase client to automatically pick up the session
+    // once the deep link opens the app.
+    if (uri.fragment.contains('access_token')) {
+      // You don't necessarily need to parse it manually if using
+      // the supabase_flutter package, as it listens to the platform's
+      // initial URI automatically, but logging it helps debug.
+      print("Detected Auth token in fragment: ${uri.fragment}");
+    }
   }
 
   void _setupAuthStateListener() {
@@ -197,6 +228,12 @@ class _MyAppState extends State<MyApp> {
         );
       }
     });
+  }
+
+  @override
+  void dispose() {
+    // Clean up if necessary
+    super.dispose();
   }
 
   @override
@@ -212,6 +249,12 @@ class _MyAppState extends State<MyApp> {
     );
   }
 }
+
+
+
+
+
+
 
 class HiveInit {
   HiveInit._();

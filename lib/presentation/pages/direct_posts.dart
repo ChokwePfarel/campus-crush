@@ -9,6 +9,7 @@ import 'package:dating_app/core/utils/snackbar.dart';
 import 'package:dating_app/core/utils/theme.dart';
 import 'package:dating_app/core/widgets/bottom_sheet.dart';
 import 'package:dating_app/data/models/post_model.dart';
+
 import 'package:dating_app/data/models/user_model.dart';
 import 'package:dating_app/domain/entities/coins_entity.dart';
 import 'package:dating_app/presentation/bloc/coins/coins_bloc.dart';
@@ -22,6 +23,7 @@ import 'package:dating_app/presentation/bloc/direct_posts/direct_posts_state.dar
 import 'package:dating_app/presentation/pages/Notification_Page.dart';
 import 'package:dating_app/presentation/pages/other_user_profile.dart';
 import 'package:dating_app/presentation/pages/send_post_page.dart';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -51,7 +53,8 @@ class _DirectPostsPageState extends State<DirectPostsPage>
   late final _fadeCtrl = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 400),
-  )..forward();
+  )
+    ..forward();
 
   @override
   void initState() {
@@ -134,11 +137,9 @@ class _DirectPostsPageState extends State<DirectPostsPage>
     );
   }
 
-  void _showRevealDialog(
-    BuildContext context,
-    PostModel post,
-    String currentUserId,
-  ) {
+  void _showRevealDialog(BuildContext context,
+      PostModel post,
+      String currentUserId,) {
     if (!mounted) return;
 
     if (_isOffline) {
@@ -151,35 +152,38 @@ class _DirectPostsPageState extends State<DirectPostsPage>
       return; // stops here
     }
 
-    final coinsState = context.read<CoinsBloc>().state;
+    final coinsState = context
+        .read<CoinsBloc>()
+        .state;
     final coins = coinsState is CoinsLoaded ? coinsState.coins : null;
     final hasEnough = (coins?.balance ?? 0) >= CoinsEntity.anonymousRevealCost;
 
     showCupertinoDialog(
       context: context,
-      builder: (_) => _RevealDialog(
-        post: post,
-        hasEnoughCoins: hasEnough,
-        coinBalance: coins?.balance ?? 0,
-        onReveal: () {
-          Navigator.pop(context);
-          if (post.isAnonymous) {
-            _pendingProfileUserId = post.userId;
-            _pendingPostId = post.id;
-            context.read<CoinsBloc>().add(
-              SpendCoinsOnReveal(userId: currentUserId, postId: post.id),
-            );
-          } else {
-            _navigateToProfile(post.userId);
-          }
-        },
-        onWatchAd: () {
-          Navigator.pop(context);
-          _pendingProfileUserId = post.userId;
-          _pendingPostId = post.id;
-          context.read<CoinsBloc>().add(WatchAdRequested(currentUserId));
-        },
-      ),
+      builder: (_) =>
+          _RevealDialog(
+            post: post,
+            hasEnoughCoins: hasEnough,
+            coinBalance: coins?.balance ?? 0,
+            onReveal: () {
+              Navigator.pop(context);
+              if (post.isAnonymous) {
+                _pendingProfileUserId = post.userId;
+                _pendingPostId = post.id;
+                context.read<CoinsBloc>().add(
+                  SpendCoinsOnReveal(userId: currentUserId, postId: post.id),
+                );
+              } else {
+                _navigateToProfile(post.userId);
+              }
+            },
+            onWatchAd: () {
+              Navigator.pop(context);
+              _pendingProfileUserId = post.userId;
+              _pendingPostId = post.id;
+              context.read<CoinsBloc>().add(WatchAdRequested(currentUserId));
+            },
+          ),
     );
   }
 
@@ -210,10 +214,12 @@ class _DirectPostsPageState extends State<DirectPostsPage>
             _pendingPostId = null;
           } else {
             // Not revealed yet. Show dialog.
-            final directPostsState = context.read<DirectPostsBloc>().state;
+            final directPostsState = context
+                .read<DirectPostsBloc>()
+                .state;
             if (directPostsState is DirectPostsLoaded) {
               final post = directPostsState.posts.firstWhere(
-                (p) => p.id == _pendingPostId,
+                    (p) => p.id == _pendingPostId,
               );
               _showRevealDialog(context, post, currentUserId!);
             }
@@ -289,10 +295,11 @@ class _DirectPostsPageState extends State<DirectPostsPage>
             );
           },
           icon: BlocBuilder<CommentsBloc, CommentsState>(
-            builder: (context, state) => NotificationIcon(
-              icon: CupertinoIcons.bell_fill,
-              showDot: state.showRedDot,
-            ),
+            builder: (context, state) =>
+                NotificationIcon(
+                  icon: CupertinoIcons.bell_fill,
+                  showDot: state.showRedDot,
+                ),
           ),
         ),
       ],
@@ -385,7 +392,7 @@ class _DirectPostsPageState extends State<DirectPostsPage>
 
             return SliverList(
               delegate: SliverChildBuilderDelegate(
-                (_, i) {
+                    (_, i) {
                   if (i >= state.posts.length) {
                     return const Padding(
                       padding: EdgeInsets.symmetric(vertical: 16),
@@ -396,17 +403,18 @@ class _DirectPostsPageState extends State<DirectPostsPage>
                   return _DirectPostCard(
                     post: post,
                     onTap: () => _handlePostTap(post, currentUserId),
-                    onReplyTap: () => _isOffline
+                    onReplyTap: () =>
+                    _isOffline
                         ? AppSnackBar.show(
-                            context,
-                            'No internet connection',
-                            type: SnackBarType.warning,
-                          )
+                      context,
+                      'No internet connection',
+                      type: SnackBarType.warning,
+                    )
                         : showCommentsSheet(
-                            context: context,
-                            postId: post.id,
-                            commentCount: post.commentCount,
-                          ),
+                      context: context,
+                      postId: post.id,
+                      commentCount: post.commentCount,
+                    ),
                   );
                 },
                 childCount: state.hasMore
@@ -601,7 +609,8 @@ class _RevealDialog extends StatelessWidget {
       title: Text(post.isAnonymous ? 'Reveal Sender?' : 'View Profile?'),
       content: Text(
         post.isAnonymous
-            ? 'Revealing costs ${CoinsEntity.anonymousRevealCost} coins. You have $coinBalance.'
+            ? 'Revealing costs ${CoinsEntity
+            .anonymousRevealCost} coins. You have $coinBalance.'
             : 'View the profile of the person who sent this.',
       ),
       actions: [

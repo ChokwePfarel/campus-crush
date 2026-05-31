@@ -277,7 +277,11 @@ class _SignUpPageState extends State<SignUpPage> {
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppStylee.primaryColor,
-                              shape: const StadiumBorder(),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  16,
+                                ),
+                              ),
                               elevation: 0,
                             ),
                             onPressed: () {
@@ -323,6 +327,7 @@ class _SignUpPageState extends State<SignUpPage> {
                         );
                       },
                     ),
+
                     const SizedBox(height: 16),
 
                     Row(
