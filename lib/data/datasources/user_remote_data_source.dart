@@ -37,7 +37,7 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
         .eq('id', user.id)
         .single();
 
-    print("Supabase Response: $response");
+// print("Supabase Response: $response");
 
 
     return UserModel.fromJson(response);
@@ -95,13 +95,13 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
         updates['privacy_settings'] = privacySettings.toJson();
       }
 
-      print("Attempting Supabase Upsert with: $updates");
+// print("Attempting Supabase Upsert with: $updates");
 
       final response = await client.from('profiles').upsert(updates).select();
       
-      print("Supabase Response: $response");
+// print("Supabase Response: $response");
     } catch (e) {
-      print("FATAL ERROR in updateUserData: $e");
+// print("FATAL ERROR in updateUserData: $e");
       rethrow;
     }
   }

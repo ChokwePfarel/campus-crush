@@ -53,61 +53,58 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
     required int offset,
     required int limit,
   }) async {
-    print(
-      'DEBUG: getPosts starting with Params: university=$university, type=$postType, location=$locationTag',
-    );
+
 
     try {
-      final selectString = '''
+    final selectString = '''
         *,
         profiles (
           id, name, profile_image_url, is_verified, privacy_settings
         )
       ''';
 
-      var query = client.from('posts').select(selectString);
-      query = _applyFilters(query, university, postType, locationTag);
+    var query = client.from('posts').select(selectString);
+    query = _applyFilters(query, university, postType, locationTag);
 
-      final response = await query
-          .range(offset, offset + limit - 1)
-          .order('created_at', ascending: false);
+    final response = await query
+        .range(offset, offset + limit - 1)
+        .order('created_at', ascending: false);
 
-      print('DEBUG: Successfully fetched ${(response as List).length} posts');
-      return response.map((e) => PostModel.fromJson(e)).toList();
+// print('DEBUG: Successfully fetched ${(response as List).length} posts');
+    return response.map((e) => PostModel.fromJson(e)).toList();
     } on PostgrestException catch (e) {
-      print('DEBUG: PostgresException in getPosts: ${e.message}');
+// print('DEBUG: PostgresException in getPosts: ${e.message}');
 
-      try {
-        var fallbackQuery = client.from('posts').select('*');
-        fallbackQuery = _applyFilters(
-          fallbackQuery,
-          university,
-          postType,
-          locationTag,
-        );
+    try {
+    var fallbackQuery = client.from('posts').select('*');
+    fallbackQuery = _applyFilters(
+    fallbackQuery,
+    university,
+    postType,
+    locationTag,
+    );
 
-        final fallbackRes = await fallbackQuery
-            .range(offset, offset + limit - 1)
-            .order('created_at', ascending: false);
+    final fallbackRes = await fallbackQuery
+        .range(offset, offset + limit - 1)
+        .order('created_at', ascending: false);
 
-        return fallbackRes.map((e) => PostModel.fromJson(e)).toList();
-      } catch (fallbackError) {
-        print('DEBUG: Filtered fallback failed: $fallbackError');
-      }
-      rethrow;
+    return fallbackRes.map((e) => PostModel.fromJson(e)).toList();
+    } catch (fallbackError) {
+// print('DEBUG: Filtered fallback failed: $fallbackError');
+    }
+    rethrow;
     } catch (e) {
-      print('DEBUG: Unexpected error in getPosts: $e');
-      rethrow;
+// print('DEBUG: Unexpected error in getPosts: $e');
+    rethrow;
     }
   }
 
   /// Helper to apply common filters to any query on the 'posts' table
   PostgrestFilterBuilder<PostgrestList> _applyFilters(
-    PostgrestFilterBuilder<PostgrestList> query,
-    String? university,
-    String? postType,
-    String? locationTag,
-  ) {
+      PostgrestFilterBuilder<PostgrestList> query,
+      String? university,
+      String? postType,
+      String? locationTag,) {
     var q = query;
 
     if (university != null && university.isNotEmpty) {
@@ -127,7 +124,10 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
     q = q.eq('is_normal_post', true);
 
     q = q.or(
-      'expires_at.is.null,expires_at.gt.${DateTime.now().toUtc().toIso8601String()}',
+      'expires_at.is.null,expires_at.gt.${DateTime
+          .now()
+          .toUtc()
+          .toIso8601String()}',
     );
     return q;
   }
@@ -223,9 +223,9 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
         .eq('recipient_id', recipientId)
         .eq('is_normal_post', false)
         .lt(
-          'created_at',
-          before?.toIso8601String() ?? DateTime.now().toIso8601String(),
-        )
+      'created_at',
+      before?.toIso8601String() ?? DateTime.now().toIso8601String(),
+    )
         .order('created_at', ascending: false)
         .limit(limit);
 
@@ -241,11 +241,12 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
         .order('created_at', ascending: false)
         .limit(1)
         .map(
-          (data) => data
+          (data) =>
+          data
               .where((e) => e['is_normal_post'] == false)
               .map((e) => PostModel.fromJson(e))
               .toList(),
-        );
+    );
   }
 
   @override
@@ -264,7 +265,7 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
 
       return PostModel.fromJson(response);
     } catch (e) {
-      print('DEBUG: Error fetching single post by ID: $e');
+// print('DEBUG: Error fetching single post by ID: $e');
       rethrow;
     }
   }

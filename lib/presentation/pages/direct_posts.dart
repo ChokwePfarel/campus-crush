@@ -20,6 +20,8 @@ import 'package:dating_app/presentation/bloc/comments/comments_state.dart';
 import 'package:dating_app/presentation/bloc/direct_posts/direct_posts_bloc.dart';
 import 'package:dating_app/presentation/bloc/direct_posts/direct_posts_event.dart';
 import 'package:dating_app/presentation/bloc/direct_posts/direct_posts_state.dart';
+import 'package:dating_app/presentation/bloc/notification/notificationBloc.dart';
+import 'package:dating_app/presentation/bloc/notification/notification_state.dart';
 import 'package:dating_app/presentation/pages/Notification_Page.dart';
 import 'package:dating_app/presentation/pages/other_user_profile.dart';
 import 'package:dating_app/presentation/pages/send_post_page.dart';
@@ -294,7 +296,7 @@ class _DirectPostsPageState extends State<DirectPostsPage>
               MaterialPageRoute(builder: (context) => NotificationPage()),
             );
           },
-          icon: BlocBuilder<CommentsBloc, CommentsState>(
+          icon: BlocBuilder<NotificationBloc, NotificationState>(
             builder: (context, state) =>
                 NotificationIcon(
                   icon: CupertinoIcons.bell_fill,

@@ -1,7 +1,8 @@
 import 'package:dating_app/core/utils/notification_badge.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
-import 'package:dating_app/presentation/bloc/comments/comments_bloc.dart';
-import 'package:dating_app/presentation/bloc/comments/comments_state.dart';
+import 'package:dating_app/presentation/bloc/notification/notificationBloc.dart';
+import 'package:dating_app/presentation/bloc/notification/notification_state.dart';
+import 'package:dating_app/presentation/bloc/notification/notification_event.dart';
 import 'package:dating_app/presentation/bloc/conversation/conversation_bloc.dart';
 import 'package:dating_app/presentation/bloc/conversation/conversation_state.dart';
 
@@ -27,27 +28,22 @@ class _InstaStyleNavState extends State<InstaStyleNav> {
   int _selectedIndex = 0;
   bool _isBottomBarVisible = true;
 
-  // Accumulated scroll distance to check against threshold
   double _accumulatedDelta = 0;
-  final double _scrollThreshold = 40; // Higher threshold for smoother feel
+  final double _scrollThreshold = 40;
 
   void _handleScrollDelta(double delta) {
-    // Only handle scroll for Discover (0), Feed (1), and For You (3)
     if (_selectedIndex == 0 || _selectedIndex == 1 || _selectedIndex == 3) {
-      // If we change scroll direction, reset accumulation
       if (delta > 0 && _accumulatedDelta < 0) _accumulatedDelta = 0;
       if (delta < 0 && _accumulatedDelta > 0) _accumulatedDelta = 0;
 
       _accumulatedDelta += delta;
 
       if (_accumulatedDelta > _scrollThreshold && _isBottomBarVisible) {
-        // Scrolling down - hide
         setState(() {
           _isBottomBarVisible = false;
         });
         _accumulatedDelta = 0;
       } else if (_accumulatedDelta < -_scrollThreshold && !_isBottomBarVisible) {
-        // Scrolling up - show
         setState(() {
           _isBottomBarVisible = true;
         });
@@ -66,7 +62,7 @@ class _InstaStyleNavState extends State<InstaStyleNav> {
         Supabase.instance.client.auth.currentUser?.id ?? '';
 
     _pages = [
-      DiscoverPage(currentUserId: currentUserId,),
+      DiscoverPage(currentUserId: currentUserId),
       FeedScreen(currentUserId: currentUserId),
       const RadarPage(),
       DirectPostsPage(recipientId: currentUserId),
@@ -80,19 +76,22 @@ class _InstaStyleNavState extends State<InstaStyleNav> {
       _accumulatedDelta = 0;
       _isBottomBarVisible = true;
     });
+
+    // Clear notifications when entering the "For You" tab
+    if (index == 3) {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null) {
+        context.read<NotificationBloc>().add(MarkNotificationsRead(user.id));
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     SizeConfig.init(context);
 
-    // Don't hide bar on Radar page (index 2)
     final bool isRadarPage = _selectedIndex == 2;
-
-    // Also keep bar always visible on Chats page (index 4)
     final bool keepVisible = isRadarPage || _selectedIndex == 4;
-
-    // Effective visibility
     final bool showBar = keepVisible || _isBottomBarVisible;
 
     return Scaffold(
@@ -143,13 +142,13 @@ class _InstaStyleNavState extends State<InstaStyleNav> {
             ),
 
             BottomNavigationBarItem(
-              icon: BlocBuilder<CommentsBloc, CommentsState>(
+              icon: BlocBuilder<NotificationBloc, NotificationState>(
                 builder: (context, state) => NotificationIcon(
-                  icon: CupertinoIcons.heart,
+                  icon: CupertinoIcons.suit_heart,
                   showDot: state.showRedDot,
                 ),
               ),
-              activeIcon: BlocBuilder<CommentsBloc, CommentsState>(
+              activeIcon: BlocBuilder<NotificationBloc, NotificationState>(
                 builder: (context, state) => NotificationIcon(
                   icon: CupertinoIcons.heart_fill,
                   showDot: state.showRedDot,

@@ -7,6 +7,7 @@ import 'package:dating_app/data/datasources/coins_remote_data_source.dart';
 import 'package:dating_app/data/datasources/comment_remote_data_source.dart';
 import 'package:dating_app/data/datasources/image_remote_data_source.dart';
 import 'package:dating_app/data/datasources/likes_remote_data_source.dart';
+import 'package:dating_app/data/datasources/notification_remote_data_source.dart';
 import 'package:dating_app/data/datasources/post_remote_data_source.dart';
 import 'package:dating_app/data/datasources/user_remote_data_source.dart';
 import 'package:dating_app/data/datasources/users_remote_data_source.dart';
@@ -14,11 +15,13 @@ import 'package:dating_app/data/repositories/auth_repository_impl.dart';
 import 'package:dating_app/data/repositories/chat_repository_impl.dart';
 import 'package:dating_app/data/repositories/coins_repository_impl.dart';
 import 'package:dating_app/data/repositories/image_repository_impl.dart';
+import 'package:dating_app/data/repositories/notification_repository_imp.dart';
 import 'package:dating_app/data/repositories/posts_repository_impl.dart';
 import 'package:dating_app/data/repositories/user_repository_impl.dart';
 import 'package:dating_app/data/repositories/users_repository_impl.dart';
 import 'package:dating_app/domain/repositories/chat_repository.dart';
 import 'package:dating_app/domain/repositories/image_repository.dart';
+import 'package:dating_app/domain/repositories/notification_repository.dart';
 import 'package:dating_app/domain/repositories/posts_repository.dart';
 import 'package:dating_app/domain/repositories/user_repository.dart';
 import 'package:dating_app/domain/repositories/users_repository.dart';
@@ -31,6 +34,8 @@ import 'package:dating_app/presentation/bloc/conversation/conversation_bloc.dart
 import 'package:dating_app/presentation/bloc/direct_posts/direct_posts_bloc.dart';
 import 'package:dating_app/presentation/bloc/image/image_bloc.dart';
 import 'package:dating_app/presentation/bloc/likes/likes_bloc.dart';
+import 'package:dating_app/presentation/bloc/notification/notificationBloc.dart';
+import 'package:dating_app/presentation/bloc/notification/notification_event.dart';
 import 'package:dating_app/presentation/bloc/posts/posts_bloc.dart';
 import 'package:dating_app/presentation/bloc/user/user_bloc.dart';
 import 'package:dating_app/presentation/bloc/user/user_event.dart';
@@ -44,6 +49,7 @@ import 'package:dating_app/data/repositories/current_user_post_repository_impl.d
 import 'package:dating_app/domain/repositories/coins_repository.dart';
 import 'package:dating_app/presentation/pages/splash_screen.dart';
 import 'package:dating_app/presentation/pages/reset_password_page.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -51,6 +57,14 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {
+
+// overrides the global 'print' function
+  void print(dynamic object) {
+    if (kDebugMode) {
+      debugPrint(object.toString());
+    }
+  }
+
   WidgetsFlutterBinding.ensureInitialized();
 
   await MobileAds.instance.initialize();
@@ -112,6 +126,10 @@ Future<void> main() async {
     ImagesRemoteDataSourceImpl(supabaseClient),
   );
 
+  final notificationsRepository = NotificationRepositoryImp(
+    NotificationRemoteDataSourceImpl(supabaseClient),
+  );
+
   runApp(
     MultiRepositoryProvider(
       providers: [
@@ -128,6 +146,7 @@ Future<void> main() async {
         RepositoryProvider<ChatRepository>(create: (_) => chatRepository),
         RepositoryProvider<CoinsRepository>(create: (_) => coinsRepository),
         RepositoryProvider<ImagesRepository>(create: (_) => imageRepository),
+        RepositoryProvider<NotificationRepository>(create: (_) => notificationsRepository),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -166,6 +185,18 @@ Future<void> main() async {
             create: (context) => PostBloc(context.read<PostRepository>()),
           ),
           BlocProvider<ConnectivityBloc>(create: (_) => ConnectivityBloc()),
+
+          //Listen FOR NOTIFICATION
+          BlocProvider<NotificationBloc>(
+            create: (context) {
+              final bloc = NotificationBloc(notificationsRepository);
+              final user = Supabase.instance.client.auth.currentUser;
+              if (user != null) {
+                bloc.add(WatchNotifications(user.id));
+              }
+              return bloc;
+            },
+          ),
         ],
         child: const MyApp(),
       ),
@@ -215,7 +246,7 @@ class _MyAppState extends State<MyApp> {
       // You don't necessarily need to parse it manually if using
       // the supabase_flutter package, as it listens to the platform's
       // initial URI automatically, but logging it helps debug.
-      print("Detected Auth token in fragment: ${uri.fragment}");
+// print("Detected Auth token in fragment: ${uri.fragment}");
     }
   }
 

@@ -55,7 +55,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
   }
 
   void _submit() {
-    print("SUBMIT BUTTON CLICKED");
+// print("SUBMIT BUTTON CLICKED");
     if (_formKey.currentState!.validate()) {
       debugPrint('Onboarding: Submitting user data');
 

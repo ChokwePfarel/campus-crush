@@ -13,7 +13,6 @@ abstract class CommentsRepository {
   });
   Future<void> deleteComment(String commentId);
 
-  Stream<CommentEntity> watchUserNotifications(String userId);
 }
 
 

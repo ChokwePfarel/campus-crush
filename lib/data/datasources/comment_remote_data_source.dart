@@ -18,7 +18,6 @@ abstract class CommentsRemoteDataSource {
   });
   Future<void> deleteComment(String commentId);
 
-  Stream<CommentModel> watchUserNotifications(String userId);
 }
 
 class CommentsRemoteDataSourceImpl implements CommentsRemoteDataSource {
@@ -97,50 +96,4 @@ class CommentsRemoteDataSourceImpl implements CommentsRemoteDataSource {
         .eq('id', commentId);
   }
 
-  @override
-  Stream<CommentModel> watchUserNotifications(String userId) {
-
-
-    final controller = StreamController<CommentModel>();
-
-    final channel = client.channel('user-notifications-$userId')
-        .onPostgresChanges(
-      event: PostgresChangeEvent.insert,
-      schema: 'public',
-      table: 'comments',
-      filter: PostgresChangeFilter(
-        type: PostgresChangeFilterType.eq,
-        column: 'post_author_id',
-        value: userId,
-      ),
-      callback: (payload) {
-        if (payload.newRecord['user_id'] != userId) {
-          controller.add(CommentModel.fromJson(payload.newRecord));
-        }
-      },
-    )
-        .onPostgresChanges(
-      event: PostgresChangeEvent.insert,
-      schema: 'public',
-      table: 'comments',
-      filter: PostgresChangeFilter(
-        type: PostgresChangeFilterType.eq,
-        column: 'parent_comment_author_id',
-        value: userId,
-      ),
-      callback: (payload) {
-        if (payload.newRecord['user_id'] != userId) {
-          controller.add(CommentModel.fromJson(payload.newRecord));
-        }
-      },
-    )
-        .subscribe();
-
-    controller.onCancel = () {
-      client.removeChannel(channel);
-      controller.close();
-    };
-
-    return controller.stream;
-  }
 }

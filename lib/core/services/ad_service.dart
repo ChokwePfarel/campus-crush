@@ -13,11 +13,10 @@ class AdService {
   // ── Ad Unit IDs ────────────────────────────────────────────────────────────
   // Replace with your real IDs from AdMob when going live
   static const String _androidAdUnitId =
-       'ca-app-pub-3940256099942544/5224354917'; //testing
-      //'ca-app-pub-8085940948919628~5270857793'; // production ID
-  static const String _iosAdUnitId =
-       'ca-app-pub-3940256099942544/1712485313'; // testing
-      //'ca-app-pub-8085940948919628/5893674322';  // production ID
+
+      'ca-app-pub-8085940948919628/5893674322';  //production ID
+  static const String _iosAdUnitId = "";
+
 
   static String get _adUnitId {
     if (defaultTargetPlatform == TargetPlatform.android) {

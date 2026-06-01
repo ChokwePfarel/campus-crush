@@ -14,9 +14,9 @@ class CommentsBloc extends Bloc<CommentsEvent, CommentsState> {
     on<LoadComments>(_onLoadComments);
     on<AddComment>(_onAddComment);
     on<DeleteComment>(_onDeleteComment);
-    on<WatchUserNotifications>(_onWatchUserNotifications);
+   /* on<WatchUserNotifications>(_onWatchUserNotifications);
     on<NewNotificationReceived>(_onNewNotificationReceived);
-    on<MarkNotificationsAsRead>(_onMarkNotificationsAsRead);
+    on<MarkNotificationsAsRead>(_onMarkNotificationsAsRead);*/
   }
 
   // ── Load ──────────────────────────────────────────────────────────────────
@@ -112,20 +112,20 @@ class CommentsBloc extends Bloc<CommentsEvent, CommentsState> {
   }
 
   // ── Notifications ─────────────────────────────────────────────────────────
-
+/*
   Future<void> _onWatchUserNotifications(
     WatchUserNotifications event,
     Emitter<CommentsState> emit,
   ) async {
-    print('DEBUG: 👀 Watching notifications for: ${event.userId}');
+// print('DEBUG: 👀 Watching notifications for: ${event.userId}');
     await _notificationSub?.cancel();
     _notificationSub = _commentsRepository
         .watchUserNotifications(event.userId)
         .listen((comment) {
-      print('DEBUG: 🔔 Notification stream received comment: ${comment.text}');
+// print('DEBUG: 🔔 Notification stream received comment: ${comment.text}');
       add(NewNotificationReceived(comment));
     }, onError: (err) {
-      print('DEBUG: ❌ Notification stream error: $err');
+// print('DEBUG: ❌ Notification stream error: $err');
     });
   }
 
@@ -133,7 +133,7 @@ class CommentsBloc extends Bloc<CommentsEvent, CommentsState> {
     NewNotificationReceived event,
     Emitter<CommentsState> emit,
   ) {
-    print('DEBUG: 📬 Bloc handling NewNotificationReceived: ${event.comment.text}');
+// print('DEBUG: 📬 Bloc handling NewNotificationReceived: ${event.comment.text}');
     _notifications = [event.comment, ..._notifications];
 
     final current = state;
@@ -154,7 +154,7 @@ class CommentsBloc extends Bloc<CommentsEvent, CommentsState> {
     MarkNotificationsAsRead event,
     Emitter<CommentsState> emit,
   ) {
-    print('DEBUG: ✅ Marking notifications as read');
+// print('DEBUG: ✅ Marking notifications as read');
     final current = state;
     if (current is CommentsLoaded) {
       emit(current.copyWith(showRedDot: false));
@@ -164,7 +164,7 @@ class CommentsBloc extends Bloc<CommentsEvent, CommentsState> {
         notifications: _notifications,
       ));
     }
-  }
+  }*/
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 

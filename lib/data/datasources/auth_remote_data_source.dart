@@ -48,7 +48,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         data: {'full_name': name},
       );
     } catch (e) {
-      print('Error signing up: $e');
       throw Exception('Error signing up: $e');
     }
   }

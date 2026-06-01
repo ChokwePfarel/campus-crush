@@ -29,6 +29,7 @@ class DeleteComment extends CommentsEvent {
   DeleteComment({required this.commentId, this.parentCommentId});
 }
 
+/*
 class WatchUserNotifications extends CommentsEvent {
   final String userId;
   WatchUserNotifications(this.userId);
@@ -40,3 +41,4 @@ class NewNotificationReceived extends CommentsEvent {
   final CommentEntity comment;
   NewNotificationReceived(this.comment);
 }
+*/

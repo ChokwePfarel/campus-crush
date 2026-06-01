@@ -65,7 +65,6 @@ class UsersRemoteDataSourceImpl implements UsersRemoteDataSource {
 
       return (response as List).map((e) => UserModel.fromJson(e)).toList();
     } catch (e) {
-      print('ERROR: $e');
     }
     return [];
   }
@@ -89,7 +88,6 @@ class UsersRemoteDataSourceImpl implements UsersRemoteDataSource {
 
       return (response as List).map((e) => UserModel.fromJson(e)).toList();
     } catch (e) {
-      print('SEARCH ERROR: $e');
       return [];
     }
   }

@@ -33,8 +33,5 @@ class CommentsRepositoryImpl implements CommentsRepository {
   Future<void> deleteComment(String commentId) =>
       _dataSource.deleteComment(commentId);
 
-  @override
-  Stream<CommentEntity> watchUserNotifications(String userId) {
-    return _dataSource.watchUserNotifications(userId);
-  }
+
 }

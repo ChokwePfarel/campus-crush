@@ -28,7 +28,7 @@ class ImagesRemoteDataSourceImpl implements ImagesRemoteDataSource {
   @override
   Future<List<UserImageModel>> getUserImages(String userId) async {
     try {
-      print('Fetching user images for user ID: $userId');
+// print('Fetching user images for user ID: $userId');
 
       final response = await client
           .from('user_images')
@@ -36,7 +36,7 @@ class ImagesRemoteDataSourceImpl implements ImagesRemoteDataSource {
           .eq('user_id', userId)
           .order('created_at', ascending: false);
 
-      print('Response: $response');
+// print('Response: $response');
 
 
       return (response as List).map((e) => UserImageModel.fromJson(e)).toList();

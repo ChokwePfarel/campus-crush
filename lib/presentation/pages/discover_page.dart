@@ -7,6 +7,8 @@ import 'package:dating_app/presentation/bloc/auth/auth_bloc.dart';
 import 'package:dating_app/presentation/bloc/auth/auth_event.dart';
 import 'package:dating_app/presentation/bloc/comments/commenst_event.dart';
 import 'package:dating_app/presentation/bloc/comments/comments_bloc.dart';
+import 'package:dating_app/presentation/bloc/notification/notificationBloc.dart';
+import 'package:dating_app/presentation/bloc/notification/notification_event.dart';
 import 'package:dating_app/presentation/bloc/user/user_bloc.dart';
 import 'package:dating_app/presentation/bloc/user/user_event.dart';
 import 'package:dating_app/presentation/bloc/user/user_state.dart';
@@ -46,8 +48,8 @@ class _DiscoverPageState extends State<DiscoverPage> {
   void initState() {
     super.initState();
 
-    context.read<CommentsBloc>().add(
-      WatchUserNotifications(widget.currentUserId)
+    context.read<NotificationBloc>().add(
+      LoadNotifications(widget.currentUserId)
     );
 
     _scrollController.addListener(_scrollListener);

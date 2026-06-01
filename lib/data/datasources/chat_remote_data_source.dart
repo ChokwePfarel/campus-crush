@@ -221,7 +221,6 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
 
           controller.add(ConversationModel.fromJson(updated, currentUserId, unreadCount));
         } catch (e) {
-          print('Realtime Fetch Error: $e');
         }
       },
     )
@@ -268,9 +267,7 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
           .eq('id', conversationId)
           .select(); // Verify RLS allows update
 
-      print('Deletion success: Inbox summary updated for $conversationId');
     } catch (e) {
-      print('Delete Message Error: $e');
       rethrow;
     }
   }

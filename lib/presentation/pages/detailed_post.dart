@@ -87,18 +87,18 @@ class _DetailedPostState extends State<DetailedPost> {
       child: Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: Colors.black,
           elevation: 0,
           leading: IconButton(
             icon: const Icon(
               Icons.arrow_back_ios_new_rounded,
-              color: Colors.black,
+              color: Colors.white,
             ),
             onPressed: () => Navigator.pop(context),
           ),
           title: const Text(
             'Post',
-            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
         ),
         body: BlocBuilder<PostBloc, PostState>(
@@ -248,7 +248,7 @@ class _DetailedPostState extends State<DetailedPost> {
   Widget _buildInputBar() {
     return Container(
       padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom + 10,
+        bottom: 10,
         left: 16,
         right: 16,
         top: 10,
@@ -310,8 +310,8 @@ class _CommentItem extends StatelessWidget {
               CircleAvatar(
                 radius: 18,
                 backgroundColor: isAnonymous
-                    ? Colors.grey[200]
-                    : Colors.purple[50],
+                    ? Colors.grey.shade200
+                    : Colors.purple.shade50,
                 child: Text(isAnonymous ? '🎭' : comment.repliersName[0]),
               ),
               const SizedBox(width: 12),

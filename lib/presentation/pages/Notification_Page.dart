@@ -1,8 +1,12 @@
-import 'package:dating_app/domain/entities/comment_entity.dart';
-import 'package:dating_app/presentation/bloc/comments/comments_bloc.dart';
-import 'package:dating_app/presentation/bloc/comments/comments_state.dart';
-import 'package:dating_app/presentation/bloc/comments/commenst_event.dart';
+import 'package:dating_app/domain/entities/notification_entity.dart';
+import 'package:dating_app/presentation/bloc/notification/notificationBloc.dart';
+import 'package:dating_app/presentation/bloc/notification/notification_event.dart';
+import 'package:dating_app/presentation/bloc/notification/notification_state.dart';
+
+import 'package:dating_app/presentation/bloc/user/user_bloc.dart';
+import 'package:dating_app/presentation/bloc/user/user_state.dart' as user_st;
 import 'package:dating_app/presentation/pages/detailed_post.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -14,39 +18,62 @@ class NotificationPage extends StatefulWidget {
 }
 
 class _NotificationPageState extends State<NotificationPage> {
+  // NotificationPage initState — fetches persisted data
+  // lib/presentation/pages/Notification_Page.dart
+
   @override
   void initState() {
     super.initState();
-    // Mark all as read when user opens the page
-    context.read<CommentsBloc>().add(MarkNotificationsAsRead());
+    final userState = context.read<UserBloc>().state;
+    if (userState is user_st.UserLoaded) {
+      // Trigger a manual load to ensure we have the list immediately
+      context.read<NotificationBloc>().add(
+        LoadNotifications(userState.user.id),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final userState = context.read<UserBloc>().state;
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
+        leading: CupertinoButton(
+          padding: EdgeInsets.zero,
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Icon(
+            CupertinoIcons.chevron_left,
+            color: Color(0xFF1A1A2E),
+          ),
+        ),
         elevation: 0,
         title: const Text(
           'Notifications',
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
       ),
-      body: BlocBuilder<CommentsBloc, CommentsState>(
+      body: BlocBuilder<NotificationBloc, NotificationState>(
         builder: (context, state) {
           // ── Loading ──────────────────────────────────────────
-          if (state is LoadingComments) {
-            return const Center(child: CircularProgressIndicator());
+          if (state is NotificationLoading) {
+            return const Center(child: CupertinoActivityIndicator());
+          }
+
+          // ── Error ────────────────────────────────────────────
+          if (state is NotificationError) {
+            return Center(child: Text(state.message));
           }
 
           // ── Get notifications from state ─────────────────────
-          final notifications = state is CommentsLoaded
+          final notifications = state is NotificationLoaded
               ? state.notifications
-              : <CommentEntity>[];
+              : <NotificationEntity>[];
 
           // ── Empty ────────────────────────────────────────────
-          if (notifications!.isEmpty) {
+          if (notifications.isEmpty) {
             return const Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -69,22 +96,26 @@ class _NotificationPageState extends State<NotificationPage> {
           // ── List ─────────────────────────────────────────────
           return ListView.separated(
             padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: notifications!.length,
+            itemCount: notifications.length,
             separatorBuilder: (_, __) =>
                 Divider(height: 1, color: Colors.grey[200]),
             itemBuilder: (context, index) {
               final notification = notifications[index];
               return _NotificationItem(
                 notification: notification,
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => DetailedPost(
-                      postId: notification.postId,
-                      currentUserId: notification.userId,
-                    ),
-                  ),
-                ),
+                onTap: () {
+                  if (userState is user_st.UserLoaded) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => DetailedPost(
+                          postId: notification.postId,
+                          currentUserId: userState.user.id, //  logged in user
+                        ),
+                      ),
+                    );
+                  }
+                },
               );
             },
           );
@@ -95,31 +126,29 @@ class _NotificationPageState extends State<NotificationPage> {
 }
 
 class _NotificationItem extends StatelessWidget {
-  final CommentEntity notification;
+  final NotificationEntity notification;
   final VoidCallback onTap;
 
   const _NotificationItem({required this.notification, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final isReply = notification.parentCommentId != null;
-
     return ListTile(
       onTap: onTap,
       leading: CircleAvatar(
         backgroundColor: Colors.purple[50],
-        child: Text(notification.repliersName[0].toUpperCase()),
+        child: Text(notification.triggeredByName[0].toUpperCase()),
       ),
       title: RichText(
         text: TextSpan(
           style: const TextStyle(color: Colors.black, fontSize: 14),
           children: [
             TextSpan(
-              text: notification.repliersName,
+              text: notification.triggeredByName,
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             TextSpan(
-              text: isReply
+              text: notification.isReply
                   ? ' replied to your comment'
                   : ' commented on your post',
             ),
@@ -127,7 +156,7 @@ class _NotificationItem extends StatelessWidget {
         ),
       ),
       subtitle: Text(
-        notification.text,
+        notification.commentText,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: const TextStyle(color: Colors.grey, fontSize: 12),
