@@ -44,7 +44,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[200],
       appBar: AppBar(
         title: const Text('Reset Password'),
         backgroundColor: Colors.white,
@@ -79,7 +79,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                   controller: _passwordController,
                   hint: 'New Password',
                   icon: Icons.lock_outline,
-                  obscure: true,
+                  obscure: false,
                   validator: (val) =>
                       val == null || val.length < 6 ? 'Min 6 characters' : null,
                 ),
