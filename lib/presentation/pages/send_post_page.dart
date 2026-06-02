@@ -1085,9 +1085,9 @@ class _SuccessDialogState extends State<_SuccessDialog> {
 
   String _getTitle() {
     if (widget.isAnonymous) {
-      return '✨ Anonymous Post Sent!';
+      return 'Anonymous Post Sent!';
     }
-    return '✨ Post Sent!';
+    return 'Post Sent!';
   }
 
   String _getMessage() {
