@@ -7,16 +7,13 @@ class AdService {
   AdService._();
   static final AdService instance = AdService._();
 
-  RewardedAd? _rewardedAd;
+  // Corrected type: RewardedInterstitialAd
+  RewardedInterstitialAd? _rewardedAd;
   bool _isLoading = false;
 
   // ── Ad Unit IDs ────────────────────────────────────────────────────────────
-  // Replace with your real IDs from AdMob when going live
-  static const String _androidAdUnitId =
-
-      'ca-app-pub-8085940948919628/5893674322';  //production ID
-  static const String _iosAdUnitId = "";
-
+  static const String _androidAdUnitId = 'ca-app-pub-8085940948919628/5893674322';
+  static const String _iosAdUnitId = ""; // Add your iOS ID here
 
   static String get _adUnitId {
     if (defaultTargetPlatform == TargetPlatform.android) {
@@ -36,24 +33,24 @@ class AdService {
     if (_isLoading || _rewardedAd != null) return;
     _isLoading = true;
 
-    await RewardedAd.load(
+    // Use the specific RewardedInterstitialAd.load method
+    await RewardedInterstitialAd.load(
       adUnitId: _adUnitId,
       request: const AdRequest(),
-      rewardedAdLoadCallback: RewardedAdLoadCallback(
+      rewardedInterstitialAdLoadCallback: RewardedInterstitialAdLoadCallback(
         onAdLoaded: (ad) {
           _rewardedAd = ad;
           _isLoading = false;
-          debugPrint('✅ Rewarded ad loaded');
+          debugPrint('✅ Rewarded Interstitial ad loaded');
         },
         onAdFailedToLoad: (error) {
           _rewardedAd = null;
           _isLoading = false;
-          debugPrint('❌ Rewarded ad failed to load: ${error.message}');
+          debugPrint('❌ Rewarded Interstitial ad failed to load: ${error.message}');
         },
       ),
     );
   }
-
   // ── Show ───────────────────────────────────────────────────────────────────
 
   Future<bool> showRewardedAd({

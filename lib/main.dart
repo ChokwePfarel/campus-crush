@@ -57,8 +57,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {
-
-// overrides the global 'print' function
+  // overrides the global 'print' function
   void print(dynamic object) {
     if (kDebugMode) {
       debugPrint(object.toString());
@@ -68,6 +67,15 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await MobileAds.instance.initialize();
+
+  /*// Configure test device
+  MobileAds.instance.updateRequestConfiguration(
+    RequestConfiguration(
+      testDeviceIds: ['78c46566-5627-4b2e-a7b3-10ca1ad1abe1'],
+      //104dd0e5-dbf9-43f9-9a61-10ca1ad1abe1
+    ),
+  );*/
+
   AdService.instance.loadRewardedAd();
 
   await HiveInit.init();
@@ -146,7 +154,9 @@ Future<void> main() async {
         RepositoryProvider<ChatRepository>(create: (_) => chatRepository),
         RepositoryProvider<CoinsRepository>(create: (_) => coinsRepository),
         RepositoryProvider<ImagesRepository>(create: (_) => imageRepository),
-        RepositoryProvider<NotificationRepository>(create: (_) => notificationsRepository),
+        RepositoryProvider<NotificationRepository>(
+          create: (_) => notificationsRepository,
+        ),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -211,7 +221,6 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-
 class _MyAppState extends State<MyApp> {
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
   late AppLinks _appLinks;
@@ -246,7 +255,7 @@ class _MyAppState extends State<MyApp> {
       // You don't necessarily need to parse it manually if using
       // the supabase_flutter package, as it listens to the platform's
       // initial URI automatically, but logging it helps debug.
-// print("Detected Auth token in fragment: ${uri.fragment}");
+      // print("Detected Auth token in fragment: ${uri.fragment}");
     }
   }
 
@@ -280,12 +289,6 @@ class _MyAppState extends State<MyApp> {
     );
   }
 }
-
-
-
-
-
-
 
 class HiveInit {
   HiveInit._();
