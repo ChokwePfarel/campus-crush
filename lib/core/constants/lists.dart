@@ -1,4 +1,3 @@
-
 enum PostType { general, crush, confession, spotted }
 
 extension PostTypeExt on PostType {
@@ -15,8 +14,6 @@ extension PostTypeExt on PostType {
     }
   }
 
-
-
   String get hint {
     switch (this) {
       case PostType.general:
@@ -29,15 +26,13 @@ extension PostTypeExt on PostType {
         return "Describe what you're wearing today...";
     }
   }
-
-
 }
 
 class DropDownOptions {
   static final List<String> sexOptions = ['Male', 'Female', 'LGBTQ'];
 
   static final List<String> universities = [
-    'University of the Western Cape (UWC)'
+    'University of the Western Cape (UWC)',
   ];
 
   static final List<String> availableInterests = [
@@ -69,5 +64,18 @@ class DropDownOptions {
     'Married',
     'Divorced',
     'Widowed',
+  ];
+}
+
+class Reason {
+  static final reasons = [
+    "Spam",
+    "Harassment",
+    "Hate Speech",
+    "Inappropriate Content",
+    "Misinformation",
+    "Illegal Activity",
+    "Self-harm",
+    "Other",
   ];
 }

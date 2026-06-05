@@ -9,6 +9,7 @@ import 'package:dating_app/data/datasources/image_remote_data_source.dart';
 import 'package:dating_app/data/datasources/likes_remote_data_source.dart';
 import 'package:dating_app/data/datasources/notification_remote_data_source.dart';
 import 'package:dating_app/data/datasources/post_remote_data_source.dart';
+import 'package:dating_app/data/datasources/report_remote_data_source.dart';
 import 'package:dating_app/data/datasources/user_remote_data_source.dart';
 import 'package:dating_app/data/datasources/users_remote_data_source.dart';
 import 'package:dating_app/data/repositories/auth_repository_impl.dart';
@@ -17,6 +18,7 @@ import 'package:dating_app/data/repositories/coins_repository_impl.dart';
 import 'package:dating_app/data/repositories/image_repository_impl.dart';
 import 'package:dating_app/data/repositories/notification_repository_imp.dart';
 import 'package:dating_app/data/repositories/posts_repository_impl.dart';
+import 'package:dating_app/data/repositories/reports_repository_impl.dart';
 import 'package:dating_app/data/repositories/user_repository_impl.dart';
 import 'package:dating_app/data/repositories/users_repository_impl.dart';
 import 'package:dating_app/domain/repositories/chat_repository.dart';
@@ -37,6 +39,7 @@ import 'package:dating_app/presentation/bloc/likes/likes_bloc.dart';
 import 'package:dating_app/presentation/bloc/notification/notificationBloc.dart';
 import 'package:dating_app/presentation/bloc/notification/notification_event.dart';
 import 'package:dating_app/presentation/bloc/posts/posts_bloc.dart';
+import 'package:dating_app/presentation/bloc/reports/report_bloc.dart';
 import 'package:dating_app/presentation/bloc/user/user_bloc.dart';
 import 'package:dating_app/presentation/bloc/user/user_event.dart';
 import 'package:dating_app/presentation/bloc/users/users_bloc.dart';
@@ -138,6 +141,11 @@ Future<void> main() async {
     NotificationRemoteDataSourceImpl(supabaseClient),
   );
 
+  final reportsRepository = ReportsRepositoryImpl(
+
+     remoteDataSource: ReportsRemoteDataSourceImp(supabaseClient),
+  );
+
   runApp(
     MultiRepositoryProvider(
       providers: [
@@ -207,6 +215,15 @@ Future<void> main() async {
               return bloc;
             },
           ),
+
+          BlocProvider<BlockUserBloc>(
+            create: (context) => BlockUserBloc(reportsRepository),
+          ),
+
+          BlocProvider<ReportsBloc>(
+            create: (context) => ReportsBloc(reportsRepository),
+          )
+
         ],
         child: const MyApp(),
       ),
