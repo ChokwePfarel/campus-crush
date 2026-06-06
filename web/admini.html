@@ -100,7 +100,7 @@
       'sb_publishable_YOMbh7gnIrWdBjk4jjIajw_euyagT9S';
 
     // Initialized with a unique name to avoid conflict
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     async function login() {
         const email = document.getElementById('email').value;
