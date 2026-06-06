@@ -89,6 +89,7 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
         'age': age,
         'is_verified': isVerified,
         'coins': coins,
+        'profile_status': 'clean'
       };
 
       if (privacySettings != null) {

@@ -31,8 +31,11 @@ class MockData {
         showUniversity: true,
         allowMessageRequests: true,
       ),
+      profileStatus: 'clean'
     ),
     UserModel(
+      profileStatus: 'clean',
+
       id: 'u2',
       name: 'Bob Smith',
       age: 24,
@@ -176,6 +179,8 @@ class SpottedMock {
 //------------------------------------------------------------------CURRENT USER
 class MockCurrentUser {
   final currentUserMock = UserModel(
+    profileStatus: 'clean',
+
     id: 'u_mock_001',
     name: 'Ayanda Dlamini',
     coins: 15,

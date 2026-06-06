@@ -50,10 +50,10 @@ class _SignUpPageState extends State<SignUpPage> {
   void initState() {
     super.initState();
     // Re-verify email when text changes
-    _emailController.addListener(_updateVerificationStatus);
+   // _emailController.addListener(_updateVerificationStatus);
   }
 
-  void _updateVerificationStatus() {
+ /* void _updateVerificationStatus() {
     final status = _checkIfVerified();
     if (status != _isVerified) {
       setState(() => _isVerified = status);
@@ -66,7 +66,7 @@ class _SignUpPageState extends State<SignUpPage> {
     final expectedDomain = _universityDomains[_selectedUniversity];
     if (expectedDomain == null) return false;
     return email.endsWith(expectedDomain);
-  }
+  }*/
 
   void _createUser() {
     if (_formKey.currentState!.validate()) {
@@ -90,7 +90,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
   @override
   void dispose() {
-    _emailController.removeListener(_updateVerificationStatus);
+   // _emailController.removeListener(_updateVerificationStatus);
     _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
@@ -181,7 +181,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       onChanged: (value) {
                         setState(() {
                           _selectedUniversity = value!;
-                          _updateVerificationStatus();
+                          //_updateVerificationStatus();
                         });
                       },
                     ),

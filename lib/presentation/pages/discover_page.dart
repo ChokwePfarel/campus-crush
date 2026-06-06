@@ -2,11 +2,9 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
 import 'package:dating_app/core/utils/users_skeleton.dart';
+import 'package:dating_app/core/utils/warning_bar.dart';
 import 'package:dating_app/domain/repositories/users_repository.dart';
-import 'package:dating_app/presentation/bloc/auth/auth_bloc.dart';
-import 'package:dating_app/presentation/bloc/auth/auth_event.dart';
-import 'package:dating_app/presentation/bloc/comments/commenst_event.dart';
-import 'package:dating_app/presentation/bloc/comments/comments_bloc.dart';
+
 import 'package:dating_app/presentation/bloc/notification/notificationBloc.dart';
 import 'package:dating_app/presentation/bloc/notification/notification_event.dart';
 import 'package:dating_app/presentation/bloc/user/user_bloc.dart';
@@ -16,7 +14,7 @@ import 'package:dating_app/presentation/bloc/users/users_bloc.dart';
 import 'package:dating_app/presentation/bloc/users/users_event.dart';
 import 'package:dating_app/presentation/bloc/users/users_state.dart'
     as users_st;
-import 'package:dating_app/presentation/pages/login_page.dart';
+import 'package:dating_app/presentation/pages/account_suspended.dart';
 import 'package:dating_app/presentation/pages/profile_page.dart';
 import 'package:dating_app/presentation/pages/search_page.dart';
 import 'package:flutter/material.dart';
@@ -49,7 +47,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
     super.initState();
 
     context.read<NotificationBloc>().add(
-      LoadNotifications(widget.currentUserId)
+      LoadNotifications(widget.currentUserId),
     );
 
     _scrollController.addListener(_scrollListener);
@@ -84,7 +82,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
     });
   }
 
-
   void _scrollListener() {
     if (!mounted) return;
 
@@ -116,7 +113,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
     );
   }
 
-
   @override
   void dispose() {
     _scrollController.removeListener(_scrollListener);
@@ -135,84 +131,93 @@ class _DiscoverPageState extends State<DiscoverPage> {
         String profileImg = '';
         if (userState is UserLoaded)
           profileImg = userState.user.profileImageUrl;
+        final String profileStatus = userState is UserLoaded
+            ? userState.user.profileStatus
+            : '';
 
-        return Scaffold(
-          backgroundColor: Colors.white,
-          body: Column(
-            children: [
-              if (_isOffline) _buildOfflineBanner(),
-              Expanded(
-                child: BlocListener<UserBloc, UserState>(
-                  listenWhen: (previous, current) =>
-                      previous is! UserLoaded && current is UserLoaded,
-                  listener: (listenerCtx, state) {
-                    if (state is UserLoaded && mounted) {
-                      _currentUniversity = state.user.university;
-                      _currentSex = state.user.sex;
-                      _triggerLoad(listenerCtx, isInitial: true);
-                    }
-                  },
-                  child: NestedScrollView(
-                    controller: _scrollController,
-                    headerSliverBuilder: (headerCtx, innerBoxIsScrolled) {
-                      return [
-                        SliverAppBar(
-                          floating: true,
-                          snap: true,
-                          backgroundColor: Colors.white,
-                          elevation: 0,
-                          centerTitle: true,
-                          title: _appName(),
-                          bottom: PreferredSize(
-                            preferredSize: Size.fromHeight(
-                              SizeConfig.heightPercent(8),
-                            ),
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: SizeConfig.widthPercent(4),
-                                vertical: SizeConfig.heightPercent(1),
+        final bool isSuspended = profileStatus.contains('suspended');
+
+        if (isSuspended) {
+          return const SuspendedPage();
+        } else {
+          return Scaffold(
+            backgroundColor: Colors.white,
+            body: Column(
+              children: [
+                if (_isOffline) _buildOfflineBanner(),
+                Expanded(
+                  child: BlocListener<UserBloc, UserState>(
+                    listenWhen: (previous, current) =>
+                        previous is! UserLoaded && current is UserLoaded,
+                    listener: (listenerCtx, state) {
+                      if (state is UserLoaded && mounted) {
+                        _currentUniversity = state.user.university;
+                        _currentSex = state.user.sex;
+                        _triggerLoad(listenerCtx, isInitial: true);
+                      }
+                    },
+                    child: NestedScrollView(
+                      controller: _scrollController,
+                      headerSliverBuilder: (headerCtx, innerBoxIsScrolled) {
+                        return [
+                          SliverAppBar(
+                            floating: true,
+                            snap: true,
+                            backgroundColor: Colors.white,
+                            elevation: 0,
+                            centerTitle: true,
+                            title: _appName(),
+                            bottom: PreferredSize(
+                              preferredSize: Size.fromHeight(
+                                SizeConfig.heightPercent(8),
                               ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-
-
-                                  _profileButton(profileImg),
-                                  const SizedBox(width: 10),
-                                  _searchField(),
-                                ],
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: SizeConfig.widthPercent(4),
+                                  vertical: SizeConfig.heightPercent(1),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    _showWarningBar(profileStatus),
+                                    const SizedBox(width: 10),
+                                    _profileButton(profileImg),
+                                    const SizedBox(width: 10),
+                                    _searchField(),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ];
-                    },
-                    body: BlocBuilder<UsersBloc, users_st.UsersState>(
-                      builder: (usersBuilderCtx, state) {
-                        if (state is users_st.UsersLoading) {
-                          return const UserListSkeleton();
-                        }
-
-                        if (state is users_st.UsersError) {
-                          return _buildErrorState();
-                        }
-
-                        if (state is users_st.UsersLoaded) {
-                          return _buildUserList(
-                            state.users,
-                            state.hasReachedMax,
-                          );
-                        }
-
-                        return const UserListSkeleton();
+                        ];
                       },
+                      body: BlocBuilder<UsersBloc, users_st.UsersState>(
+                        builder: (usersBuilderCtx, state) {
+                          if (state is users_st.UsersLoading) {
+                            return const UserListSkeleton();
+                          }
+
+                          if (state is users_st.UsersError) {
+                            return _buildErrorState();
+                          }
+
+                          if (state is users_st.UsersLoaded) {
+                            return _buildUserList(
+                              state.users,
+                              state.hasReachedMax,
+                            );
+                          }
+
+                          return const UserListSkeleton();
+                        },
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        );
+              ],
+            ),
+          );
+        }
       },
     );
   }
@@ -290,7 +295,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
   Widget _searchField() {
     return GestureDetector(
       onTap: () {
-
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -320,29 +324,21 @@ class _DiscoverPageState extends State<DiscoverPage> {
 
   Widget _profileButton(String image) {
     return GestureDetector(
-      onTap: (){
-
-        Navigator.push(context, MaterialPageRoute(builder:
-        (context) => const ProfilePage()));
-
-        /*context.read<UserBloc>().add(ResetUser());
-
-        context.read<AuthBloc>().add(LogoutRequested());
-
-        Navigator.pushAndRemoveUntil(
+      onTap: () {
+        Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const LoginPage()),
-              (route) => false,
-        );*/
+          MaterialPageRoute(builder: (context) => const ProfilePage()),
+        );
+
+
       },
       child: CircleAvatar(
         radius: SizeConfig.widthPercent(6),
         backgroundColor: Colors.grey[200],
         backgroundImage:
             !_isOffline && image.isNotEmpty && image.startsWith('http')
-                ? NetworkImage(image)
-                : const AssetImage('assets/profile_picture.png')
-                    as ImageProvider,
+            ? NetworkImage(image)
+            : const AssetImage('assets/profile_picture.png') as ImageProvider,
         child: _isOffline || image.isEmpty
             ? const Icon(Icons.person, color: Colors.grey)
             : null,
@@ -361,5 +357,13 @@ class _DiscoverPageState extends State<DiscoverPage> {
         ),
       ),
     );
+  }
+
+  Widget _showWarningBar(String profileStatus) {
+    if (profileStatus == 'warned') {
+      return const WarningBar();
+    } else {
+      return SizedBox.shrink();
+    }
   }
 }

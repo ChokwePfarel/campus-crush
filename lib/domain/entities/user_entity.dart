@@ -15,6 +15,7 @@ class UserEntity {
   final List<String> interests;
   final bool isVerified;
   final PrivacySettingsEntity privacySettings;
+  final String profileStatus;
   
   // Coin and Activity fields
   final int coins;
@@ -43,5 +44,6 @@ class UserEntity {
     this.lastAdDate,
     this.dailyDirectPostsCount = 0,
     this.lastDirectPostDate,
+    required this.profileStatus,
   });
 }

@@ -24,6 +24,7 @@ class UserModel extends UserEntity {
     super.lastAdDate,
     super.dailyDirectPostsCount = 0,
     super.lastDirectPostDate,
+    required super.profileStatus,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -47,6 +48,7 @@ class UserModel extends UserEntity {
       lastAdDate: json['last_ad_date'] != null ? DateTime.parse(json['last_ad_date']) : null,
       dailyDirectPostsCount: json['daily_direct_posts_count'] ?? 0,
       lastDirectPostDate: json['last_direct_post_date'] != null ? DateTime.parse(json['last_direct_post_date']) : null,
+      profileStatus: json['profile_status'] ?? '',
     );
   }
 
@@ -71,6 +73,7 @@ class UserModel extends UserEntity {
       'last_ad_date': lastAdDate?.toIso8601String(),
       'daily_direct_posts_count': dailyDirectPostsCount,
       'last_direct_post_date': lastDirectPostDate?.toIso8601String(),
+      'profile_status': profileStatus,
     };
   }
 
@@ -87,6 +90,7 @@ class UserModel extends UserEntity {
     String? profileImageUrl,
     List<String>? imageUrls,
     bool? isVerified,
+
   }) {
     return UserModel(
       id: id,
@@ -107,6 +111,7 @@ class UserModel extends UserEntity {
       lastAdDate: lastAdDate,
       dailyDirectPostsCount: dailyDirectPostsCount,
       lastDirectPostDate: lastDirectPostDate,
+      profileStatus: profileStatus,
     );
   }
 }

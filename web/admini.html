@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moderation Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+          --bg: #0d0d0f;
+          --bg2: #131316;
+          --bg3: #1a1a1f;
+          --surface: #1e1e26;
+          --border: rgba(255,255,255,0.07);
+          --text: #e8e8ec;
+          --text2: #9090a0;
+          --accent: #c8f065;
+          --red: #ff4f4f;
+          --radius: 10px;
+        }
+
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); padding: 40px; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+        h1 { font-family: 'Instrument Serif', serif; font-style: italic; font-size: 32px; }
+
+        .report-card {
+          background: var(--bg2);
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+          padding: 20px;
+          margin-bottom: 16px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .report-info h3 { font-size: 16px; margin-bottom: 4px; }
+        .report-info p { color: var(--text2); font-size: 13px; }
+        .reason-tag {
+          display: inline-block;
+          background: rgba(255,255,255,0.05);
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-family: 'DM Mono', monospace;
+          font-size: 11px;
+          margin-top: 8px;
+        }
+
+        .actions { display: flex; gap: 10px; }
+        button {
+          padding: 8px 16px;
+          border-radius: 6px;
+          border: none;
+          font-family: 'DM Mono', monospace;
+          font-size: 12px;
+          cursor: pointer;
+          transition: opacity 0.2s;
+        }
+        .btn-warn { background: var(--accent); color: #000; }
+        .btn-dismiss { background: transparent; border: 1px solid var(--border); color: var(--text2); }
+        button:hover { opacity: 0.8; }
+        button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        #login-form { max-width: 320px; margin: 100px auto; display: flex; flex-direction: column; gap: 12px; }
+        input { background: var(--bg3); border: 1px solid var(--border); padding: 12px; border-radius: 6px; color: #fff; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="auth-section">
+        <h1>Admin Access</h1>
+        <div id="login-form">
+            <input type="email" id="email" placeholder="Admin Email">
+            <input type="password" id="password" placeholder="Password">
+            <button class="btn-warn" onclick="login()">Login</button>
+        </div>
+    </div>
+
+    <div id="dashboard-section" style="display: none;">
+        <div class="header">
+            <h1>Reports Queue</h1>
+            <button class="btn-dismiss" onclick="logout()">Logout</button>
+        </div>
+        <div id="reports-list">
+            <p style="color: var(--text3)">Loading reports...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL = 'https://wdhzlfqftxytphnohpqb.supabase.co';
+    const SUPABASE_KEY = 'your-anon-key'; // REPLACE WITH YOUR ANON KEY
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function login() {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+        if (error) return alert(error.message);
+
+        // Check if admin
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).single();
+        if (profile?.role !== 'admin') {
+            await supabase.auth.signOut();
+            return alert('Unauthorized access.');
+        }
+
+        showDashboard();
+    }
+
+    async function logout() {
+        await supabase.auth.signOut();
+        location.reload();
+    }
+
+    function showDashboard() {
+        document.getElementById('auth-section').style.display = 'none';
+        document.getElementById('dashboard-section').style.display = 'block';
+        fetchReports();
+    }
+
+    async function fetchReports() {
+        const { data: reports, error } = await supabase
+            .from('reports')
+            .select(`
+                id, reason, created_at, reported_user_id,
+                profiles:reported_user_id ( name, profile_status ),
+                posts:post_id ( content )
+            `)
+            .is('reviewed_at', null);
+
+        if (error) return console.error(error);
+
+        const list = document.getElementById('reports-list');
+        list.innerHTML = reports.length ? '' : '<p>No pending reports.</p>';
+
+        reports.forEach(r => {
+            const card = document.createElement('div');
+            card.className = 'report-card';
+            card.innerHTML = `
+                <div class="report-info">
+                    <h3>Reported: ${r.profiles.name} (${r.profiles.profile_status})</h3>
+                    <p>Post: "${r.posts?.content || 'Deleted post'}"</p>
+                    <div class="reason-tag">${r.reason.toUpperCase()}</div>
+                </div>
+                <div class="actions">
+                    <button class="btn-dismiss" onclick="handleAction('${r.id}', 'dismiss')">Dismiss</button>
+                    <button class="btn-warn" onclick="handleAction('${r.id}', 'warn')">Issue Warning</button>
+                </div>
+            `;
+            list.appendChild(card);
+        });
+    }
+
+    async function handleAction(reportId, action) {
+        const { data: { user } } = await supabase.auth.getUser();
+
+        const { error } = await supabase.rpc('review_report', {
+            report_id_param: reportId,
+            admin_id: user.id,
+            action: action
+        });
+
+        if (error) alert('Error: ' + error.message);
+        else fetchReports();
+    }
+
+    // Auto-check session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) showDashboard();
+    });
+</script>
+
+</body>
+</html>

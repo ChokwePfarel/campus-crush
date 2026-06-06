@@ -142,8 +142,7 @@ Future<void> main() async {
   );
 
   final reportsRepository = ReportsRepositoryImpl(
-
-     remoteDataSource: ReportsRemoteDataSourceImp(supabaseClient),
+    remoteDataSource: ReportsRemoteDataSourceImp(supabaseClient),
   );
 
   runApp(
@@ -215,15 +214,12 @@ Future<void> main() async {
               return bloc;
             },
           ),
-
           BlocProvider<BlockUserBloc>(
             create: (context) => BlockUserBloc(reportsRepository),
           ),
-
           BlocProvider<ReportsBloc>(
             create: (context) => ReportsBloc(reportsRepository),
           )
-
         ],
         child: const MyApp(),
       ),
@@ -247,6 +243,38 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     _initDeepLinks();
     _setupAuthStateListener();
+    _makeAdmin();
+  }
+
+  /// One-time utility to promote a specific user to admin.
+  /// Call this in initState if you need to perform the promotion.
+  Future<void> _makeAdmin() async {
+    final adminClient = SupabaseClient(
+      dotenv.env['SUPABASE_URL']!,
+      dotenv.env['SUPABASE_SERVICE_ROLE_KEY']!,
+    );
+
+    const targetUserId = 'c1e60e5a-15b5-4ce9-8494-0f6c8340b9ea';
+
+    try {
+      // 1. Update Auth Metadata (for RLS checks using auth.jwt())
+      await adminClient.auth.admin.updateUserById(
+        targetUserId,
+        attributes: AdminUserAttributes(
+          appMetadata: {'role': 'admin'},
+        ),
+      );
+
+      // 2. Update profiles table (for UI checks and queries)
+      await adminClient
+          .from('profiles')
+          .update({'role': 'admin'})
+          .eq('id', targetUserId);
+
+      debugPrint('User promoted to admin successfully');
+    } catch (e) {
+      debugPrint('Error promoting user: $e');
+    }
   }
 
   Future<void> _initDeepLinks() async {
@@ -266,13 +294,8 @@ class _MyAppState extends State<MyApp> {
 
   void _handleIncomingLink(Uri uri) {
     // Supabase sends the reset token as a hash fragment (e.g., #access_token=...)
-    // This allows the Supabase client to automatically pick up the session
-    // once the deep link opens the app.
     if (uri.fragment.contains('access_token')) {
-      // You don't necessarily need to parse it manually if using
-      // the supabase_flutter package, as it listens to the platform's
-      // initial URI automatically, but logging it helps debug.
-      // print("Detected Auth token in fragment: ${uri.fragment}");
+      print("Detected Auth token in fragment: ${uri.fragment}");
     }
   }
 
@@ -289,7 +312,6 @@ class _MyAppState extends State<MyApp> {
 
   @override
   void dispose() {
-    // Clean up if necessary
     super.dispose();
   }
 
