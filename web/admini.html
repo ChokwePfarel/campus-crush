@@ -87,7 +87,7 @@
             <button class="btn-dismiss" onclick="logout()">Logout</button>
         </div>
         <div id="reports-list">
-            <p style="color: var(--text3)">Loading reports...</p>
+            <p style="color: var(--text2)">Loading reports...</p>
         </div>
     </div>
 </div>
@@ -95,27 +95,34 @@
 <script>
     const SUPABASE_URL = 'https://wdhzlfqftxytphnohpqb.supabase.co';
     const SUPABASE_KEY = 'your-anon-key'; // REPLACE WITH YOUR ANON KEY
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // Initialized with a unique name to avoid conflict
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     async function login() {
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
 
         if (error) return alert(error.message);
 
-        // Check if admin
-        const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).single();
-        if (profile?.role !== 'admin') {
-            await supabase.auth.signOut();
-            return alert('Unauthorized access.');
+        // Verify admin status from the 'roles' table
+        const { data: roleData, error: roleError } = await supabaseClient
+            .from('roles')
+            .select('role')
+            .eq('user_id', data.user.id)
+            .single();
+
+        if (roleError || roleData?.role !== 'admin') {
+            await supabaseClient.auth.signOut();
+            return alert('Access Denied: You do not have administrator privileges.');
         }
 
         showDashboard();
     }
 
     async function logout() {
-        await supabase.auth.signOut();
+        await supabaseClient.auth.signOut();
         location.reload();
     }
 
@@ -126,16 +133,20 @@
     }
 
     async function fetchReports() {
-        const { data: reports, error } = await supabase
+        const { data: reports, error } = await supabaseClient
             .from('reports')
             .select(`
                 id, reason, created_at, reported_user_id,
-                profiles:reported_user_id ( name, profile_status ),
-                posts:post_id ( content )
+                profiles:profiles!reported_user_id ( name, profile_status ),
+                posts:posts!post_id ( content )
             `)
             .is('reviewed_at', null);
 
-        if (error) return console.error(error);
+        if (error) {
+            console.error('Fetch Error:', error);
+            document.getElementById('reports-list').innerHTML = '<p>Error loading reports.</p>';
+            return;
+        }
 
         const list = document.getElementById('reports-list');
         list.innerHTML = reports.length ? '' : '<p>No pending reports.</p>';
@@ -145,8 +156,8 @@
             card.className = 'report-card';
             card.innerHTML = `
                 <div class="report-info">
-                    <h3>Reported: ${r.profiles.name} (${r.profiles.profile_status})</h3>
-                    <p>Post: "${r.posts?.content || 'Deleted post'}"</p>
+                    <h3>Reported: ${r.profiles?.name || 'Unknown'} (${r.profiles?.profile_status || 'N/A'})</h3>
+                    <p>Post: "${r.posts?.content || 'Content unavailable'}"</p>
                     <div class="reason-tag">${r.reason.toUpperCase()}</div>
                 </div>
                 <div class="actions">
@@ -159,20 +170,20 @@
     }
 
     async function handleAction(reportId, action) {
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user } } = await supabaseClient.auth.getUser();
 
-        const { error } = await supabase.rpc('review_report', {
+        const { error } = await supabaseClient.rpc('review_report', {
             report_id_param: reportId,
             admin_id: user.id,
             action: action
         });
 
-        if (error) alert('Error: ' + error.message);
+        if (error) alert('Action Error: ' + error.message);
         else fetchReports();
     }
 
     // Auto-check session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabaseClient.auth.getSession().then(({ data: { session } }) => {
         if (session) showDashboard();
     });
 </script>

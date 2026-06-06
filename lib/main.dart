@@ -71,14 +71,6 @@ Future<void> main() async {
 
   await MobileAds.instance.initialize();
 
-  /*// Configure test device
-  MobileAds.instance.updateRequestConfiguration(
-    RequestConfiguration(
-      testDeviceIds: ['78c46566-5627-4b2e-a7b3-10ca1ad1abe1'],
-      //104dd0e5-dbf9-43f9-9a61-10ca1ad1abe1
-    ),
-  );*/
-
   AdService.instance.loadRewardedAd();
 
   await HiveInit.init();
@@ -243,12 +235,10 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     _initDeepLinks();
     _setupAuthStateListener();
-    _makeAdmin();
   }
 
-  /// One-time utility to promote a specific user to admin.
-  /// Call this in initState if you need to perform the promotion.
-  Future<void> _makeAdmin() async {
+  /// One-time utility to promote a specific user to admin using the 'roles' table.
+  Future<void> _promoteToAdmin() async {
     final adminClient = SupabaseClient(
       dotenv.env['SUPABASE_URL']!,
       dotenv.env['SUPABASE_SERVICE_ROLE_KEY']!,
@@ -257,21 +247,23 @@ class _MyAppState extends State<MyApp> {
     const targetUserId = 'c1e60e5a-15b5-4ce9-8494-0f6c8340b9ea';
 
     try {
-      // 1. Update Auth Metadata (for RLS checks using auth.jwt())
+      // 1. Update roles table (Source of truth for is_admin() function)
+      await adminClient
+          .from('roles')
+          .upsert({
+            'user_id': targetUserId, 
+            'role': 'admin'
+          });
+
+      // 2. Update Auth Metadata (Keep in sync for RLS checks using auth.jwt())
       await adminClient.auth.admin.updateUserById(
         targetUserId,
-        attributes: AdminUserAttributes(
+        attributes: const AdminUserAttributes(
           appMetadata: {'role': 'admin'},
         ),
       );
 
-      // 2. Update profiles table (for UI checks and queries)
-      await adminClient
-          .from('profiles')
-          .update({'role': 'admin'})
-          .eq('id', targetUserId);
-
-      debugPrint('User promoted to admin successfully');
+      debugPrint('User promoted to admin in roles table successfully');
     } catch (e) {
       debugPrint('Error promoting user: $e');
     }

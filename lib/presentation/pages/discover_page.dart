@@ -113,6 +113,8 @@ class _DiscoverPageState extends State<DiscoverPage> {
     );
   }
 
+
+
   @override
   void dispose() {
     _scrollController.removeListener(_scrollListener);
