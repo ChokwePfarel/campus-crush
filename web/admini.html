@@ -1,195 +1,888 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Moderation Dashboard</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-          --bg: #0d0d0f;
-          --bg2: #131316;
-          --bg3: #1a1a1f;
-          --surface: #1e1e26;
-          --border: rgba(255,255,255,0.07);
-          --text: #e8e8ec;
-          --text2: #9090a0;
-          --accent: #c8f065;
-          --red: #ff4f4f;
-          --radius: 10px;
-        }
 
-        body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); padding: 40px; }
-        .container { max-width: 1000px; margin: 0 auto; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
-        h1 { font-family: 'Instrument Serif', serif; font-style: italic; font-size: 32px; }
 
-        .report-card {
-          background: var(--bg2);
-          border: 1px solid var(--border);
-          border-radius: var(--radius);
-          padding: 20px;
-          margin-bottom: 16px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Moderation Dashboard</title>
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+        <style>
+            :root {
+              --bg:       #0a0a0c;
+              --bg2:      #111115;
+              --bg3:      #17171d;
+              --surface:  #1e1e28;
+              --border:   rgba(255,255,255,0.07);
+              --border2:  rgba(255,255,255,0.12);
+              --text:     #e4e4ec;
+              --text2:    #7a7a8c;
+              --text3:    #4a4a5a;
+              --accent:   #c8f065;
+              --accent2:  #a8d045;
+              --red:      #ff5555;
+              --red-bg:   rgba(255,85,85,0.08);
+              --yellow:   #ffd166;
+              --yellow-bg:rgba(255,209,102,0.08);
+              --radius:   10px;
+              --radius-sm:6px;
+            }
 
-        .report-info h3 { font-size: 16px; margin-bottom: 4px; }
-        .report-info p { color: var(--text2); font-size: 13px; }
-        .reason-tag {
-          display: inline-block;
-          background: rgba(255,255,255,0.05);
-          padding: 4px 8px;
-          border-radius: 4px;
-          font-family: 'DM Mono', monospace;
-          font-size: 11px;
-          margin-top: 8px;
-        }
+            * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        .actions { display: flex; gap: 10px; }
-        button {
-          padding: 8px 16px;
-          border-radius: 6px;
-          border: none;
-          font-family: 'DM Mono', monospace;
-          font-size: 12px;
-          cursor: pointer;
-          transition: opacity 0.2s;
-        }
-        .btn-warn { background: var(--accent); color: #000; }
-        .btn-dismiss { background: transparent; border: 1px solid var(--border); color: var(--text2); }
-        button:hover { opacity: 0.8; }
-        button:disabled { opacity: 0.4; cursor: not-allowed; }
+            body {
+              font-family: 'DM Sans', sans-serif;
+              background: var(--bg);
+              color: var(--text);
+              min-height: 100vh;
+              line-height: 1.5;
+            }
 
-        #login-form { max-width: 320px; margin: 100px auto; display: flex; flex-direction: column; gap: 12px; }
-        input { background: var(--bg3); border: 1px solid var(--border); padding: 12px; border-radius: 6px; color: #fff; }
-    </style>
-</head>
-<body>
+            /* ── Login ─────────────────────────────────────────── */
+            #auth-section {
+              min-height: 100vh;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              background:
+                radial-gradient(ellipse 60% 40% at 50% 0%, rgba(200,240,101,0.06) 0%, transparent 70%),
+                var(--bg);
+            }
 
-<div class="container">
+            .login-box {
+              width: 360px;
+              background: var(--bg2);
+              border: 1px solid var(--border2);
+              border-radius: 16px;
+              padding: 40px 36px;
+              display: flex;
+              flex-direction: column;
+              gap: 20px;
+            }
+
+            .login-box .brand {
+              text-align: center;
+              margin-bottom: 4px;
+            }
+
+            .login-box .brand h1 {
+              font-family: 'Instrument Serif', serif;
+              font-style: italic;
+              font-size: 28px;
+              letter-spacing: -0.3px;
+            }
+
+            .login-box .brand p {
+              color: var(--text2);
+              font-size: 13px;
+              margin-top: 4px;
+            }
+
+            .field {
+              display: flex;
+              flex-direction: column;
+              gap: 6px;
+            }
+
+            .field label {
+              font-size: 12px;
+              font-weight: 600;
+              color: var(--text2);
+              letter-spacing: 0.06em;
+              text-transform: uppercase;
+            }
+
+            .field input {
+              background: var(--bg3);
+              border: 1px solid var(--border2);
+              border-radius: var(--radius-sm);
+              padding: 11px 14px;
+              color: var(--text);
+              font-family: 'DM Sans', sans-serif;
+              font-size: 14px;
+              outline: none;
+              transition: border-color 0.2s, box-shadow 0.2s;
+            }
+
+            .field input:focus {
+              border-color: rgba(200,240,101,0.4);
+              box-shadow: 0 0 0 3px rgba(200,240,101,0.07);
+            }
+
+            .field input.error {
+              border-color: rgba(255,85,85,0.5);
+              box-shadow: 0 0 0 3px rgba(255,85,85,0.07);
+            }
+
+            /* Error log panel */
+            #login-error-log {
+              display: none;
+              background: var(--red-bg);
+              border: 1px solid rgba(255,85,85,0.2);
+              border-radius: var(--radius-sm);
+              padding: 12px 14px;
+              gap: 8px;
+              flex-direction: column;
+            }
+
+            #login-error-log.visible { display: flex; }
+
+            .error-log-header {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              font-size: 12px;
+              font-weight: 600;
+              color: var(--red);
+              letter-spacing: 0.04em;
+              text-transform: uppercase;
+            }
+
+            .error-log-header svg { flex-shrink: 0; }
+
+            .error-entries {
+              display: flex;
+              flex-direction: column;
+              gap: 4px;
+            }
+
+            .error-entry {
+              display: flex;
+              align-items: flex-start;
+              gap: 10px;
+              font-size: 12.5px;
+              color: #ffaaaa;
+              font-family: 'DM Mono', monospace;
+            }
+
+            .error-entry .ts {
+              color: var(--text3);
+              flex-shrink: 0;
+              font-size: 11px;
+              padding-top: 1px;
+            }
+
+            .error-entry .msg { word-break: break-word; }
+
+            .btn-primary {
+              padding: 12px;
+              border-radius: var(--radius-sm);
+              border: none;
+              background: var(--accent);
+              color: #000;
+              font-family: 'DM Mono', monospace;
+              font-size: 13px;
+              font-weight: 500;
+              cursor: pointer;
+              transition: background 0.2s, opacity 0.2s, transform 0.1s;
+              letter-spacing: 0.02em;
+            }
+
+            .btn-primary:hover { background: var(--accent2); }
+            .btn-primary:active { transform: scale(0.98); }
+
+            .btn-primary:disabled {
+              opacity: 0.5;
+              cursor: not-allowed;
+              transform: none;
+            }
+
+            .btn-primary.loading {
+              position: relative;
+              color: transparent;
+            }
+
+            .btn-primary.loading::after {
+              content: '';
+              position: absolute;
+              inset: 0;
+              margin: auto;
+              width: 16px; height: 16px;
+              border: 2px solid rgba(0,0,0,0.3);
+              border-top-color: #000;
+              border-radius: 50%;
+              animation: spin 0.6s linear infinite;
+            }
+
+            @keyframes spin { to { transform: rotate(360deg); } }
+
+            /* ── Dashboard ──────────────────────────────────────── */
+            #dashboard-section {
+              display: none;
+              padding: 40px;
+              max-width: 1040px;
+              margin: 0 auto;
+            }
+
+            .dash-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 32px;
+              padding-bottom: 24px;
+              border-bottom: 1px solid var(--border);
+            }
+
+            .dash-header h1 {
+              font-family: 'Instrument Serif', serif;
+              font-style: italic;
+              font-size: 30px;
+              letter-spacing: -0.3px;
+            }
+
+            .dash-header .meta {
+              font-size: 13px;
+              color: var(--text2);
+              margin-top: 2px;
+            }
+
+            .dash-header .meta span {
+              color: var(--accent);
+              font-family: 'DM Mono', monospace;
+              font-size: 12px;
+            }
+
+            .dash-right {
+              display: flex;
+              align-items: center;
+              gap: 12px;
+            }
+
+            .user-pill {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              background: var(--bg3);
+              border: 1px solid var(--border2);
+              border-radius: 20px;
+              padding: 6px 12px 6px 8px;
+              font-size: 13px;
+              color: var(--text2);
+            }
+
+            .user-pill .avatar {
+              width: 24px; height: 24px;
+              border-radius: 50%;
+              background: linear-gradient(135deg, var(--accent), #60c0b0);
+              display: flex; align-items: center; justify-content: center;
+              font-size: 11px;
+              font-weight: 600;
+              color: #000;
+            }
+
+            .btn-ghost {
+              padding: 8px 14px;
+              border-radius: var(--radius-sm);
+              border: 1px solid var(--border2);
+              background: transparent;
+              color: var(--text2);
+              font-family: 'DM Mono', monospace;
+              font-size: 12px;
+              cursor: pointer;
+              transition: background 0.2s, color 0.2s, border-color 0.2s;
+            }
+
+            .btn-ghost:hover {
+              background: var(--bg3);
+              color: var(--text);
+              border-color: var(--border2);
+            }
+
+            /* Stats bar */
+            .stats-bar {
+              display: flex;
+              gap: 12px;
+              margin-bottom: 24px;
+            }
+
+            .stat-chip {
+              background: var(--bg2);
+              border: 1px solid var(--border);
+              border-radius: var(--radius-sm);
+              padding: 10px 16px;
+              font-size: 13px;
+              color: var(--text2);
+              display: flex;
+              align-items: center;
+              gap: 8px;
+            }
+
+            .stat-chip .val {
+              font-family: 'DM Mono', monospace;
+              font-size: 16px;
+              color: var(--text);
+              font-weight: 500;
+            }
+
+            /* Report cards */
+            .report-card {
+              background: var(--bg2);
+              border: 1px solid var(--border);
+              border-radius: var(--radius);
+              padding: 18px 20px;
+              margin-bottom: 10px;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              gap: 16px;
+              transition: border-color 0.2s, background 0.2s;
+              animation: fadeSlide 0.25s ease both;
+            }
+
+            @keyframes fadeSlide {
+              from { opacity: 0; transform: translateY(6px); }
+              to   { opacity: 1; transform: translateY(0); }
+            }
+
+            .report-card:hover {
+              border-color: var(--border2);
+              background: var(--bg3);
+            }
+
+            .report-card.resolving {
+              opacity: 0.4;
+              pointer-events: none;
+            }
+
+            .report-left {
+              display: flex;
+              align-items: center;
+              gap: 16px;
+              min-width: 0;
+            }
+
+            .report-avatar {
+              width: 38px; height: 38px;
+              border-radius: 50%;
+              background: linear-gradient(135deg, #5060d0, #a040c0);
+              display: flex; align-items: center; justify-content: center;
+              font-family: 'Instrument Serif', serif;
+              font-size: 15px;
+              color: #fff;
+              flex-shrink: 0;
+            }
+
+            .report-info { min-width: 0; }
+
+            .report-info .name-row {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              margin-bottom: 3px;
+            }
+
+            .report-info .name {
+              font-size: 14px;
+              font-weight: 600;
+              color: var(--text);
+            }
+
+            .status-badge {
+              font-size: 10px;
+              font-family: 'DM Mono', monospace;
+              padding: 2px 6px;
+              border-radius: 3px;
+              text-transform: uppercase;
+              letter-spacing: 0.05em;
+              border: 1px solid;
+            }
+
+            .status-badge.active    { color: #5ddf90; border-color: rgba(93,223,144,0.3); background: rgba(93,223,144,0.07); }
+            .status-badge.suspended { color: var(--red); border-color: rgba(255,85,85,0.3); background: var(--red-bg); }
+            .status-badge.warned    { color: var(--yellow); border-color: rgba(255,209,102,0.3); background: var(--yellow-bg); }
+            .status-badge.default   { color: var(--text2); border-color: var(--border); background: transparent; }
+
+            .report-info .post-preview {
+              font-size: 12.5px;
+              color: var(--text2);
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              max-width: 440px;
+              font-style: italic;
+            }
+
+            .report-info .post-preview::before { content: '"'; }
+            .report-info .post-preview::after  { content: '"'; }
+
+            .report-meta {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              margin-top: 6px;
+            }
+
+            .reason-tag {
+              font-family: 'DM Mono', monospace;
+              font-size: 10px;
+              padding: 2px 7px;
+              border-radius: 3px;
+              background: rgba(200,240,101,0.08);
+              color: var(--accent);
+              border: 1px solid rgba(200,240,101,0.18);
+              text-transform: uppercase;
+              letter-spacing: 0.06em;
+            }
+
+            .report-time {
+              font-size: 11px;
+              color: var(--text3);
+              font-family: 'DM Mono', monospace;
+            }
+
+            .actions {
+              display: flex;
+              gap: 8px;
+              flex-shrink: 0;
+            }
+
+            .btn-warn {
+              padding: 8px 16px;
+              border-radius: var(--radius-sm);
+              border: none;
+              background: var(--accent);
+              color: #000;
+              font-family: 'DM Mono', monospace;
+              font-size: 11px;
+              font-weight: 500;
+              cursor: pointer;
+              transition: background 0.2s, opacity 0.15s;
+              letter-spacing: 0.02em;
+            }
+
+            .btn-warn:hover { background: var(--accent2); }
+            .btn-warn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+            .btn-dismiss {
+              padding: 8px 14px;
+              border-radius: var(--radius-sm);
+              border: 1px solid var(--border2);
+              background: transparent;
+              color: var(--text2);
+              font-family: 'DM Mono', monospace;
+              font-size: 11px;
+              cursor: pointer;
+              transition: background 0.15s, color 0.15s;
+            }
+
+            .btn-dismiss:hover { background: var(--bg3); color: var(--text); }
+            .btn-dismiss:disabled { opacity: 0.4; cursor: not-allowed; }
+
+            /* Empty & loading states */
+            .empty-state {
+              text-align: center;
+              padding: 64px 0;
+              color: var(--text2);
+            }
+
+            .empty-state .icon {
+              font-size: 36px;
+              margin-bottom: 12px;
+              opacity: 0.4;
+            }
+
+            .empty-state p { font-size: 14px; }
+
+            .skeleton {
+              background: linear-gradient(90deg, var(--bg2) 25%, var(--bg3) 50%, var(--bg2) 75%);
+              background-size: 400% 100%;
+              animation: shimmer 1.4s ease infinite;
+              border-radius: var(--radius-sm);
+              height: 72px;
+              margin-bottom: 10px;
+            }
+
+            @keyframes shimmer {
+              0%   { background-position: 100% 50%; }
+              100% { background-position: 0%   50%; }
+            }
+
+            /* Toast */
+            #toast {
+              position: fixed;
+              bottom: 28px;
+              right: 28px;
+              background: var(--surface);
+              border: 1px solid var(--border2);
+              border-radius: var(--radius);
+              padding: 12px 18px;
+              font-size: 13px;
+              color: var(--text);
+              box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              opacity: 0;
+              transform: translateY(8px);
+              transition: opacity 0.25s, transform 0.25s;
+              pointer-events: none;
+              z-index: 100;
+            }
+
+            #toast.show { opacity: 1; transform: translateY(0); }
+            #toast.success .dot { background: #5ddf90; }
+            #toast.error   .dot { background: var(--red); }
+
+            #toast .dot {
+              width: 7px; height: 7px;
+              border-radius: 50%;
+              flex-shrink: 0;
+            }
+
+            /* Action error inline */
+            .action-error {
+              font-size: 11px;
+              color: var(--red);
+              font-family: 'DM Mono', monospace;
+              margin-top: 4px;
+              text-align: right;
+            }
+        </style>
+    </head>
+    <body>
+
+    <!-- ── Login ───────────────────────────────────────────────── -->
     <div id="auth-section">
-        <h1>Admin Access</h1>
-        <div id="login-form">
-            <input type="email" id="email" placeholder="Admin Email">
-            <input type="password" id="password" placeholder="Password">
-            <button class="btn-warn" onclick="login()">Login</button>
+        <div class="login-box">
+            <div class="brand">
+                <h1>Moderation</h1>
+                <p>Admin access only</p>
+            </div>
+
+            <div id="login-error-log">
+                <div class="error-log-header">
+                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                        <circle cx="8" cy="8" r="7" stroke="#ff5555" stroke-width="1.5"/>
+                        <path d="M8 4.5v4M8 11v.5" stroke="#ff5555" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                    Sign-in errors
+                </div>
+                <div class="error-entries" id="error-entries"></div>
+            </div>
+
+            <div class="field">
+                <label>Email</label>
+                <input type="email" id="email" placeholder="admin@example.com" autocomplete="email">
+            </div>
+            <div class="field">
+                <label>Password</label>
+                <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+            </div>
+
+            <button class="btn-primary" id="login-btn" onclick="login()">Sign in</button>
         </div>
     </div>
 
-    <div id="dashboard-section" style="display: none;">
-        <div class="header">
-            <h1>Reports Queue</h1>
-            <button class="btn-dismiss" onclick="logout()">Logout</button>
+    <!-- ── Dashboard ───────────────────────────────────────────── -->
+    <div id="dashboard-section">
+        <div class="dash-header">
+            <div>
+                <h1>Reports Queue</h1>
+                <div class="meta">Pending review — <span id="pending-count">—</span></div>
+            </div>
+            <div class="dash-right">
+                <div class="user-pill">
+                    <div class="avatar" id="user-avatar">?</div>
+                    <span id="user-email-display">admin</span>
+                </div>
+                <button class="btn-ghost" onclick="logout()">Sign out</button>
+            </div>
         </div>
-        <div id="reports-list">
-            <p style="color: var(--text2)">Loading reports...</p>
-        </div>
-    </div>
-</div>
 
-<script>
-    const SUPABASE_URL =
+        <div class="stats-bar" id="stats-bar" style="display:none">
+            <div class="stat-chip"><span class="val" id="stat-pending">0</span> pending</div>
+            <div class="stat-chip"><span class="val" id="stat-spam">0</span> spam</div>
+            <div class="stat-chip"><span class="val" id="stat-harassment">0</span> harassment</div>
+            <div class="stat-chip"><span class="val" id="stat-other">0</span> other</div>
+        </div>
+
+        <div id="reports-list"></div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast"><div class="dot"></div><span id="toast-msg"></span></div>
+
+    <script>
+        const SUPABASE_URL =
       'https://wdhzlfqftxytphnohpqb.supabase.co';
 
     const SUPABASE_ANON_KEY =
       'sb_publishable_YOMbh7gnIrWdBjk4jjIajw_euyagT9S';
 
-    // Initialized with a unique name to avoid conflict
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabaseClient =
+      supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+      );
+        // ── Error logging ──────────────────────────────────────────
+        const errorLog = [];
 
-    async function login() {
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        function logError(context, error) {
+            const entry = {
+                ts: new Date().toLocaleTimeString(),
+                context,
+                message: error?.message || String(error),
+                code: error?.code || error?.status || null,
+            };
+            errorLog.push(entry);
+            console.error(`[${entry.ts}] ${context}:`, error);
+            renderLoginErrors();
+        }
 
-        if (error) return alert(error.message);
+        function renderLoginErrors() {
+            const log   = document.getElementById('login-error-log');
+            const list  = document.getElementById('error-entries');
+            if (!errorLog.length) { log.classList.remove('visible'); return; }
 
-        // Verify admin status from the 'roles' table
-        const { data: roleData, error: roleError } = await supabaseClient
-            .from('roles')
-            .select('role')
-            .eq('user_id', data.user.id)
-            .single();
+            log.classList.add('visible');
+            list.innerHTML = errorLog.slice(-4).map(e => `
+              <div class="error-entry">
+                <span class="ts">${e.ts}</span>
+                <span class="msg">${e.context}: ${e.message}${e.code ? ` (${e.code})` : ''}</span>
+              </div>
+            `).join('');
+        }
 
-        if (roleError || roleData?.role !== 'admin') {
+        function clearLoginErrors() {
+            errorLog.length = 0;
+            renderLoginErrors();
+        }
+
+        // ── Toast ──────────────────────────────────────────────────
+        let toastTimer;
+        function showToast(msg, type = 'success') {
+            const el  = document.getElementById('toast');
+            const txt = document.getElementById('toast-msg');
+            clearTimeout(toastTimer);
+            el.className = `show ${type}`;
+            txt.textContent = msg;
+            toastTimer = setTimeout(() => el.className = '', 3000);
+        }
+
+        // ── Auth ───────────────────────────────────────────────────
+        async function login() {
+            const email    = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const btn      = document.getElementById('login-btn');
+
+            if (!email || !password) {
+                logError('Validation', { message: 'Email and password are required.' });
+                return;
+            }
+
+            btn.disabled = true;
+            btn.classList.add('loading');
+            clearLoginErrors();
+
+            // Mark inputs neutral
+            document.getElementById('email').classList.remove('error');
+            document.getElementById('password').classList.remove('error');
+
+            try {
+                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+                if (error) {
+                    logError('Auth', error);
+                    document.getElementById('email').classList.add('error');
+                    document.getElementById('password').classList.add('error');
+                    return;
+                }
+
+                // Verify admin role
+                const { data: roleData, error: roleError } = await supabaseClient
+                    .from('roles')
+                    .select('role')
+                    .eq('user_id', data.user.id)
+                    .single();
+
+                if (roleError) {
+                    logError('Role lookup', roleError);
+                    await supabaseClient.auth.signOut();
+                    return;
+                }
+
+                if (roleData?.role !== 'admin') {
+                    const denied = { message: 'User does not have administrator privileges.', code: 'ROLE_DENIED' };
+                    logError('Access control', denied);
+                    await supabaseClient.auth.signOut();
+                    return;
+                }
+
+                showDashboard(data.user);
+
+            } catch (err) {
+                logError('Unexpected', err);
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('loading');
+            }
+        }
+
+        async function logout() {
             await supabaseClient.auth.signOut();
-            return alert('Access Denied: You do not have administrator privileges.');
+            location.reload();
         }
 
-        showDashboard();
-    }
+        function showDashboard(user) {
+            document.getElementById('auth-section').style.display = 'none';
+            document.getElementById('dashboard-section').style.display = 'block';
 
-    async function logout() {
-        await supabaseClient.auth.signOut();
-        location.reload();
-    }
+            // Set user info
+            const emailShort = user?.email?.split('@')[0] || 'admin';
+            document.getElementById('user-email-display').textContent = user?.email || 'admin';
+            document.getElementById('user-avatar').textContent = emailShort[0].toUpperCase();
 
-    function showDashboard() {
-        document.getElementById('auth-section').style.display = 'none';
-        document.getElementById('dashboard-section').style.display = 'block';
-        fetchReports();
-    }
-
-    async function fetchReports() {
-        const { data: reports, error } = await supabaseClient
-            .from('reports')
-            .select(`
-                id, reason, created_at, reported_user_id,
-                profiles:profiles!reported_user_id ( name, profile_status ),
-                posts:posts!post_id ( content )
-            `)
-            .is('reviewed_at', null);
-
-        if (error) {
-            console.error('Fetch Error:', error);
-            document.getElementById('reports-list').innerHTML = '<p>Error loading reports.</p>';
-            return;
+            fetchReports();
         }
 
-        const list = document.getElementById('reports-list');
-        list.innerHTML = reports.length ? '' : '<p>No pending reports.</p>';
+        // ── Reports ────────────────────────────────────────────────
+        async function fetchReports() {
+            const list = document.getElementById('reports-list');
+            list.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>';
 
-        reports.forEach(r => {
-            const card = document.createElement('div');
-            card.className = 'report-card';
-            card.innerHTML = `
-                <div class="report-info">
-                    <h3>Reported: ${r.profiles?.name || 'Unknown'} (${r.profiles?.profile_status || 'N/A'})</h3>
-                    <p>Post: "${r.posts?.content || 'Content unavailable'}"</p>
-                    <div class="reason-tag">${r.reason.toUpperCase()}</div>
-                </div>
-                <div class="actions">
-                    <button class="btn-dismiss" onclick="handleAction('${r.id}', 'dismiss')">Dismiss</button>
-                    <button class="btn-warn" onclick="handleAction('${r.id}', 'warn')">Issue Warning</button>
-                </div>
-            `;
-            list.appendChild(card);
+            const { data: reports, error } = await supabaseClient
+                .from('reports')
+                .select(`
+                    id, reason, created_at, reported_user_id,
+                    profiles:profiles!reported_user_id ( name, profile_status ),
+                    posts:posts!post_id ( content )
+                `)
+                .is('reviewed_at', null)
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error('Fetch reports error:', error);
+                list.innerHTML = `<div class="empty-state"><div class="icon">⚠</div><p>Failed to load reports: ${error.message}</p></div>`;
+                return;
+            }
+
+            // Stats
+            const spam       = reports.filter(r => r.reason?.toLowerCase().includes('spam')).length;
+            const harassment = reports.filter(r => r.reason?.toLowerCase().includes('harass')).length;
+            const other      = reports.length - spam - harassment;
+
+            document.getElementById('pending-count').textContent = reports.length;
+            document.getElementById('stat-pending').textContent    = reports.length;
+            document.getElementById('stat-spam').textContent       = spam;
+            document.getElementById('stat-harassment').textContent = harassment;
+            document.getElementById('stat-other').textContent      = other;
+            document.getElementById('stats-bar').style.display = 'flex';
+
+            list.innerHTML = '';
+
+            if (!reports.length) {
+                list.innerHTML = `
+                  <div class="empty-state">
+                    <div class="icon">✓</div>
+                    <p>No pending reports — queue is clear.</p>
+                  </div>`;
+                return;
+            }
+
+            reports.forEach((r, i) => {
+                const card   = document.createElement('div');
+                card.className = 'report-card';
+                card.id = `card-${r.id}`;
+                card.style.animationDelay = `${i * 40}ms`;
+
+                const name   = r.profiles?.name || 'Unknown';
+                const status = r.profiles?.profile_status || '';
+                const initials = name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+                const badgeClass = ['active','suspended','warned'].includes(status) ? status : 'default';
+                const time   = r.created_at ? new Date(r.created_at).toLocaleDateString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }) : '';
+
+                card.innerHTML = `
+                  <div class="report-left">
+                    <div class="report-avatar">${initials || '?'}</div>
+                    <div class="report-info">
+                      <div class="name-row">
+                        <span class="name">${name}</span>
+                        ${status ? `<span class="status-badge ${badgeClass}">${status}</span>` : ''}
+                      </div>
+                      <div class="post-preview">${r.posts?.content || 'Content unavailable'}</div>
+                      <div class="report-meta">
+                        <span class="reason-tag">${r.reason?.toUpperCase() || 'UNKNOWN'}</span>
+                        ${time ? `<span class="report-time">${time}</span>` : ''}
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <div class="actions">
+                      <button class="btn-dismiss" id="dismiss-${r.id}" onclick="handleAction('${r.id}', 'dismiss')">Dismiss</button>
+                      <button class="btn-warn"    id="warn-${r.id}"    onclick="handleAction('${r.id}', 'warn')">Issue Warning</button>
+                    </div>
+                    <div class="action-error" id="err-${r.id}"></div>
+                  </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        async function handleAction(reportId, action) {
+            const card    = document.getElementById(`card-${reportId}`);
+            const errEl   = document.getElementById(`err-${reportId}`);
+            const warnBtn = document.getElementById(`warn-${reportId}`);
+            const disBtn  = document.getElementById(`dismiss-${reportId}`);
+
+            card.classList.add('resolving');
+            errEl.textContent = '';
+
+            try {
+                const { data: { user } } = await supabaseClient.auth.getUser();
+
+                const { error } = await supabaseClient.rpc('review_report', {
+                    report_id_param: reportId,
+                    admin_id: user.id,
+                    action,
+                });
+
+                if (error) {
+                    console.error(`Action '${action}' failed for report ${reportId}:`, error);
+                    card.classList.remove('resolving');
+                    errEl.textContent = error.message || 'Action failed.';
+                    return;
+                }
+
+                showToast(action === 'warn' ? 'Warning issued' : 'Report dismissed', 'success');
+                card.style.transition = 'opacity 0.3s, transform 0.3s, max-height 0.4s';
+                card.style.opacity  = '0';
+                card.style.transform = 'translateX(12px)';
+                setTimeout(() => { card.remove(); updateCount(); }, 350);
+
+            } catch (err) {
+                console.error('Unexpected action error:', err);
+                card.classList.remove('resolving');
+                errEl.textContent = 'Unexpected error. See console.';
+                showToast('Action failed', 'error');
+            }
+        }
+
+        function updateCount() {
+            const remaining = document.querySelectorAll('.report-card').length;
+            document.getElementById('pending-count').textContent = remaining;
+            document.getElementById('stat-pending').textContent  = remaining;
+            if (!remaining) {
+                document.getElementById('reports-list').innerHTML = `
+                  <div class="empty-state">
+                    <div class="icon">✓</div>
+                    <p>No pending reports — queue is clear.</p>
+                  </div>`;
+            }
+        }
+
+        // ── Auto-restore session ───────────────────────────────────
+        supabaseClient.auth.getSession().then(({ data: { session } }) => {
+            if (session) showDashboard(session.user);
         });
-    }
 
-    async function handleAction(reportId, action) {
-        const { data: { user } } = await supabaseClient.auth.getUser();
-
-        const { error } = await supabaseClient.rpc('review_report', {
-            report_id_param: reportId,
-            admin_id: user.id,
-            action: action
+        // Enter key on login
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Enter' && document.getElementById('auth-section').style.display !== 'none') login();
         });
+    </script>
+    </body>
+    </html>
 
-        if (error) alert('Action Error: ' + error.message);
-        else fetchReports();
-    }
-
-    // Auto-check session
-    supabaseClient.auth.getSession().then(({ data: { session } }) => {
-        if (session) showDashboard();
-    });
-</script>
-
-</body>
-</html>
