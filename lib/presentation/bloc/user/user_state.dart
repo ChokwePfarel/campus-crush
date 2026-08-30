@@ -11,6 +11,11 @@ class UserLoaded extends UserState {
   UserLoaded(this.user);
 }
 
+class UserCreated extends UserState {
+  final UserEntity user;
+  UserCreated(this.user);
+}
+
 class UserError extends UserState {
   final String message;
   UserError(this.message);

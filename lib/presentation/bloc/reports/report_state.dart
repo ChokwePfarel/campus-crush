@@ -6,6 +6,8 @@ class ReportsLoading extends ReportsState {}
 
 class ReportsSuccess extends ReportsState {}
 
+class PostAlreadyReported extends ReportsState {}
+
 class ReportsFailure extends ReportsState {
   final String message;
   ReportsFailure(this.message);
@@ -19,6 +21,7 @@ class BlockUserInitial extends BlockUserState {}
 class BlockUserLoading extends BlockUserState {}
 
 class BlockUserSuccess extends BlockUserState {}
+
 
 class BlockUserFailure extends BlockUserState {
   final String message;

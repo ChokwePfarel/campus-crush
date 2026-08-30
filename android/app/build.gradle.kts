@@ -37,9 +37,15 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11) // Or JVM_17 depending on your project
+        }
     }
+
+    /*kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_11.toString()
+    }*/
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
@@ -55,7 +61,7 @@ android {
     buildTypes {
         //for keystore
         //for keystore
-        //enabled Code Shrinking and Obfuscation, which are essential for making your app smaller and
+        //enabled Code Shrinking and Obfuscation, which are essential for making yo app smaller and
         // harder to reverse-engineer.
         getByName("release") {
             signingConfig = signingConfigs.getByName("release")
@@ -73,3 +79,7 @@ android {
     flutter {
         source = "../.."
     }
+
+dependencies {
+    implementation("androidx.appcompat:appcompat:1.6.1")
+}

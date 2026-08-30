@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
+import 'package:dating_app/core/utils/snackbar.dart';
 import 'package:dating_app/data/models/user_model.dart';
 import 'package:dating_app/domain/entities/image_entity.dart';
 import 'package:dating_app/presentation/bloc/conectivity/conectivityBloc.dart';
@@ -325,6 +326,13 @@ class _ProfilePageState extends State<ProfilePage> {
         BlocBuilder<ImagesBloc, ImagesState>(
           builder: (context, state) => IconButton(
             onPressed: () async {
+              if(
+              state is ImagesUploading &&
+              state.currentImages.length >= 3
+              ){
+                return AppSnackBar.show(context,'You can only upload 3 photos', type: SnackBarType.info);
+
+              }
               final picked = await ImagePicker().pickImage(
                 source: ImageSource.gallery,
                 imageQuality: 80,
@@ -334,6 +342,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   UploadGalleryImage(userId: userId, image: File(picked.path)),
                 );
               }
+
+
             },
             icon: Icon(Icons.add_a_photo_outlined, color: color),
           ),

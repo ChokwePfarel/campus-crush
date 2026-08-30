@@ -4,19 +4,17 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dating_app/core/utils/date_utils.dart';
 import 'package:dating_app/core/utils/feed_skeleton.dart';
 import 'package:dating_app/core/utils/notification_badge.dart';
+import 'package:dating_app/core/utils/report_page.dart';
 import 'package:dating_app/core/utils/screen_size.dart';
 import 'package:dating_app/core/utils/snackbar.dart';
 import 'package:dating_app/core/utils/theme.dart';
 import 'package:dating_app/core/widgets/bottom_sheet.dart';
 import 'package:dating_app/data/models/post_model.dart';
 
-import 'package:dating_app/data/models/user_model.dart';
 import 'package:dating_app/domain/entities/coins_entity.dart';
 import 'package:dating_app/presentation/bloc/coins/coins_bloc.dart';
 import 'package:dating_app/presentation/bloc/coins/coins_event.dart';
 import 'package:dating_app/presentation/bloc/coins/coins_state.dart';
-import 'package:dating_app/presentation/bloc/comments/comments_bloc.dart';
-import 'package:dating_app/presentation/bloc/comments/comments_state.dart';
 import 'package:dating_app/presentation/bloc/direct_posts/direct_posts_bloc.dart';
 import 'package:dating_app/presentation/bloc/direct_posts/direct_posts_event.dart';
 import 'package:dating_app/presentation/bloc/direct_posts/direct_posts_state.dart';
@@ -24,7 +22,6 @@ import 'package:dating_app/presentation/bloc/notification/notificationBloc.dart'
 import 'package:dating_app/presentation/bloc/notification/notification_state.dart';
 import 'package:dating_app/presentation/pages/Notification_Page.dart';
 import 'package:dating_app/presentation/pages/other_user_profile.dart';
-import 'package:dating_app/presentation/pages/send_post_page.dart';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -71,7 +68,6 @@ class _DirectPostsPageState extends State<DirectPostsPage>
     });
 
     _scrollCtrl.addListener(_onScroll);
-
     // Initial load after mount
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -196,6 +192,8 @@ class _DirectPostsPageState extends State<DirectPostsPage>
       CupertinoPageRoute(builder: (_) => OtherUserProfilePage(userId: userId)),
     );
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -479,11 +477,29 @@ class _DirectPostCard extends StatelessWidget {
     required this.onReplyTap,
   });
 
+  void showPostOptionsDialog(BuildContext context, currentUserId, blockedUserId, username) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.4),
+      builder: (context) => PostOptionsDialog(
+        post: post,
+        currentUserId: currentUserId,
+        blockedUserId: post.userId,
+        username: post.authorName,)
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final accent = post.postType.accentColor;
+
+    final currentUserId = Supabase.instance.client.auth.currentUser?.id;
+
     return GestureDetector(
       onTap: onTap,
+      onLongPress: (){
+        showPostOptionsDialog(context, currentUserId, post.userId, post.authorName);
+      },
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(16),

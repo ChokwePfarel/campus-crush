@@ -1,3 +1,5 @@
+
+
 import 'package:dating_app/core/constants/lists.dart';
 import 'package:dating_app/core/utils/purple.dart';
 import 'package:dating_app/core/utils/snackbar.dart';
@@ -7,12 +9,12 @@ import 'package:dating_app/presentation/bloc/user/user_bloc.dart';
 import 'package:dating_app/presentation/bloc/user/user_event.dart';
 import 'package:dating_app/presentation/bloc/user/user_state.dart';
 import 'package:dating_app/presentation/pages/home_page.dart';
+import 'package:dating_app/presentation/pages/verify_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/auth/auth_bloc.dart';
 import '../bloc/auth/auth_event.dart';
 import '../bloc/auth/auth_state.dart';
-import 'onboarding_page.dart' hide PurplePalette;
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -23,15 +25,11 @@ class SignUpPage extends StatefulWidget {
 
 class _SignUpPageState extends State<SignUpPage> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-
-  String _selectedSex = DropDownOptions.sexOptions.first;
-  String _selectedUniversity = DropDownOptions.universities.first;
+  final String _nameController = '';
 
   bool _agreedToPolicy = false;
-  bool _isVerified = false;
   bool _obscurePassword = true;
 
   // Mapping of universities to their expected email domains
@@ -43,55 +41,32 @@ class _SignUpPageState extends State<SignUpPage> {
     'University of Johannesburg': '@student.uj.ac.za',
     'University of Pretoria': '@tuks.co.za',
     'University of KwaZulu-Natal': '@stu.ukzn.ac.za',
-    'Rhodes University': '@ruconnect.ru.ac.za',
+    'Rhodes University': '@ru.ac.za',
+
+    //Additional universities
+    'Nelson Mandela University': '@mandela.ac.za',
+    'University of Limpopo': '@ul.ac.za',
+    'University of Fort Hare': '@ufh.ac.za',
+    'North-West University (NWU)': '@nwu.ac.za',
+    'University of Mpumalanga': '@ump.ac.za',
+    'Sol Plaatje University': '@spu.ac.za',
+    'Walter Sisulu University': '@wsu.ac.za',
+    'Cape Peninsula University of Technology (CPUT)': '@mycput.ac.za',
+    'Durban University of Technology (DUT)': '@dut.ac.za',
+    'Mangosuthu University of Technology (MUT)': '@mut.ac.za',
+    'Tshwane University of Technology (TUT)': '@tut.ac.za',
+    'Central University of Technology (CUT)': '@cut.ac.za',
+    'Vaal University of Technology (VUT)': '@vut.ac.za',
   };
+
 
   @override
   void initState() {
     super.initState();
-    // Re-verify email when text changes
-   // _emailController.addListener(_updateVerificationStatus);
-  }
-
- /* void _updateVerificationStatus() {
-    final status = _checkIfVerified();
-    if (status != _isVerified) {
-      setState(() => _isVerified = status);
-    }
-  }
-
-  bool _checkIfVerified() {
-    final email = _emailController.text.trim().toLowerCase();
-    // Check if the email matches the selected university's domain
-    final expectedDomain = _universityDomains[_selectedUniversity];
-    if (expectedDomain == null) return false;
-    return email.endsWith(expectedDomain);
-  }*/
-
-  void _createUser() {
-    if (_formKey.currentState!.validate()) {
-      context.read<UserBloc>().add(
-        UpdateUserRequested(
-          name: _nameController.text.trim(),
-          sex: _selectedSex,
-          bio: 'No Bio',
-          status: 'Looking',
-          residence: '',
-          university: _selectedUniversity,
-          interests: ['Music'],
-          age: 0,
-          privacySettings: null,
-          isVerified: _isVerified,
-          coins: 30,
-        ),
-      );
-    }
   }
 
   @override
   void dispose() {
-   // _emailController.removeListener(_updateVerificationStatus);
-    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -114,19 +89,9 @@ class _SignUpPageState extends State<SignUpPage> {
                   type: SnackBarType.error,
                 );
               }
-              if (state is Authenticated) {
-
-                context.read<UserBloc>().add(LoadUserSubscription());
-
-                _createUser();
-              }
-            },
-          ),
-          BlocListener<UserBloc, UserState>(
-            listener: (context, state) {
-              if (state is UserLoaded) {
+              if (state is EmailVerificationRequired) {
                 Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (_) => const MyHomePage()),
+                  MaterialPageRoute(builder: (_) => const VerifyPage()),
                 );
               }
             },
@@ -163,54 +128,20 @@ class _SignUpPageState extends State<SignUpPage> {
                     const SizedBox(height: 32),
 
                     _pillField(
-                      controller: _nameController,
-                      hint: 'Display Name',
-                      icon: Icons.person_outline,
-                      validator: (val) =>
-                          val == null || val.isEmpty ? 'Required' : null,
-                    ),
-
-                    const SizedBox(height: 13),
-
-                    _label("Where do you study?"),
-
-                    CustomDropdown<String>(
-                      labelText: '',
-                      items: DropDownOptions.universities,
-                      value: _selectedUniversity,
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedUniversity = value!;
-                          //_updateVerificationStatus();
-                        });
-                      },
-                    ),
-
-                    const SizedBox(height: 13),
-
-                    _label("Gender"),
-
-                    CustomDropdown<String>(
-                      labelText: '',
-                      items: DropDownOptions.sexOptions,
-                      value: _selectedSex,
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedSex = value!;
-                        });
-                      },
-                    ),
-
-                    const SizedBox(height: 13),
-
-                    _pillField(
                       controller: _emailController,
                       hint: 'Student Email',
                       icon: Icons.email_outlined,
                       keyboardType: TextInputType.emailAddress,
                       validator: (val) {
-                        if (val == null || !val.contains('@')) return 'Invalid email';
-                        return null;
+                        if (val == null || !val.contains('@')) {
+                          return 'Invalid email';
+                        }
+
+                        final isValid = _universityDomains.values.any((domain) => val.endsWith(domain));
+                        if (!isValid) {
+                          return 'Please use your official student email';
+                        }
+                        return null; // valid
                       },
                     ),
                     const SizedBox(height: 13),
@@ -294,22 +225,12 @@ class _SignUpPageState extends State<SignUpPage> {
                                 return;
                               }
 
-                              if (!_isVerified) {
-                                final domain = _universityDomains[_selectedUniversity] ?? "correct student domain";
-                                AppSnackBar.show(
-                                  context,
-                                  'Exclusive to students. Please use your $domain email.',
-                                  type: SnackBarType.info,
-                                );
-                                return;
-                              }
-
                               if (_formKey.currentState!.validate()) {
                                 context.read<AuthBloc>().add(
                                   SignUpRequested(
                                     _emailController.text.trim(),
                                     _passwordController.text.trim(),
-                                    _nameController.text.trim(),
+                                    _nameController,
                                   ),
                                 );
                               }
@@ -381,6 +302,7 @@ class _SignUpPageState extends State<SignUpPage> {
       ),
     );
   }
+
 
   Widget _label(String text) => Padding(
     padding: const EdgeInsets.only(bottom: 8, left: 4),

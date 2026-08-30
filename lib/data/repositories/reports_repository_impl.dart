@@ -31,4 +31,20 @@ class ReportsRepositoryImpl implements ReportsRepository {
       blockedId: blockedId,
     );
   }
+
+  @override
+  Future<void> unblockUser({
+    required String blockerId,
+    required String blockedId,
+  }) async {
+    await remoteDataSource.unblockUser(
+      blockerId: blockerId,
+      blockedId: blockedId,
+    );
+  }
+
+  @override
+  Future<List<String>> getBlockedUserIds(String userId) async {
+    return await remoteDataSource.getBlockedUserIds(userId);
+  }
 }

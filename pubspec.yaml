@@ -2,7 +2,7 @@ name: dating_app
 description: "A new Flutter project."
 publish_to: 'none'
 
-version: 1.0.0+5
+version: 1.0.0+10
 
 environment:
   sdk: ^3.9.0
@@ -17,8 +17,7 @@ dependencies:
   google_fonts: ^8.0.2
   image_picker: ^1.2.1
   feather_icons: ^1.2.0
-  lucide_icons: ^0.257.0
-  google_mobile_ads: ^7.0.0
+  google_mobile_ads: ^9.0.0
   hugeicons: ^1.1.6
   mocktail: ^1.0.5
   shared_preferences: any
@@ -28,10 +27,12 @@ dependencies:
   cached_network_image: ^3.4.1
   flutter_dotenv: ^6.0.1
   app_links: ^7.0.0
+  image_cropper: ^12.2.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_lints: ^3.0.0
   flutter_launcher_icons: ^0.14.4
   change_app_package_name: ^1.5.0
 
@@ -53,3 +54,4 @@ flutter:
   assets:
     - .env
     - assets/
+    - shorebird.yaml

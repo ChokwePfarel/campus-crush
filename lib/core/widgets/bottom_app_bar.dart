@@ -12,7 +12,6 @@ import 'package:dating_app/presentation/pages/feed.dart';
 import 'package:dating_app/presentation/pages/inbox_page.dart';
 import 'package:dating_app/presentation/pages/radar_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -100,7 +99,7 @@ class _InstaStyleNavState extends State<InstaStyleNav> {
           : CupertinoColors.systemBackground,
       body: NotificationListener<ScrollNotification>(
         onNotification: (notification) {
-          if (notification is ScrollUpdateNotification && 
+          if (notification is ScrollUpdateNotification &&
               notification.metrics.axis == Axis.vertical) {
             _handleScrollDelta(notification.scrollDelta ?? 0);
           }
@@ -136,8 +135,8 @@ class _InstaStyleNavState extends State<InstaStyleNav> {
                 label: 'Feed'
             ),
             const BottomNavigationBarItem(
-                icon: Icon(LucideIcons.radio),
-                activeIcon: Icon(LucideIcons.radio),
+                icon: Icon(CupertinoIcons.dot_radiowaves_left_right),
+                activeIcon: Icon(CupertinoIcons.dot_radiowaves_left_right),
                 label: 'Radar'
             ),
 

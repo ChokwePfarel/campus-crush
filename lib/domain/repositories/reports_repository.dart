@@ -10,4 +10,11 @@ abstract class ReportsRepository {
     required String blockerId,
     required String blockedId,
   });
+
+  Future<void> unblockUser({
+    required String blockerId,
+    required String blockedId,
+  });
+
+  Future<List<String>> getBlockedUserIds(String userId);
 }

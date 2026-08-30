@@ -1,7 +1,11 @@
 import 'package:dating_app/data/models/post_model.dart';
+import 'package:dating_app/presentation/bloc/posts/posts_bloc.dart';
+import 'package:dating_app/presentation/bloc/posts/posts_event.dart';
 import 'package:dating_app/presentation/bloc/reports/report_bloc.dart';
 import 'package:dating_app/presentation/bloc/reports/report_event.dart';
 import 'package:dating_app/presentation/bloc/reports/report_state.dart';
+import 'package:dating_app/presentation/bloc/user/user_bloc.dart';
+import 'package:dating_app/presentation/bloc/user/user_state.dart' as user_st;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dating_app/core/utils/snackbar.dart';
@@ -24,6 +28,7 @@ class ReportPostPage extends StatefulWidget {
 class _ReportPostPageState extends State<ReportPostPage> {
   int? _selectedIndex;
   bool _submitted = false;
+  bool _alreadyReported = false;
 
   static const List<_ReportReason> _reasons = [
     _ReportReason(
@@ -32,6 +37,13 @@ class _ReportPostPageState extends State<ReportPostPage> {
       title: 'Spam',
       subtitle: 'Unwanted commercial content or repetitive posts',
     ),
+    _ReportReason(
+      icon: Icons.warning_amber_rounded,
+      iconColor: Color(0xFFFF6F00),
+      title: 'Sexualizing Children',
+      subtitle: 'Content that exploits or sexualizes minors',
+    ),
+
     _ReportReason(
       icon: Icons.sentiment_very_dissatisfied_rounded,
       iconColor: Color(0xFFE53935),
@@ -57,10 +69,10 @@ class _ReportPostPageState extends State<ReportPostPage> {
       subtitle: 'Promotes or glorifies self-harm behaviour',
     ),
     _ReportReason(
-      icon: Icons.copyright_rounded,
-      iconColor: Color(0xFF558B2F),
-      title: 'Copyright Violation',
-      subtitle: 'Uses someones intellectual property without permission',
+        icon: Icons.copyright_rounded,
+        iconColor: Color(0xFF558B2F),
+        title: 'Copyright Violation',
+        subtitle: 'Uses someones intellectual property without permission',
     ),
     _ReportReason(
       icon: Icons.more_horiz_rounded,
@@ -75,6 +87,7 @@ class _ReportPostPageState extends State<ReportPostPage> {
     context.read<ReportsBloc>().add(
       ReportPost(
         postId: widget.post.id,
+        reportedUserId: widget.post.userId,
         reporterId: widget.currentUserId,
         reason: _reasons[_selectedIndex!].title,
       ),
@@ -82,43 +95,48 @@ class _ReportPostPageState extends State<ReportPostPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return BlocListener<ReportsBloc, ReportsState>(
-      listener: (context, state) {
-        if (state is ReportsSuccess) {
-          setState(() => _submitted = true);
-        } else if (state is ReportsFailure) {
-          AppSnackBar.show(context, state.message, type: SnackBarType.error);
-        }
-      },
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF7F8FA),
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.close_rounded, color: Color(0xFF212121)),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          title: const Text(
-            'Report Post',
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF212121),
-              letterSpacing: -0.3,
+    Widget build(BuildContext context) {
+      return BlocListener<ReportsBloc, ReportsState>(
+        listener: (context, state) {
+          if (state is ReportsSuccess) {
+            setState(() => _submitted = true);
+          } else if (state is PostAlreadyReported) {
+            setState(() {
+              _submitted = true;
+              _alreadyReported = true;
+            });
+          } else if (state is ReportsFailure) {
+            AppSnackBar.show(context, state.message, type: SnackBarType.error);
+          }
+        },
+        child: Scaffold(
+          backgroundColor: const Color(0xFFF7F8FA),
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.close_rounded, color: Color(0xFF212121)),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            title: const Text(
+              'Report Post',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF212121),
+                letterSpacing: -0.3,
+              ),
+            ),
+            centerTitle: true,
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(1),
+              child: Container(height: 1, color: Colors.grey.shade100),
             ),
           ),
-          centerTitle: true,
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(1),
-            child: Container(height: 1, color: Colors.grey.shade100),
-          ),
+          body: _submitted ? _buildSuccessState() : _buildReasonsList(),
         ),
-        body: _submitted ? _buildSuccessState() : _buildReasonsList(),
-      ),
-    );
-  }
+      );
+    }
 
   Widget _buildReasonsList() {
     return Column(
@@ -324,19 +342,25 @@ class _ReportPostPageState extends State<ReportPostPage> {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: const Color(0xFFE8F5E9),
+                color: _alreadyReported
+                    ? const Color(0xFFE3F2FD)
+                    : const Color(0xFFE8F5E9),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.check_circle_outline_rounded,
-                color: Color(0xFF2E7D32),
+              child: Icon(
+                _alreadyReported
+                    ? Icons.info_outline_rounded
+                    : Icons.check_circle_outline_rounded,
+                color: _alreadyReported
+                    ? const Color(0xFF1565C0)
+                    : const Color(0xFF2E7D32),
                 size: 44,
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
-              'Report Submitted',
-              style: TextStyle(
+            Text(
+              _alreadyReported ? 'Already Reported' : 'Report Submitted',
+              style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w700,
                 color: Color(0xFF212121),
@@ -345,7 +369,9 @@ class _ReportPostPageState extends State<ReportPostPage> {
             ),
             const SizedBox(height: 10),
             Text(
-              'Thank you for helping keep our community safe. We\'ll review this post shortly.',
+              _alreadyReported
+                  ? 'This post has already been reported and is currently being reviewed by our team.'
+                  : 'Thank you for helping keep our community safe. We\'ll review this post shortly.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
@@ -412,7 +438,7 @@ class PostOptionsDialog extends StatelessWidget {
     showDialog(
       context: context,
       barrierColor: Colors.black.withOpacity(0.45),
-      builder: (context) => _BlockUserDialog(
+      builder: (context) => BlockUserDialog(
         currentUserId: currentUserId,
         blockedUserId: blockedUserId,
         username: username,
@@ -465,12 +491,11 @@ class PostOptionsDialog extends StatelessWidget {
               onTap: () {
                 Navigator.of(context).pop();
                 Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => ReportPostPage(
-                      post: post,
-                      currentUserId: currentUserId,
-                    ),
-                  ),
+                  MaterialPageRoute(builder: (_) => ReportPostPage(
+                    post: post,
+                    currentUserId: currentUserId,
+
+                  )),
                 );
               },
             ),
@@ -558,12 +583,12 @@ class _OptionTile extends StatelessWidget {
   }
 }
 
-class _BlockUserDialog extends StatelessWidget {
+class BlockUserDialog extends StatelessWidget {
   final String currentUserId;
   final String blockedUserId;
   final String? username;
 
-  const _BlockUserDialog({
+  const BlockUserDialog({
     required this.currentUserId,
     required this.blockedUserId,
     this.username,
@@ -576,6 +601,15 @@ class _BlockUserDialog extends StatelessWidget {
     return BlocListener<BlockUserBloc, BlockUserState>(
       listener: (context, state) {
         if (state is BlockUserSuccess) {
+          // Refresh the feed immediately
+          final userState = context.read<UserBloc>().state;
+          if (userState is user_st.UserLoaded) {
+             context.read<PostBloc>().add(LoadPosts(
+               university: userState.user.university,
+               isInitial: true,
+             ));
+          }
+          
           Navigator.of(context).pop();
           AppSnackBar.show(
             context,
@@ -676,7 +710,8 @@ class _BlockUserDialog extends StatelessWidget {
                 },
               ),
               const SizedBox(height: 10),
-              SliverToBoxAdapter(
+              SizedBox(
+                width: double.infinity,
                 child: TextButton(
                   onPressed: () => Navigator.of(context).pop(),
                   style: TextButton.styleFrom(

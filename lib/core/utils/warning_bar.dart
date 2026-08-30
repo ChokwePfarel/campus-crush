@@ -41,9 +41,10 @@ class _WarningBarState extends State<WarningBar> {
     }
 
     return GestureDetector(
-      onTap: (){
+      onTap: () {
+        _dismissContainer();
         Navigator.push(
-          context, MaterialPageRoute(
+            context, MaterialPageRoute(
             builder: (context) => const WarningPage()
         )
         );
@@ -53,19 +54,22 @@ class _WarningBarState extends State<WarningBar> {
           color: Colors.red.shade900,
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Row(
-          children: [
-            Icon(Icons.warning, color: Colors.amber),
-            Text(
-              'Tap to view warning',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            children: [
+              Icon(Icons.warning, color: Colors.amber),
+              Text(
+                'Tap to view warning',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
 
-          ],
+            ],
+          ),
         ),
       ),
     );

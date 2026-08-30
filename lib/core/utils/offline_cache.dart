@@ -216,6 +216,10 @@ class OfflineCache {
     await box.put('recent_posts', data);
   }
 
+  static Future<void> clearPostsCache() async {
+    await Hive.box(postsBoxName).delete('recent_posts');
+  }
+
   static List<PostModel> getCachedPosts() {
     final box              = Hive.box(postsBoxName);
     final List<dynamic>? data = box.get('recent_posts');

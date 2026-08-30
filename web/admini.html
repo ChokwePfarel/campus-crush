@@ -1,888 +1,701 @@
-
-
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Moderation Dashboard</title>
-        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
-        <style>
-            :root {
-              --bg:       #0a0a0c;
-              --bg2:      #111115;
-              --bg3:      #17171d;
-              --surface:  #1e1e28;
-              --border:   rgba(255,255,255,0.07);
-              --border2:  rgba(255,255,255,0.12);
-              --text:     #e4e4ec;
-              --text2:    #7a7a8c;
-              --text3:    #4a4a5a;
-              --accent:   #c8f065;
-              --accent2:  #a8d045;
-              --red:      #ff5555;
-              --red-bg:   rgba(255,85,85,0.08);
-              --yellow:   #ffd166;
-              --yellow-bg:rgba(255,209,102,0.08);
-              --radius:   10px;
-              --radius-sm:6px;
-            }
-
-            * { box-sizing: border-box; margin: 0; padding: 0; }
-
-            body {
-              font-family: 'DM Sans', sans-serif;
-              background: var(--bg);
-              color: var(--text);
-              min-height: 100vh;
-              line-height: 1.5;
-            }
-
-            /* ── Login ─────────────────────────────────────────── */
-            #auth-section {
-              min-height: 100vh;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              background:
-                radial-gradient(ellipse 60% 40% at 50% 0%, rgba(200,240,101,0.06) 0%, transparent 70%),
-                var(--bg);
-            }
-
-            .login-box {
-              width: 360px;
-              background: var(--bg2);
-              border: 1px solid var(--border2);
-              border-radius: 16px;
-              padding: 40px 36px;
-              display: flex;
-              flex-direction: column;
-              gap: 20px;
-            }
-
-            .login-box .brand {
-              text-align: center;
-              margin-bottom: 4px;
-            }
-
-            .login-box .brand h1 {
-              font-family: 'Instrument Serif', serif;
-              font-style: italic;
-              font-size: 28px;
-              letter-spacing: -0.3px;
-            }
-
-            .login-box .brand p {
-              color: var(--text2);
-              font-size: 13px;
-              margin-top: 4px;
-            }
-
-            .field {
-              display: flex;
-              flex-direction: column;
-              gap: 6px;
-            }
-
-            .field label {
-              font-size: 12px;
-              font-weight: 600;
-              color: var(--text2);
-              letter-spacing: 0.06em;
-              text-transform: uppercase;
-            }
-
-            .field input {
-              background: var(--bg3);
-              border: 1px solid var(--border2);
-              border-radius: var(--radius-sm);
-              padding: 11px 14px;
-              color: var(--text);
-              font-family: 'DM Sans', sans-serif;
-              font-size: 14px;
-              outline: none;
-              transition: border-color 0.2s, box-shadow 0.2s;
-            }
-
-            .field input:focus {
-              border-color: rgba(200,240,101,0.4);
-              box-shadow: 0 0 0 3px rgba(200,240,101,0.07);
-            }
-
-            .field input.error {
-              border-color: rgba(255,85,85,0.5);
-              box-shadow: 0 0 0 3px rgba(255,85,85,0.07);
-            }
-
-            /* Error log panel */
-            #login-error-log {
-              display: none;
-              background: var(--red-bg);
-              border: 1px solid rgba(255,85,85,0.2);
-              border-radius: var(--radius-sm);
-              padding: 12px 14px;
-              gap: 8px;
-              flex-direction: column;
-            }
-
-            #login-error-log.visible { display: flex; }
-
-            .error-log-header {
-              display: flex;
-              align-items: center;
-              gap: 8px;
-              font-size: 12px;
-              font-weight: 600;
-              color: var(--red);
-              letter-spacing: 0.04em;
-              text-transform: uppercase;
-            }
-
-            .error-log-header svg { flex-shrink: 0; }
-
-            .error-entries {
-              display: flex;
-              flex-direction: column;
-              gap: 4px;
-            }
-
-            .error-entry {
-              display: flex;
-              align-items: flex-start;
-              gap: 10px;
-              font-size: 12.5px;
-              color: #ffaaaa;
-              font-family: 'DM Mono', monospace;
-            }
-
-            .error-entry .ts {
-              color: var(--text3);
-              flex-shrink: 0;
-              font-size: 11px;
-              padding-top: 1px;
-            }
-
-            .error-entry .msg { word-break: break-word; }
-
-            .btn-primary {
-              padding: 12px;
-              border-radius: var(--radius-sm);
-              border: none;
-              background: var(--accent);
-              color: #000;
-              font-family: 'DM Mono', monospace;
-              font-size: 13px;
-              font-weight: 500;
-              cursor: pointer;
-              transition: background 0.2s, opacity 0.2s, transform 0.1s;
-              letter-spacing: 0.02em;
-            }
-
-            .btn-primary:hover { background: var(--accent2); }
-            .btn-primary:active { transform: scale(0.98); }
-
-            .btn-primary:disabled {
-              opacity: 0.5;
-              cursor: not-allowed;
-              transform: none;
-            }
-
-            .btn-primary.loading {
-              position: relative;
-              color: transparent;
-            }
-
-            .btn-primary.loading::after {
-              content: '';
-              position: absolute;
-              inset: 0;
-              margin: auto;
-              width: 16px; height: 16px;
-              border: 2px solid rgba(0,0,0,0.3);
-              border-top-color: #000;
-              border-radius: 50%;
-              animation: spin 0.6s linear infinite;
-            }
-
-            @keyframes spin { to { transform: rotate(360deg); } }
-
-            /* ── Dashboard ──────────────────────────────────────── */
-            #dashboard-section {
-              display: none;
-              padding: 40px;
-              max-width: 1040px;
-              margin: 0 auto;
-            }
-
-            .dash-header {
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              margin-bottom: 32px;
-              padding-bottom: 24px;
-              border-bottom: 1px solid var(--border);
-            }
-
-            .dash-header h1 {
-              font-family: 'Instrument Serif', serif;
-              font-style: italic;
-              font-size: 30px;
-              letter-spacing: -0.3px;
-            }
-
-            .dash-header .meta {
-              font-size: 13px;
-              color: var(--text2);
-              margin-top: 2px;
-            }
-
-            .dash-header .meta span {
-              color: var(--accent);
-              font-family: 'DM Mono', monospace;
-              font-size: 12px;
-            }
-
-            .dash-right {
-              display: flex;
-              align-items: center;
-              gap: 12px;
-            }
-
-            .user-pill {
-              display: flex;
-              align-items: center;
-              gap: 8px;
-              background: var(--bg3);
-              border: 1px solid var(--border2);
-              border-radius: 20px;
-              padding: 6px 12px 6px 8px;
-              font-size: 13px;
-              color: var(--text2);
-            }
-
-            .user-pill .avatar {
-              width: 24px; height: 24px;
-              border-radius: 50%;
-              background: linear-gradient(135deg, var(--accent), #60c0b0);
-              display: flex; align-items: center; justify-content: center;
-              font-size: 11px;
-              font-weight: 600;
-              color: #000;
-            }
-
-            .btn-ghost {
-              padding: 8px 14px;
-              border-radius: var(--radius-sm);
-              border: 1px solid var(--border2);
-              background: transparent;
-              color: var(--text2);
-              font-family: 'DM Mono', monospace;
-              font-size: 12px;
-              cursor: pointer;
-              transition: background 0.2s, color 0.2s, border-color 0.2s;
-            }
-
-            .btn-ghost:hover {
-              background: var(--bg3);
-              color: var(--text);
-              border-color: var(--border2);
-            }
-
-            /* Stats bar */
-            .stats-bar {
-              display: flex;
-              gap: 12px;
-              margin-bottom: 24px;
-            }
-
-            .stat-chip {
-              background: var(--bg2);
-              border: 1px solid var(--border);
-              border-radius: var(--radius-sm);
-              padding: 10px 16px;
-              font-size: 13px;
-              color: var(--text2);
-              display: flex;
-              align-items: center;
-              gap: 8px;
-            }
-
-            .stat-chip .val {
-              font-family: 'DM Mono', monospace;
-              font-size: 16px;
-              color: var(--text);
-              font-weight: 500;
-            }
-
-            /* Report cards */
-            .report-card {
-              background: var(--bg2);
-              border: 1px solid var(--border);
-              border-radius: var(--radius);
-              padding: 18px 20px;
-              margin-bottom: 10px;
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              gap: 16px;
-              transition: border-color 0.2s, background 0.2s;
-              animation: fadeSlide 0.25s ease both;
-            }
-
-            @keyframes fadeSlide {
-              from { opacity: 0; transform: translateY(6px); }
-              to   { opacity: 1; transform: translateY(0); }
-            }
-
-            .report-card:hover {
-              border-color: var(--border2);
-              background: var(--bg3);
-            }
-
-            .report-card.resolving {
-              opacity: 0.4;
-              pointer-events: none;
-            }
-
-            .report-left {
-              display: flex;
-              align-items: center;
-              gap: 16px;
-              min-width: 0;
-            }
-
-            .report-avatar {
-              width: 38px; height: 38px;
-              border-radius: 50%;
-              background: linear-gradient(135deg, #5060d0, #a040c0);
-              display: flex; align-items: center; justify-content: center;
-              font-family: 'Instrument Serif', serif;
-              font-size: 15px;
-              color: #fff;
-              flex-shrink: 0;
-            }
-
-            .report-info { min-width: 0; }
-
-            .report-info .name-row {
-              display: flex;
-              align-items: center;
-              gap: 8px;
-              margin-bottom: 3px;
-            }
-
-            .report-info .name {
-              font-size: 14px;
-              font-weight: 600;
-              color: var(--text);
-            }
-
-            .status-badge {
-              font-size: 10px;
-              font-family: 'DM Mono', monospace;
-              padding: 2px 6px;
-              border-radius: 3px;
-              text-transform: uppercase;
-              letter-spacing: 0.05em;
-              border: 1px solid;
-            }
-
-            .status-badge.active    { color: #5ddf90; border-color: rgba(93,223,144,0.3); background: rgba(93,223,144,0.07); }
-            .status-badge.suspended { color: var(--red); border-color: rgba(255,85,85,0.3); background: var(--red-bg); }
-            .status-badge.warned    { color: var(--yellow); border-color: rgba(255,209,102,0.3); background: var(--yellow-bg); }
-            .status-badge.default   { color: var(--text2); border-color: var(--border); background: transparent; }
-
-            .report-info .post-preview {
-              font-size: 12.5px;
-              color: var(--text2);
-              white-space: nowrap;
-              overflow: hidden;
-              text-overflow: ellipsis;
-              max-width: 440px;
-              font-style: italic;
-            }
-
-            .report-info .post-preview::before { content: '"'; }
-            .report-info .post-preview::after  { content: '"'; }
-
-            .report-meta {
-              display: flex;
-              align-items: center;
-              gap: 8px;
-              margin-top: 6px;
-            }
-
-            .reason-tag {
-              font-family: 'DM Mono', monospace;
-              font-size: 10px;
-              padding: 2px 7px;
-              border-radius: 3px;
-              background: rgba(200,240,101,0.08);
-              color: var(--accent);
-              border: 1px solid rgba(200,240,101,0.18);
-              text-transform: uppercase;
-              letter-spacing: 0.06em;
-            }
-
-            .report-time {
-              font-size: 11px;
-              color: var(--text3);
-              font-family: 'DM Mono', monospace;
-            }
-
-            .actions {
-              display: flex;
-              gap: 8px;
-              flex-shrink: 0;
-            }
-
-            .btn-warn {
-              padding: 8px 16px;
-              border-radius: var(--radius-sm);
-              border: none;
-              background: var(--accent);
-              color: #000;
-              font-family: 'DM Mono', monospace;
-              font-size: 11px;
-              font-weight: 500;
-              cursor: pointer;
-              transition: background 0.2s, opacity 0.15s;
-              letter-spacing: 0.02em;
-            }
-
-            .btn-warn:hover { background: var(--accent2); }
-            .btn-warn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-            .btn-dismiss {
-              padding: 8px 14px;
-              border-radius: var(--radius-sm);
-              border: 1px solid var(--border2);
-              background: transparent;
-              color: var(--text2);
-              font-family: 'DM Mono', monospace;
-              font-size: 11px;
-              cursor: pointer;
-              transition: background 0.15s, color 0.15s;
-            }
-
-            .btn-dismiss:hover { background: var(--bg3); color: var(--text); }
-            .btn-dismiss:disabled { opacity: 0.4; cursor: not-allowed; }
-
-            /* Empty & loading states */
-            .empty-state {
-              text-align: center;
-              padding: 64px 0;
-              color: var(--text2);
-            }
-
-            .empty-state .icon {
-              font-size: 36px;
-              margin-bottom: 12px;
-              opacity: 0.4;
-            }
-
-            .empty-state p { font-size: 14px; }
-
-            .skeleton {
-              background: linear-gradient(90deg, var(--bg2) 25%, var(--bg3) 50%, var(--bg2) 75%);
-              background-size: 400% 100%;
-              animation: shimmer 1.4s ease infinite;
-              border-radius: var(--radius-sm);
-              height: 72px;
-              margin-bottom: 10px;
-            }
-
-            @keyframes shimmer {
-              0%   { background-position: 100% 50%; }
-              100% { background-position: 0%   50%; }
-            }
-
-            /* Toast */
-            #toast {
-              position: fixed;
-              bottom: 28px;
-              right: 28px;
-              background: var(--surface);
-              border: 1px solid var(--border2);
-              border-radius: var(--radius);
-              padding: 12px 18px;
-              font-size: 13px;
-              color: var(--text);
-              box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-              display: flex;
-              align-items: center;
-              gap: 10px;
-              opacity: 0;
-              transform: translateY(8px);
-              transition: opacity 0.25s, transform 0.25s;
-              pointer-events: none;
-              z-index: 100;
-            }
-
-            #toast.show { opacity: 1; transform: translateY(0); }
-            #toast.success .dot { background: #5ddf90; }
-            #toast.error   .dot { background: var(--red); }
-
-            #toast .dot {
-              width: 7px; height: 7px;
-              border-radius: 50%;
-              flex-shrink: 0;
-            }
-
-            /* Action error inline */
-            .action-error {
-              font-size: 11px;
-              color: var(--red);
-              font-family: 'DM Mono', monospace;
-              margin-top: 4px;
-              text-align: right;
-            }
-        </style>
-    </head>
-    <body>
-
-    <!-- ── Login ───────────────────────────────────────────────── -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moderation Dashboard | CampusFeed</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #09090b;
+            --sidebar: #121217;
+            --card: #18181b;
+            --border: rgba(255, 255, 255, 0.08);
+            --border-focus: rgba(200, 240, 101, 0.4);
+            --text: #fafafa;
+            --text-muted: #a1a1aa;
+            --text-dim: #52525b;
+            --accent: #c8f065;
+            --accent-hover: #a8d045;
+            --red: #ef4444;
+            --red-bg: rgba(239, 68, 68, 0.1);
+            --blue: #3b82f6;
+            --blue-bg: rgba(59, 130, 246, 0.1);
+            --radius: 12px;
+            --radius-sm: 8px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* ── Login Overlay ─────────────────────────────────────── */
+        #auth-section {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg);
+            background-image: radial-gradient(circle at top center, rgba(200, 240, 101, 0.05), transparent);
+        }
+
+        .login-box {
+            width: 380px;
+            background: var(--sidebar);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 48px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        .login-box h1 {
+            font-family: 'Instrument Serif', serif;
+            font-style: italic;
+            font-size: 32px;
+            text-align: center;
+        }
+
+        .field { display: flex; flex-direction: column; gap: 8px; }
+        .field label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); font-weight: 600; }
+        .field input {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            outline: none;
+            transition: 0.2s;
+        }
+        .field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(200, 240, 101, 0.1); }
+
+        /* ── Sidebar ───────────────────────────────────────────── */
+        nav {
+            width: 260px;
+            background: var(--sidebar);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 24px 16px;
+            flex-shrink: 0;
+        }
+
+        .nav-brand {
+            font-family: 'Instrument Serif', serif;
+            font-style: italic;
+            font-size: 24px;
+            margin-bottom: 40px;
+            padding: 0 8px;
+        }
+
+        .nav-links { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .nav-link:hover { background: rgba(255,255,255,0.03); color: var(--text); }
+        .nav-link.active { background: var(--accent); color: #000; }
+        .nav-link svg { width: 18px; height: 18px; }
+
+        .nav-footer {
+            margin-top: auto;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            flex-direction: column; gap: 12px;
+        }
+
+        .user-info {
+            font-size: 12px;
+            color: var(--text-muted);
+            padding: 0 8px;
+            word-break: break-all;
+        }
+
+        /* ── Main Content ──────────────────────────────────────── */
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px 60px;
+            position: relative;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 32px;
+        }
+
+        .page-title h2 { font-size: 28px; font-weight: 600; margin-bottom: 4px; }
+        .page-title p { color: var(--text-muted); font-size: 14px; }
+
+        /* ── Controls ──────────────────────────────────────────── */
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            align-items: center;
+        }
+
+        .search-container {
+            flex: 1;
+            position: relative;
+        }
+        .search-container input {
+            width: 100%;
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 12px 16px 12px 42px;
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            outline: none;
+        }
+        .search-container svg {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-dim);
+        }
+
+        .filter-pill {
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            font-size: 13px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .filter-pill:hover { border-color: var(--text-dim); }
+        .filter-pill.active { background: var(--blue-bg); color: var(--blue); border-color: var(--blue); }
+
+        /* ── Grid/List Layouts ─────────────────────────────────── */
+        .grid-container { display: flex; flex-direction: column; gap: 12px; }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 20px;
+            transition: 0.2s;
+            animation: fadeIn 0.3s ease;
+        }
+        .card:hover { border-color: var(--text-dim); transform: translateY(-1px); }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } }
+
+        /* ── Report/User Specifics ─────────────────────────────── */
+        .card-content { min-width: 0; }
+        .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+        .user-name { font-weight: 600; font-size: 15px; }
+        .badge {
+            font-family: 'DM Mono', monospace;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+        .badge-red { background: var(--red-bg); color: var(--red); }
+        .badge-blue { background: var(--blue-bg); color: var(--blue); }
+        .badge-accent { background: rgba(200, 240, 101, 0.1); color: var(--accent); }
+
+        .text-preview {
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text);
+            background: rgba(0,0,0,0.2);
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 12px;
+            border-left: 3px solid var(--accent);
+        }
+
+        .card-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
+            color: var(--text-muted);
+            flex-wrap: wrap;
+        }
+        .meta-item { display: flex; align-items: center; gap: 6px; }
+
+        .card-actions { display: flex; flex-direction: column; gap: 8px; justify-content: center; min-width: 140px; }
+
+        .btn {
+            padding: 10px 16px;
+            border-radius: var(--radius-sm);
+            font-family: 'DM Mono', monospace;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: 0.2s;
+            text-align: center;
+        }
+        .btn-primary { background: var(--accent); color: #000; }
+        .btn-primary:hover { background: var(--accent-hover); }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
+        .btn-outline:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+        .btn-danger { background: var(--red-bg); color: var(--red); }
+        .btn-danger:hover { background: var(--red); color: #fff; }
+
+        /* ── States ────────────────────────────────────────────── */
+        .empty-state {
+            padding: 80px 0;
+            text-align: center;
+            color: var(--text-dim);
+        }
+        .empty-state svg { width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.5; }
+
+        .skeleton {
+            height: 120px;
+            background: linear-gradient(90deg, var(--card) 25%, #202024 50%, var(--card) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: var(--radius);
+        }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        /* Toast */
+        #toast {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 16px 24px;
+            border-radius: var(--radius);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transform: translateY(100px);
+            transition: 0.3s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+            z-index: 2000;
+        }
+        #toast.show { transform: translateY(0); }
+        .toast-icon { width: 8px; height: 8px; border-radius: 50%; }
+        .toast-success { background: var(--accent); }
+        .toast-error { background: var(--red); }
+    </style>
+</head>
+<body>
+
+    <!-- ── Auth Section ────────────────────────────────────────── -->
     <div id="auth-section">
         <div class="login-box">
             <div class="brand">
-                <h1>Moderation</h1>
-                <p>Admin access only</p>
-            </div>
-
-            <div id="login-error-log">
-                <div class="error-log-header">
-                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                        <circle cx="8" cy="8" r="7" stroke="#ff5555" stroke-width="1.5"/>
-                        <path d="M8 4.5v4M8 11v.5" stroke="#ff5555" stroke-width="1.5" stroke-linecap="round"/>
-                    </svg>
-                    Sign-in errors
-                </div>
-                <div class="error-entries" id="error-entries"></div>
+                <h1>CampusFeed</h1>
+                <p style="text-align: center; color: var(--text-muted); font-size: 13px; margin-top: 4px;">Moderation Console</p>
             </div>
 
             <div class="field">
-                <label>Email</label>
-                <input type="email" id="email" placeholder="admin@example.com" autocomplete="email">
+                <label>Admin Email</label>
+                <input type="email" id="email" placeholder="admin@campusfeed.com">
             </div>
             <div class="field">
                 <label>Password</label>
-                <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+                <input type="password" id="password" placeholder="••••••••">
             </div>
 
-            <button class="btn-primary" id="login-btn" onclick="login()">Sign in</button>
+            <button class="btn btn-primary" id="login-btn" onclick="login()">Sign In</button>
         </div>
     </div>
 
-    <!-- ── Dashboard ───────────────────────────────────────────── -->
-    <div id="dashboard-section">
-        <div class="dash-header">
-            <div>
-                <h1>Reports Queue</h1>
-                <div class="meta">Pending review — <span id="pending-count">—</span></div>
+    <!-- ── Sidebar ─────────────────────────────────────────────── -->
+    <nav>
+        <div class="nav-brand">Moderation</div>
+
+        <div class="nav-links">
+            <div class="nav-link active" onclick="showSection('queue')" id="link-queue">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                Reports Queue
             </div>
-            <div class="dash-right">
-                <div class="user-pill">
-                    <div class="avatar" id="user-avatar">?</div>
-                    <span id="user-email-display">admin</span>
+            <div class="nav-link" onclick="showSection('history')" id="link-history">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                History
+            </div>
+            <div class="nav-link" onclick="showSection('users')" id="link-users">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                Users
+            </div>
+        </div>
+
+        <div class="nav-footer">
+            <div class="user-info" id="user-email-display">Not signed in</div>
+            <button class="btn btn-outline" onclick="logout()">Sign Out</button>
+        </div>
+    </nav>
+
+    <!-- ── Main Dashboard ──────────────────────────────────────── -->
+    <main>
+        <!-- Reports Queue -->
+        <div id="section-queue">
+            <div class="page-header">
+                <div class="page-title">
+                    <h2>Reports Queue</h2>
+                    <p>Manage pending reports and maintain community safety.</p>
                 </div>
-                <button class="btn-ghost" onclick="logout()">Sign out</button>
+                <div class="btn btn-primary" onclick="fetchReports()">Refresh Queue</div>
             </div>
+
+            <div class="controls">
+                <div class="search-container">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <input type="text" id="queue-search" placeholder="Search by content or username..." oninput="filterList('queue')">
+                </div>
+                <div class="filter-pill active" onclick="setQuickFilter(null)">All</div>
+                <div class="filter-pill" onclick="setQuickFilter('spam')">Spam</div>
+                <div class="filter-pill" onclick="setQuickFilter('harass')">Harassment</div>
+            </div>
+
+            <div id="reports-list" class="grid-container"></div>
         </div>
 
-        <div class="stats-bar" id="stats-bar" style="display:none">
-            <div class="stat-chip"><span class="val" id="stat-pending">0</span> pending</div>
-            <div class="stat-chip"><span class="val" id="stat-spam">0</span> spam</div>
-            <div class="stat-chip"><span class="val" id="stat-harassment">0</span> harassment</div>
-            <div class="stat-chip"><span class="val" id="stat-other">0</span> other</div>
+        <!-- History -->
+        <div id="section-history" style="display:none">
+            <div class="page-header">
+                <div class="page-title">
+                    <h2>Moderation History</h2>
+                    <p>Review previous moderation actions.</p>
+                </div>
+                <div class="search-container" style="max-width: 400px;">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <input type="text" id="history-search" placeholder="Search history..." oninput="filterList('history')">
+                </div>
+            </div>
+            <div id="history-list" class="grid-container"></div>
         </div>
 
-        <div id="reports-list"></div>
-    </div>
+        <!-- Users -->
+        <div id="section-users" style="display:none">
+            <div class="page-header">
+                <div class="page-title">
+                    <h2>User Management</h2>
+                    <p>Search and manage user statuses and verification.</p>
+                </div>
+                <div class="btn btn-primary" onclick="fetchUsers()">Refresh Users</div>
+            </div>
+
+            <div class="controls">
+                <div class="search-container">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <input type="text" id="user-search" placeholder="Search by name or ID..." oninput="filterList('users')">
+                </div>
+            </div>
+
+            <div id="users-list" class="grid-container"></div>
+        </div>
+    </main>
 
     <!-- Toast -->
-    <div id="toast"><div class="dot"></div><span id="toast-msg"></span></div>
+    <div id="toast">
+        <div class="toast-icon" id="toast-icon"></div>
+        <span id="toast-msg"></span>
+    </div>
 
     <script>
-        const SUPABASE_URL =
-      'https://wdhzlfqftxytphnohpqb.supabase.co';
+        const SUPABASE_URL = 'https://wdhzlfqftxytphnohpqb.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_YOMbh7gnIrWdBjk4jjIajw_euyagT9S';
 
-    const SUPABASE_ANON_KEY =
-      'sb_publishable_YOMbh7gnIrWdBjk4jjIajw_euyagT9S';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const supabaseClient =
-      supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_ANON_KEY
-      );
-        // ── Error logging ──────────────────────────────────────────
-        const errorLog = [];
+        let reportsData = [];
+        let historyData = [];
+        let usersData = [];
+        let currentQuickFilter = null;
 
-        function logError(context, error) {
-            const entry = {
-                ts: new Date().toLocaleTimeString(),
-                context,
-                message: error?.message || String(error),
-                code: error?.code || error?.status || null,
-            };
-            errorLog.push(entry);
-            console.error(`[${entry.ts}] ${context}:`, error);
-            renderLoginErrors();
-        }
-
-        function renderLoginErrors() {
-            const log   = document.getElementById('login-error-log');
-            const list  = document.getElementById('error-entries');
-            if (!errorLog.length) { log.classList.remove('visible'); return; }
-
-            log.classList.add('visible');
-            list.innerHTML = errorLog.slice(-4).map(e => `
-              <div class="error-entry">
-                <span class="ts">${e.ts}</span>
-                <span class="msg">${e.context}: ${e.message}${e.code ? ` (${e.code})` : ''}</span>
-              </div>
-            `).join('');
-        }
-
-        function clearLoginErrors() {
-            errorLog.length = 0;
-            renderLoginErrors();
-        }
-
-        // ── Toast ──────────────────────────────────────────────────
-        let toastTimer;
-        function showToast(msg, type = 'success') {
-            const el  = document.getElementById('toast');
-            const txt = document.getElementById('toast-msg');
-            clearTimeout(toastTimer);
-            el.className = `show ${type}`;
-            txt.textContent = msg;
-            toastTimer = setTimeout(() => el.className = '', 3000);
-        }
-
-        // ── Auth ───────────────────────────────────────────────────
+        // ── Auth Logic ───────────────────────────────────────────
         async function login() {
-            const email    = document.getElementById('email').value.trim();
+            const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            const btn      = document.getElementById('login-btn');
+            const btn = document.getElementById('login-btn');
 
-            if (!email || !password) {
-                logError('Validation', { message: 'Email and password are required.' });
-                return;
-            }
-
+            btn.innerText = 'Signing in...';
             btn.disabled = true;
-            btn.classList.add('loading');
-            clearLoginErrors();
-
-            // Mark inputs neutral
-            document.getElementById('email').classList.remove('error');
-            document.getElementById('password').classList.remove('error');
 
             try {
-                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) throw error;
 
-                if (error) {
-                    logError('Auth', error);
-                    document.getElementById('email').classList.add('error');
-                    document.getElementById('password').classList.add('error');
-                    return;
-                }
-
-                // Verify admin role
-                const { data: roleData, error: roleError } = await supabaseClient
+                const { data: roleData, error: roleError } = await supabase
                     .from('roles')
                     .select('role')
                     .eq('user_id', data.user.id)
                     .single();
 
-                if (roleError) {
-                    logError('Role lookup', roleError);
-                    await supabaseClient.auth.signOut();
-                    return;
+                if (roleError || roleData?.role !== 'admin') {
+                    await supabase.auth.signOut();
+                    throw new Error('Access denied. Admin role required.');
                 }
 
-                if (roleData?.role !== 'admin') {
-                    const denied = { message: 'User does not have administrator privileges.', code: 'ROLE_DENIED' };
-                    logError('Access control', denied);
-                    await supabaseClient.auth.signOut();
-                    return;
-                }
-
-                showDashboard(data.user);
-
+                initDashboard(data.user);
             } catch (err) {
-                logError('Unexpected', err);
-            } finally {
+                showToast(err.message, 'error');
+                btn.innerText = 'Sign In';
                 btn.disabled = false;
-                btn.classList.remove('loading');
             }
         }
 
         async function logout() {
-            await supabaseClient.auth.signOut();
+            await supabase.auth.signOut();
             location.reload();
         }
 
-        function showDashboard(user) {
+        function initDashboard(user) {
             document.getElementById('auth-section').style.display = 'none';
-            document.getElementById('dashboard-section').style.display = 'block';
-
-            // Set user info
-            const emailShort = user?.email?.split('@')[0] || 'admin';
-            document.getElementById('user-email-display').textContent = user?.email || 'admin';
-            document.getElementById('user-avatar').textContent = emailShort[0].toUpperCase();
-
+            document.getElementById('user-email-display').innerText = user.email;
             fetchReports();
+            fetchHistory();
+            fetchUsers();
         }
 
-        // ── Reports ────────────────────────────────────────────────
+        // ── Navigation ──────────────────────────────────────────
+        function showSection(id) {
+            ['queue', 'history', 'users'].forEach(s => {
+                document.getElementById(`section-${s}`).style.display = s === id ? 'block' : 'none';
+                document.getElementById(`link-${s}`).classList.toggle('active', s === id);
+            });
+        }
+
+        // ── Data Fetching ───────────────────────────────────────
         async function fetchReports() {
             const list = document.getElementById('reports-list');
-            list.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>';
+            list.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div>';
 
-            const { data: reports, error } = await supabaseClient
+            const { data, error } = await supabase
                 .from('reports')
                 .select(`
-                    id, reason, created_at, reported_user_id,
-                    profiles:profiles!reported_user_id ( name, profile_status ),
-                    posts:posts!post_id ( content )
+                    id, reason, created_at, reporter_id, post_id, reported_user_id,
+                    profiles:profiles!reported_user_id ( id, name, profile_status ),
+                    posts:posts!post_id ( id, content, post_type )
                 `)
                 .is('reviewed_at', null)
                 .order('created_at', { ascending: false });
 
-            if (error) {
-                console.error('Fetch reports error:', error);
-                list.innerHTML = `<div class="empty-state"><div class="icon">⚠</div><p>Failed to load reports: ${error.message}</p></div>`;
-                return;
-            }
-
-            // Stats
-            const spam       = reports.filter(r => r.reason?.toLowerCase().includes('spam')).length;
-            const harassment = reports.filter(r => r.reason?.toLowerCase().includes('harass')).length;
-            const other      = reports.length - spam - harassment;
-
-            document.getElementById('pending-count').textContent = reports.length;
-            document.getElementById('stat-pending').textContent    = reports.length;
-            document.getElementById('stat-spam').textContent       = spam;
-            document.getElementById('stat-harassment').textContent = harassment;
-            document.getElementById('stat-other').textContent      = other;
-            document.getElementById('stats-bar').style.display = 'flex';
-
-            list.innerHTML = '';
-
-            if (!reports.length) {
-                list.innerHTML = `
-                  <div class="empty-state">
-                    <div class="icon">✓</div>
-                    <p>No pending reports — queue is clear.</p>
-                  </div>`;
-                return;
-            }
-
-            reports.forEach((r, i) => {
-                const card   = document.createElement('div');
-                card.className = 'report-card';
-                card.id = `card-${r.id}`;
-                card.style.animationDelay = `${i * 40}ms`;
-
-                const name   = r.profiles?.name || 'Unknown';
-                const status = r.profiles?.profile_status || '';
-                const initials = name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
-                const badgeClass = ['active','suspended','warned'].includes(status) ? status : 'default';
-                const time   = r.created_at ? new Date(r.created_at).toLocaleDateString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }) : '';
-
-                card.innerHTML = `
-                  <div class="report-left">
-                    <div class="report-avatar">${initials || '?'}</div>
-                    <div class="report-info">
-                      <div class="name-row">
-                        <span class="name">${name}</span>
-                        ${status ? `<span class="status-badge ${badgeClass}">${status}</span>` : ''}
-                      </div>
-                      <div class="post-preview">${r.posts?.content || 'Content unavailable'}</div>
-                      <div class="report-meta">
-                        <span class="reason-tag">${r.reason?.toUpperCase() || 'UNKNOWN'}</span>
-                        ${time ? `<span class="report-time">${time}</span>` : ''}
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <div class="actions">
-                      <button class="btn-dismiss" id="dismiss-${r.id}" onclick="handleAction('${r.id}', 'dismiss')">Dismiss</button>
-                      <button class="btn-warn"    id="warn-${r.id}"    onclick="handleAction('${r.id}', 'warn')">Issue Warning</button>
-                    </div>
-                    <div class="action-error" id="err-${r.id}"></div>
-                  </div>
-                `;
-                list.appendChild(card);
-            });
+            if (error) { showToast('Failed to fetch reports', 'error'); return; }
+            reportsData = data;
+            renderReports(data, 'reports-list');
         }
 
-        async function handleAction(reportId, action) {
-            const card    = document.getElementById(`card-${reportId}`);
-            const errEl   = document.getElementById(`err-${reportId}`);
-            const warnBtn = document.getElementById(`warn-${reportId}`);
-            const disBtn  = document.getElementById(`dismiss-${reportId}`);
+        async function fetchHistory() {
+            const { data, error } = await supabase
+                .from('reports')
+                .select(`
+                    id, reason, reviewed_at,
+                    profiles:profiles!reported_user_id ( name ),
+                    posts:posts!post_id ( content )
+                `)
+                .not('reviewed_at', 'is', null)
+                .limit(50)
+                .order('reviewed_at', { ascending: false });
 
-            card.classList.add('resolving');
-            errEl.textContent = '';
+            if (!error) { historyData = data; renderReports(data, 'history-list', true); }
+        }
+
+        async function fetchUsers() {
+            const list = document.getElementById('users-list');
+            list.innerHTML = '<div class="skeleton"></div>';
+
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('id, name, profile_status, is_verified, university, created_at')
+                .order('created_at', { ascending: false })
+                .limit(100);
+
+            if (error) { showToast('Failed to fetch users', 'error'); return; }
+            usersData = data;
+            renderUsers(data);
+        }
+
+        // ── Rendering ───────────────────────────────────────────
+        function renderReports(reports, targetId, isHistory = false) {
+            const list = document.getElementById(targetId);
+            if (!reports.length) {
+                list.innerHTML = `<div class="empty-state">No reports found.</div>`;
+                return;
+            }
+
+            list.innerHTML = reports.map(r => `
+                <div class="card" id="report-${r.id}">
+                    <div class="card-content">
+                        <div class="card-header">
+                            <span class="user-name">${r.profiles?.name || 'Deleted User'}</span>
+                            <span class="badge badge-red">${r.reason}</span>
+                            ${r.posts?.post_type ? `<span class="badge badge-blue">${r.posts.post_type}</span>` : ''}
+                        </div>
+                        <div class="text-preview">${r.posts?.content || 'Post content no longer available.'}</div>
+                        <div class="card-meta">
+                            <div class="meta-item">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                ${new Date(isHistory ? r.reviewed_at : r.created_at).toLocaleDateString()}
+                            </div>
+                            <div class="meta-item">ID: ${r.id.slice(0, 8)}...</div>
+                        </div>
+                    </div>
+                    ${!isHistory ? `
+                    <div class="card-actions">
+                        <button class="btn btn-primary" onclick="resolveReport('${r.id}', 'warn')">Issue Warning</button>
+                        <button class="btn btn-danger" onclick="resolveReport('${r.id}', 'delete')">Delete Post</button>
+                        <button class="btn btn-outline" onclick="resolveReport('${r.id}', 'suspend')">Suspend User</button>
+                        <button class="btn btn-outline" onclick="resolveReport('${r.id}', 'dismiss')">Dismiss</button>
+                    </div>` : `
+                    <div style="font-size: 11px; color: var(--accent); font-family: 'DM Mono'; align-self: center;">RESOLVED</div>
+                    `}
+                </div>
+            `).join('');
+        }
+
+        function renderUsers(users) {
+            const list = document.getElementById('users-list');
+            if (!users.length) {
+                list.innerHTML = `<div class="empty-state">No users matching search.</div>`;
+                return;
+            }
+
+            list.innerHTML = users.map(u => `
+                <div class="card" id="user-${u.id}">
+                    <div class="card-content">
+                        <div class="card-header">
+                            <span class="user-name">${u.name}</span>
+                            <span class="badge ${u.profile_status === 'suspended' ? 'badge-red' : 'badge-accent'}">${u.profile_status || 'clean'}</span>
+                            ${u.is_verified ? '<span class="badge badge-blue">Verified</span>' : ''}
+                        </div>
+                        <div class="card-meta">
+                            <div class="meta-item">Univ: ${u.university || 'N/A'}</div>
+                            <div class="meta-item">Joined: ${new Date(u.created_at).toLocaleDateString()}</div>
+                            <div class="meta-item">ID: ${u.id.slice(0, 8)}...</div>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn btn-primary" onclick="manageUser('${u.id}', 'verify')">${u.is_verified ? 'Unverify' : 'Verify'}</button>
+                        <button class="btn btn-danger" onclick="manageUser('${u.id}', 'suspend')">${u.profile_status === 'suspended' ? 'Reactivate' : 'Suspend'}</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ── Actions ─────────────────────────────────────────────
+        async function resolveReport(reportId, action) {
+            if (!confirm(`Are you sure you want to perform action: ${action}?`)) return;
+
+            const report = reportsData.find(r => r.id === reportId);
+            const { data: { user } } = await supabase.auth.getUser();
 
             try {
-                const { data: { user } } = await supabaseClient.auth.getUser();
-
-                const { error } = await supabaseClient.rpc('review_report', {
-                    report_id_param: reportId,
-                    admin_id: user.id,
-                    action,
-                });
-
-                if (error) {
-                    console.error(`Action '${action}' failed for report ${reportId}:`, error);
-                    card.classList.remove('resolving');
-                    errEl.textContent = error.message || 'Action failed.';
-                    return;
+                // 1. Perform destructive actions first if needed
+                if (action === 'delete' && report.post_id) {
+                    await supabase.from('posts').delete().eq('id', report.post_id);
+                } else if (action === 'suspend' && report.reported_user_id) {
+                    await supabase.from('profiles').update({ profile_status: 'suspended' }).eq('id', report.reported_user_id);
                 }
 
-                showToast(action === 'warn' ? 'Warning issued' : 'Report dismissed', 'success');
-                card.style.transition = 'opacity 0.3s, transform 0.3s, max-height 0.4s';
-                card.style.opacity  = '0';
-                card.style.transform = 'translateX(12px)';
-                setTimeout(() => { card.remove(); updateCount(); }, 350);
+                // 2. Call RPC to close report
+                const { error } = await supabase.rpc('review_report', {
+                    report_id_param: reportId,
+                    admin_id: user.id,
+                    action: (action === 'delete' || action === 'suspend') ? 'warn' : action // Map to supported RPC actions
+                });
 
+                if (error) throw error;
+
+                showToast(`Action '${action}' successful.`, 'success');
+                fetchReports(); fetchHistory();
             } catch (err) {
-                console.error('Unexpected action error:', err);
-                card.classList.remove('resolving');
-                errEl.textContent = 'Unexpected error. See console.';
-                showToast('Action failed', 'error');
+                showToast(err.message, 'error');
             }
         }
 
-        function updateCount() {
-            const remaining = document.querySelectorAll('.report-card').length;
-            document.getElementById('pending-count').textContent = remaining;
-            document.getElementById('stat-pending').textContent  = remaining;
-            if (!remaining) {
-                document.getElementById('reports-list').innerHTML = `
-                  <div class="empty-state">
-                    <div class="icon">✓</div>
-                    <p>No pending reports — queue is clear.</p>
-                  </div>`;
+        async function manageUser(userId, action) {
+            const userObj = usersData.find(u => u.id === userId);
+            if (!userObj) return;
+
+            try {
+                let update = {};
+                if (action === 'verify') update = { is_verified: !userObj.is_verified };
+                if (action === 'suspend') update = { profile_status: userObj.profile_status === 'suspended' ? 'clean' : 'suspended' };
+
+                const { error } = await supabase.from('profiles').update(update).eq('id', userId);
+                if (error) throw error;
+
+                showToast('User updated successfully.', 'success');
+                fetchUsers();
+            } catch (err) {
+                showToast(err.message, 'error');
             }
         }
 
-        // ── Auto-restore session ───────────────────────────────────
-        supabaseClient.auth.getSession().then(({ data: { session } }) => {
-            if (session) showDashboard(session.user);
-        });
+        // ── Filtering ───────────────────────────────────────────
+        function filterList(type) {
+            if (type === 'queue') {
+                const query = document.getElementById('queue-search').value.toLowerCase();
+                const filtered = reportsData.filter(r => {
+                    const matchesSearch = (r.profiles?.name?.toLowerCase().includes(query) || r.posts?.content?.toLowerCase().includes(query));
+                    const matchesQuick = !currentQuickFilter || r.reason.toLowerCase().includes(currentQuickFilter);
+                    return matchesSearch && matchesQuick;
+                });
+                renderReports(filtered, 'reports-list');
+            } else if (type === 'history') {
+                const query = document.getElementById('history-search').value.toLowerCase();
+                const filtered = historyData.filter(h => (h.profiles?.name?.toLowerCase().includes(query) || h.posts?.content?.toLowerCase().includes(query)));
+                renderReports(filtered, 'history-list', true);
+            } else if (type === 'users') {
+                const query = document.getElementById('user-search').value.toLowerCase();
+                const filtered = usersData.filter(u => u.name.toLowerCase().includes(query) || u.id.toLowerCase().includes(query));
+                renderUsers(filtered);
+            }
+        }
 
-        // Enter key on login
-        document.addEventListener('keydown', e => {
-            if (e.key === 'Enter' && document.getElementById('auth-section').style.display !== 'none') login();
+        function setQuickFilter(type) {
+            currentQuickFilter = type;
+            document.querySelectorAll('.filter-pill').forEach(p => {
+                p.classList.toggle('active', p.innerText.toLowerCase() === (type || 'all'));
+            });
+            filterList('queue');
+        }
+
+        // ── Utils ───────────────────────────────────────────────
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            document.getElementById('toast-msg').innerText = msg;
+            icon.className = `toast-icon toast-${type}`;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session) initDashboard(session.user);
         });
     </script>
-    </body>
-    </html>
-
+</body>
+</html>

@@ -64,8 +64,9 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
     _scrollCtrl.addListener(_scrollListener);
 
     Connectivity().checkConnectivity().then((results) {
-      if (mounted)
+      if (mounted) {
         setState(() => _isOffline = results.first == ConnectivityResult.none);
+      }
     });
 
     _connectivitySub = Connectivity().onConnectivityChanged.listen((results) {
@@ -136,85 +137,89 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     SizeConfig.init(context);
 
-    return BlocProvider(
-      create: (context) => PostBloc(context.read<PostRepository>()),
-      child: Builder(
-        builder: (context) {
-          return Scaffold(
-            backgroundColor: Colors.black,
-            body: Column(
-              children: [
-                if (_isOffline) _buildOfflineBanner(),
-                Expanded(
-                  child: BlocListener<UserBloc, UserState>(
-                    listener: (context, state) {
-                      if (state is UserLoaded) _fetchPosts(context);
-                    },
-                    child: NestedScrollView(
-                      controller: _scrollCtrl,
-                      headerSliverBuilder: (_, __) => [_buildAppBar()],
-                      body: Column(
-                        children: [
-                          _buildFilterBar(),
-                          Expanded(
-                            child: BlocBuilder<PostBloc, PostState>(
-                              builder: (context, state) {
-                                // The bloc handles cache-first loading and
-                                // offline fallback internally — the UI just
-                                // renders whatever state it receives.
-                                if (state is LoadingPosts) {
-                                  return const UserListSkeleton();
-                                }
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Column(
+        children: [
+          if (_isOffline) _buildOfflineBanner(),
+          Expanded(
+            child: BlocListener<UserBloc, UserState>(
+              listener: (context, state) {
+                if (state is UserLoaded) _fetchPosts(context);
+              },
+            child: NestedScrollView(
+              controller: _scrollCtrl,
+              headerSliverBuilder: (_, __) => [_buildAppBar()],
+              body: Column(
+                children: [
+                  _buildFilterBar(),
+                  Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: () async {
+                        if (!_isOffline) _fetchPosts(context);
+                      },
+                      child: BlocBuilder<PostBloc, PostState>(
+                        builder: (context, state) {
+                          // The bloc handles cache-first loading and
+                          // offline fallback internally — the UI just
+                          // renders whatever state it receives.
+                          if (state is LoadingPosts) {
+                            return const UserListSkeleton();
+                          }
 
-                                if (state is PostError) {
-                                  return Center(
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        const Text('Could not load posts'),
-                                        const SizedBox(height: 12),
-                                        ElevatedButton(
-                                          onPressed: () => _fetchPosts(
-                                            context,
-                                            isInitial: true,
-                                          ),
-                                          child: const Text('Retry'),
+                          if (state is PostError) {
+                            return SingleChildScrollView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              child: SizedBox(
+                                height: MediaQuery.of(context).size.height * 0.6,
+                                child: Center(
+                                  child: Column(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.center,
+                                    children: [
+                                      const Text('Could not load posts'),
+                                      const SizedBox(height: 12),
+                                      ElevatedButton(
+                                        onPressed: () => _fetchPosts(
+                                          context,
+                                          isInitial: true,
                                         ),
-                                      ],
-                                    ),
-                                  );
-                                }
+                                        child: const Text('Retry'),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
 
-                                if (state is PostsLoaded) {
-                                  final posts = _activeFilter == null
-                                      ? state.post
-                                      : state.post
-                                            .where(
-                                              (p) =>
-                                                  p.postType == _activeFilter,
-                                            )
-                                            .toList();
+                          if (state is PostsLoaded) {
+                            final posts = _activeFilter == null
+                                ? state.post
+                                : state.post
+                                      .where(
+                                        (p) =>
+                                            p.postType == _activeFilter,
+                                      )
+                                      .toList();
 
-                                  return _buildPostList(
-                                    posts,
-                                    state.hasReachedMax,
-                                  );
-                                }
+                            return _buildPostList(
+                              posts,
+                              state.hasReachedMax,
+                            );
+                          }
 
-                                return const FeedSkeleton();
-                              },
-                            ),
-                          ),
-                        ],
+                          return const FeedSkeleton();
+                        },
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          );
-        },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -239,41 +244,36 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
   Widget _buildPostList(List<PostModel> posts, bool hasReachedMax) {
     if (posts.isEmpty) return _buildEmpty();
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        if (!_isOffline) _fetchPosts(context);
-      },
-      child: ListView.builder(
-        itemCount: hasReachedMax || _isOffline
-            ? posts.length
-            : posts.length + 1,
-        itemBuilder: (context, i) {
-          if (i >= posts.length) {
-            return Center(child: const CircularProgressIndicator.adaptive());
-          }
-          final post = posts[i];
-          return BlocProvider(
-            key: ValueKey(post.id),
-            create: (_) => LikesBloc(context.read<LikesRepository>()),
-            child: PostCard(
-              post: post,
-              currentUserId: widget.currentUserId,
-              isOffline: _isOffline,
-              onComment: () => showCommentsSheet(
-                context: context,
-                postId: post.id,
-                commentCount: post.commentCount,
-              ),
-              onAuthorTap: (uid) => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => OtherUserProfilePage(userId: uid),
-                ),
+    return ListView.builder(
+      itemCount: hasReachedMax || _isOffline
+          ? posts.length
+          : posts.length + 1,
+      itemBuilder: (context, i) {
+        if (i >= posts.length) {
+          return Center(child: const CircularProgressIndicator.adaptive());
+        }
+        final post = posts[i];
+        return BlocProvider(
+          key: ValueKey(post.id),
+          create: (_) => LikesBloc(context.read<LikesRepository>()),
+          child: PostCard(
+            post: post,
+            currentUserId: widget.currentUserId,
+            isOffline: _isOffline,
+            onComment: () => showCommentsSheet(
+              context: context,
+              postId: post.id,
+              commentCount: post.commentCount,
+            ),
+            onAuthorTap: (uid) => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => OtherUserProfilePage(userId: uid),
               ),
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -385,20 +385,26 @@ class _FeedScreenState extends State<FeedScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildEmpty() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            _activeFilter?.emoji ?? '✨',
-            style: TextStyle(fontSize: SizeConfig.widthPercent(12)),
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      child: SizedBox(
+        height: MediaQuery.of(context).size.height * 0.6,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                _activeFilter?.emoji ?? '✨',
+                style: TextStyle(fontSize: SizeConfig.widthPercent(12)),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'No ${_activeFilter?.label ?? ''} posts yet',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          Text(
-            'No ${_activeFilter?.label ?? ''} posts yet',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-        ],
+        ),
       ),
     );
   }

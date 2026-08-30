@@ -50,6 +50,9 @@ import 'package:dating_app/data/repositories/comments_repository_impl.dart';
 import 'package:dating_app/domain/repositories/current_user_post_repository.dart';
 import 'package:dating_app/data/repositories/current_user_post_repository_impl.dart';
 import 'package:dating_app/domain/repositories/coins_repository.dart';
+import 'package:dating_app/presentation/pages/create_account_page.dart';
+import 'package:dating_app/presentation/pages/home_page.dart';
+import 'package:dating_app/presentation/pages/login_page.dart';
 import 'package:dating_app/presentation/pages/splash_screen.dart';
 import 'package:dating_app/presentation/pages/reset_password_page.dart';
 import 'package:flutter/foundation.dart';
@@ -238,36 +241,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   /// One-time utility to promote a specific user to admin using the 'roles' table.
-  Future<void> _promoteToAdmin() async {
-    final adminClient = SupabaseClient(
-      dotenv.env['SUPABASE_URL']!,
-      dotenv.env['SUPABASE_SERVICE_ROLE_KEY']!,
-    );
 
-    const targetUserId = 'c1e60e5a-15b5-4ce9-8494-0f6c8340b9ea';
-
-    try {
-      // 1. Update roles table (Source of truth for is_admin() function)
-      await adminClient
-          .from('roles')
-          .upsert({
-            'user_id': targetUserId, 
-            'role': 'admin'
-          });
-
-      // 2. Update Auth Metadata (Keep in sync for RLS checks using auth.jwt())
-      await adminClient.auth.admin.updateUserById(
-        targetUserId,
-        attributes: const AdminUserAttributes(
-          appMetadata: {'role': 'admin'},
-        ),
-      );
-
-      debugPrint('User promoted to admin in roles table successfully');
-    } catch (e) {
-      debugPrint('Error promoting user: $e');
-    }
-  }
 
   Future<void> _initDeepLinks() async {
     _appLinks = AppLinks();
@@ -292,11 +266,42 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _setupAuthStateListener() {
-    Supabase.instance.client.auth.onAuthStateChange.listen((data) {
-      final AuthChangeEvent event = data.event;
+    Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
+      final event = data.event;
+      final session = data.session;
+
+      final _UserRepository = context.read<UserRepository>();
+
+      // 1. Existing Password Reset Logic
       if (event == AuthChangeEvent.passwordRecovery) {
         _navigatorKey.currentState?.push(
           MaterialPageRoute(builder: (_) => const ResetPasswordPage()),
+        );
+      }
+      // 2. New Verification/Sign-in Logic
+      else if (event == AuthChangeEvent.signedIn && session != null) {
+        print("User signed in: ${session.user}");
+        final isCompleted = await _UserRepository.checkIsProfileCompleted(session.user.id);
+        print("Is profile completed: $isCompleted");
+
+        if (!isCompleted) {
+          print("Pushing to CreateAccountProfilePage");
+          _navigatorKey.currentState?.pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const CreateAccountProfilePage()),
+                (route) => false,
+          );
+        } else {
+          _navigatorKey.currentState?.pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const MyHomePage()),
+                (route) => false,
+          );
+        }
+      }
+      // 3. Optional: Add SignOut logic here if needed
+      else if (event == AuthChangeEvent.signedOut) {
+        _navigatorKey.currentState?.pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const LoginPage()),
+              (route) => false,
         );
       }
     });

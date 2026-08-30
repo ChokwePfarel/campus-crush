@@ -21,37 +21,53 @@ enum DirectPostType { crush, compliment, confession, question }
 extension DirectPostTypeExt on DirectPostType {
   String get emoji {
     switch (this) {
-      case DirectPostType.crush:       return '💘';
-      case DirectPostType.compliment:  return '✨';
-      case DirectPostType.confession:  return '🤫';
-      case DirectPostType.question:    return '💭';
+      case DirectPostType.crush:
+        return '💘';
+      case DirectPostType.compliment:
+        return '✨';
+      case DirectPostType.confession:
+        return '🤫';
+      case DirectPostType.question:
+        return '💭';
     }
   }
 
   String get label {
     switch (this) {
-      case DirectPostType.crush:       return 'Crush';
-      case DirectPostType.compliment:  return 'Compliment';
-      case DirectPostType.confession:  return 'Confession';
-      case DirectPostType.question:    return 'Question';
+      case DirectPostType.crush:
+        return 'Crush';
+      case DirectPostType.compliment:
+        return 'Compliment';
+      case DirectPostType.confession:
+        return 'Confession';
+      case DirectPostType.question:
+        return 'Question';
     }
   }
 
   String get hint {
     switch (this) {
-      case DirectPostType.crush:       return 'Tell them how you feel... 💘';
-      case DirectPostType.compliment:  return 'Say something kind ✨';
-      case DirectPostType.confession:  return 'Get it off your chest 🤫';
-      case DirectPostType.question:    return 'Ask them something 💭';
+      case DirectPostType.crush:
+        return 'Tell them how you feel... 💘';
+      case DirectPostType.compliment:
+        return 'Say something kind ✨';
+      case DirectPostType.confession:
+        return 'Get it off your chest 🤫';
+      case DirectPostType.question:
+        return 'Ask them something 💭';
     }
   }
 
   Color get color {
     switch (this) {
-      case DirectPostType.crush:       return const Color(0xFFB5193A);
-      case DirectPostType.compliment:  return const Color(0xFF3730A3);
-      case DirectPostType.confession:  return const Color(0xFFB45309);
-      case DirectPostType.question:    return const Color(0xFF0F766E);
+      case DirectPostType.crush:
+        return const Color(0xFFB5193A);
+      case DirectPostType.compliment:
+        return const Color(0xFF3730A3);
+      case DirectPostType.confession:
+        return const Color(0xFFB45309);
+      case DirectPostType.question:
+        return const Color(0xFF0F766E);
     }
   }
 
@@ -94,10 +110,7 @@ extension DirectPostTypeExt on DirectPostType {
 class SendPostPage extends StatefulWidget {
   final UserModel recipient;
 
-  const SendPostPage({
-    super.key,
-    required this.recipient,
-  });
+  const SendPostPage({super.key, required this.recipient});
 
   @override
   State<SendPostPage> createState() => _SendPostPageState();
@@ -105,24 +118,29 @@ class SendPostPage extends StatefulWidget {
 
 class _SendPostPageState extends State<SendPostPage>
     with TickerProviderStateMixin {
-  DirectPostType _postType  = DirectPostType.crush;
-  bool           _isAnonymous = true;
-  bool           _isSending   = false;
+  DirectPostType _postType = DirectPostType.crush;
+  bool _isAnonymous = true;
+  bool _isSending = false;
 
   final _contentCtrl = TextEditingController();
-  final _focusNode   = FocusNode();
+  final _focusNode = FocusNode();
 
   late final _entranceCtrl = AnimationController(
-    vsync: this, duration: const Duration(milliseconds: 500),
+    vsync: this,
+    duration: const Duration(milliseconds: 500),
   )..forward();
-  late final _entranceFade =
-  CurvedAnimation(parent: _entranceCtrl, curve: Curves.easeOut);
+  late final _entranceFade = CurvedAnimation(
+    parent: _entranceCtrl,
+    curve: Curves.easeOut,
+  );
   late final _entranceSlide = Tween<Offset>(
-    begin: const Offset(0, 0.05), end: Offset.zero,
+    begin: const Offset(0, 0.05),
+    end: Offset.zero,
   ).animate(CurvedAnimation(parent: _entranceCtrl, curve: Curves.easeOut));
 
   late final _pulseCtrl = AnimationController(
-    vsync: this, duration: const Duration(seconds: 2),
+    vsync: this,
+    duration: const Duration(seconds: 2),
   )..repeat(reverse: true);
 
   @override
@@ -135,7 +153,8 @@ class _SendPostPageState extends State<SendPostPage>
   }
 
   bool get _canSend => _contentCtrl.text.trim().isNotEmpty && !_isSending;
-  Color get _accent  => _postType.color;
+
+  Color get _accent => _postType.color;
 
   void _pickType(DirectPostType type) {
     HapticFeedback.selectionClick();
@@ -163,7 +182,7 @@ class _SendPostPageState extends State<SendPostPage>
     if (userState is! user_st.UserLoaded) return;
 
     final coinsState = context.read<CoinsBloc>().state;
-    
+
     // Default to free if state is still loading to avoid blocking the user
     bool canPostFree = true;
     bool hasEnough = true;
@@ -213,7 +232,9 @@ class _SendPostPageState extends State<SendPostPage>
       context: context,
       builder: (context) => CupertinoAlertDialog(
         title: const Text('Not Enough Coins'),
-        content: const Text('Sending a direct post costs 5 coins. Watch an ad to earn 10 coins instantly!'),
+        content: const Text(
+          'Sending a direct post costs 5 coins. Watch an ad to earn 10 coins instantly!',
+        ),
         actions: [
           CupertinoDialogAction(
             onPressed: () => Navigator.pop(context),
@@ -272,7 +293,11 @@ class _SendPostPageState extends State<SendPostPage>
             }
             if (state is PostError && _isSending) {
               setState(() => _isSending = false);
-              AppSnackBar.show(context, 'Something went wrong', type: SnackBarType.error);
+              AppSnackBar.show(
+                context,
+                'Something went wrong',
+                type: SnackBarType.error,
+              );
             }
           },
         ),
@@ -280,9 +305,13 @@ class _SendPostPageState extends State<SendPostPage>
           listener: (context, state) {
             if (state is CoinsError && _isSending) {
               setState(() => _isSending = false);
-              AppSnackBar.show(context, state.message, type: SnackBarType.error);
+              AppSnackBar.show(
+                context,
+                state.message,
+                type: SnackBarType.error,
+              );
             }
-            
+
             if (state is CoinsSpent && _isSending) {
               final userState = context.read<UserBloc>().state;
               if (userState is user_st.UserLoaded) {
@@ -293,17 +322,25 @@ class _SendPostPageState extends State<SendPostPage>
             }
 
             if (state is CoinsEarned) {
-              setState(() => _isSending = false);  // ← ADD THIS LINE
+              setState(() => _isSending = false); // ← ADD THIS LINE
               if (_isSending) _handleSend();
             }
 
             if (state is AdNotReady && _isSending) {
-               setState(() => _isSending = false);
-               AppSnackBar.show(context, 'Ad not ready, try again in a moment', type: SnackBarType.warning);
+              setState(() => _isSending = false);
+              AppSnackBar.show(
+                context,
+                'Ad not ready, try again in a moment',
+                type: SnackBarType.warning,
+              );
             }
             if (state is AdLimitReached && _isSending) {
-               setState(() => _isSending = false);
-               AppSnackBar.show(context, 'Daily ad limit reached', type: SnackBarType.info);
+              setState(() => _isSending = false);
+              AppSnackBar.show(
+                context,
+                'Daily ad limit reached',
+                type: SnackBarType.info,
+              );
             }
           },
         ),
@@ -319,7 +356,9 @@ class _SendPostPageState extends State<SendPostPage>
                 _buildHeader(),
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: EdgeInsets.symmetric(horizontal: SizeConfig.widthPercent(5)),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: SizeConfig.widthPercent(5),
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -414,8 +453,8 @@ class _SendPostPageState extends State<SendPostPage>
         final balance = state is CoinsLoaded ? state.coins.balance : 0;
         return Container(
           padding: EdgeInsets.symmetric(
-            horizontal: SizeConfig.widthPercent(3), 
-            vertical: SizeConfig.heightPercent(0.8)
+            horizontal: SizeConfig.widthPercent(3),
+            vertical: SizeConfig.heightPercent(0.8),
           ),
           decoration: BoxDecoration(
             color: Colors.orange.withOpacity(0.15),
@@ -424,15 +463,18 @@ class _SendPostPageState extends State<SendPostPage>
           ),
           child: Row(
             children: [
-              Text('🪙', style: TextStyle(fontSize: SizeConfig.widthPercent(3.5))),
+              Text(
+                '🪙',
+                style: TextStyle(fontSize: SizeConfig.widthPercent(3.5)),
+              ),
               SizedBox(width: SizeConfig.widthPercent(1)),
               Text(
-                '$balance', 
+                '$balance',
                 style: TextStyle(
-                  color: Colors.orange, 
-                  fontWeight: FontWeight.bold, 
-                  fontSize: SizeConfig.widthPercent(3.5)
-                )
+                  color: Colors.orange,
+                  fontWeight: FontWeight.bold,
+                  fontSize: SizeConfig.widthPercent(3.5),
+                ),
               ),
             ],
           ),
@@ -444,8 +486,9 @@ class _SendPostPageState extends State<SendPostPage>
   // ── Recipient Card ──────────────────────────────────────────────────────────
 
   Widget _buildRecipientCard() {
-    final bool hasValidImage = widget.recipient.profileImageUrl.isNotEmpty && 
-                                widget.recipient.profileImageUrl.startsWith('http');
+    final bool hasValidImage =
+        widget.recipient.profileImageUrl.isNotEmpty &&
+        widget.recipient.profileImageUrl.startsWith('http');
 
     return AnimatedBuilder(
       animation: _pulseCtrl,
@@ -490,7 +533,9 @@ class _SendPostPageState extends State<SendPostPage>
                       : null,
                 ),
                 child: !hasValidImage
-                    ? const Center(child: Text('👤', style: TextStyle(fontSize: 22)))
+                    ? const Center(
+                        child: Text('👤', style: TextStyle(fontSize: 22)),
+                      )
                     : null,
               ),
               if (widget.recipient.isVerified)
@@ -504,10 +549,15 @@ class _SendPostPageState extends State<SendPostPage>
                       color: const Color(0xFF2EC4B6),
                       shape: BoxShape.circle,
                       border: Border.all(
-                          color: const Color(0xFF0D0D1A), width: 2),
+                        color: const Color(0xFF0D0D1A),
+                        width: 2,
+                      ),
                     ),
-                    child: Icon(CupertinoIcons.checkmark_alt,
-                        size: SizeConfig.widthPercent(2.5), color: Colors.white),
+                    child: Icon(
+                      CupertinoIcons.checkmark_alt,
+                      size: SizeConfig.widthPercent(2.5),
+                      color: Colors.white,
+                    ),
                   ),
                 ),
             ],
@@ -589,12 +639,16 @@ class _SendPostPageState extends State<SendPostPage>
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   margin: EdgeInsets.only(right: SizeConfig.widthPercent(2)),
-                  padding: EdgeInsets.symmetric(vertical: SizeConfig.heightPercent(1.5)),
+                  padding: EdgeInsets.symmetric(
+                    vertical: SizeConfig.heightPercent(1.5),
+                  ),
                   decoration: BoxDecoration(
                     color: selected
                         ? type.color.withOpacity(0.18)
                         : Colors.white.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(SizeConfig.widthPercent(3.5)),
+                    borderRadius: BorderRadius.circular(
+                      SizeConfig.widthPercent(3.5),
+                    ),
                     border: Border.all(
                       color: selected
                           ? type.color.withOpacity(0.6)
@@ -604,8 +658,10 @@ class _SendPostPageState extends State<SendPostPage>
                   ),
                   child: Column(
                     children: [
-                      Text(type.emoji,
-                          style: TextStyle(fontSize: SizeConfig.widthPercent(5))),
+                      Text(
+                        type.emoji,
+                        style: TextStyle(fontSize: SizeConfig.widthPercent(5)),
+                      ),
                       SizedBox(height: SizeConfig.heightPercent(0.5)),
                       Text(
                         type.label,
@@ -647,10 +703,10 @@ class _SendPostPageState extends State<SendPostPage>
         children: [
           Padding(
             padding: EdgeInsets.fromLTRB(
-              SizeConfig.widthPercent(4), 
-              SizeConfig.heightPercent(1.8), 
-              SizeConfig.widthPercent(4), 
-              0
+              SizeConfig.widthPercent(4),
+              SizeConfig.heightPercent(1.8),
+              SizeConfig.widthPercent(4),
+              0,
             ),
             child: Row(
               children: [
@@ -705,12 +761,14 @@ class _SendPostPageState extends State<SendPostPage>
                 const Spacer(),
                 Container(
                   padding: EdgeInsets.symmetric(
-                      horizontal: SizeConfig.widthPercent(2.5), 
-                      vertical: SizeConfig.heightPercent(0.5)
+                    horizontal: SizeConfig.widthPercent(2.5),
+                    vertical: SizeConfig.heightPercent(0.5),
                   ),
                   decoration: BoxDecoration(
                     color: _accent.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(SizeConfig.widthPercent(2)),
+                    borderRadius: BorderRadius.circular(
+                      SizeConfig.widthPercent(2),
+                    ),
                   ),
                   child: Text(
                     '${_postType.emoji} ${_postType.label}',
@@ -726,10 +784,10 @@ class _SendPostPageState extends State<SendPostPage>
           ),
           Padding(
             padding: EdgeInsets.fromLTRB(
-              SizeConfig.widthPercent(4), 
-              SizeConfig.heightPercent(1.2), 
-              SizeConfig.widthPercent(4), 
-              SizeConfig.heightPercent(2)
+              SizeConfig.widthPercent(4),
+              SizeConfig.heightPercent(1.2),
+              SizeConfig.widthPercent(4),
+              SizeConfig.heightPercent(2),
             ),
             child: TextField(
               controller: _contentCtrl,
@@ -778,44 +836,46 @@ class _SendPostPageState extends State<SendPostPage>
           ),
         ),
         SizedBox(height: SizeConfig.heightPercent(1.2)),
-        ...(_postType.suggestions.map((s) => GestureDetector(
-          onTap: () => _useSuggestion(s),
-          child: Container(
-            width: double.infinity,
-            margin: EdgeInsets.only(bottom: SizeConfig.heightPercent(1)),
-            padding: EdgeInsets.symmetric(
-                horizontal: SizeConfig.widthPercent(4), 
-                vertical: SizeConfig.heightPercent(1.5)
-            ),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.04),
-              borderRadius: BorderRadius.circular(SizeConfig.widthPercent(3.5)),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.07),
+        ...(_postType.suggestions.map(
+          (s) => GestureDetector(
+            onTap: () => _useSuggestion(s),
+            child: Container(
+              width: double.infinity,
+              margin: EdgeInsets.only(bottom: SizeConfig.heightPercent(1)),
+              padding: EdgeInsets.symmetric(
+                horizontal: SizeConfig.widthPercent(4),
+                vertical: SizeConfig.heightPercent(1.5),
               ),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    s,
-                    style: TextStyle(
-                      fontSize: SizeConfig.widthPercent(3.5),
-                      color: Colors.white.withOpacity(0.6),
-                      height: 1.4,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.04),
+                borderRadius: BorderRadius.circular(
+                  SizeConfig.widthPercent(3.5),
+                ),
+                border: Border.all(color: Colors.white.withOpacity(0.07)),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      s,
+                      style: TextStyle(
+                        fontSize: SizeConfig.widthPercent(3.5),
+                        color: Colors.white.withOpacity(0.6),
+                        height: 1.4,
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(width: SizeConfig.widthPercent(2.5)),
-                Icon(
-                  CupertinoIcons.arrow_up_left,
-                  size: SizeConfig.widthPercent(3.5),
-                  color: Colors.white.withOpacity(0.25),
-                ),
-              ],
+                  SizedBox(width: SizeConfig.widthPercent(2.5)),
+                  Icon(
+                    CupertinoIcons.arrow_up_left,
+                    size: SizeConfig.widthPercent(3.5),
+                    color: Colors.white.withOpacity(0.25),
+                  ),
+                ],
+              ),
             ),
           ),
-        ))),
+        )),
       ],
     );
   }
@@ -850,7 +910,9 @@ class _SendPostPageState extends State<SendPostPage>
                 color: _isAnonymous
                     ? Colors.white.withOpacity(0.08)
                     : _accent.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(SizeConfig.widthPercent(3.5)),
+                borderRadius: BorderRadius.circular(
+                  SizeConfig.widthPercent(3.5),
+                ),
               ),
               child: Center(
                 child: Text(
@@ -865,7 +927,9 @@ class _SendPostPageState extends State<SendPostPage>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _isAnonymous ? 'Sending anonymously' : 'Sending as yourself',
+                    _isAnonymous
+                        ? 'Sending anonymously'
+                        : 'Sending as yourself',
                     style: TextStyle(
                       fontSize: SizeConfig.widthPercent(3.8),
                       fontWeight: FontWeight.w700,
@@ -898,8 +962,9 @@ class _SendPostPageState extends State<SendPostPage>
               child: AnimatedAlign(
                 duration: const Duration(milliseconds: 250),
                 curve: Curves.easeInOut,
-                alignment:
-                    _isAnonymous ? Alignment.centerLeft : Alignment.centerRight,
+                alignment: _isAnonymous
+                    ? Alignment.centerLeft
+                    : Alignment.centerRight,
                 child: Container(
                   margin: const EdgeInsets.all(3),
                   width: SizeConfig.widthPercent(5.5),
@@ -920,70 +985,70 @@ class _SendPostPageState extends State<SendPostPage>
   // ── Send Button ─────────────────────────────────────────────────────────────
 
   Widget _buildSendButton() {
-    return BlocBuilder<CoinsBloc, CoinsState>(builder: (context, state) {
-      bool canPostFree = true;
-      String label = 'Send for Free';
+    return BlocBuilder<CoinsBloc, CoinsState>(
+      builder: (context, state) {
+        bool canPostFree = true;
+        String label = 'Send for Free';
 
-      if (state is CoinsLoaded) {
-        canPostFree = state.coins.canSendFreeDirectPost;
-        label = canPostFree ? 'Send for Free' : 'Send (5 🪙)';
-      }
+        if (state is CoinsLoaded) {
+          canPostFree = state.coins.canSendFreeDirectPost;
+          label = canPostFree ? 'Send for Free' : 'Send (5 🪙)';
+        }
 
-      return AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: double.infinity,
-        height: SizeConfig.heightPercent(7),
-        decoration: BoxDecoration(
-          gradient: _canSend
-              ? LinearGradient(
-                  colors: [_accent, _accent.withOpacity(0.7)],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                )
-              : null,
-          color: _canSend ? null : Colors.white.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(SizeConfig.widthPercent(4.5)),
-          boxShadow: _canSend
-              ? [
-                  BoxShadow(
-                    color: _accent.withOpacity(0.4),
-                    blurRadius: 20,
-                    offset: const Offset(0, 6),
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: double.infinity,
+          height: SizeConfig.heightPercent(7),
+          decoration: BoxDecoration(
+            gradient: _canSend
+                ? LinearGradient(
+                    colors: [_accent, _accent.withOpacity(0.7)],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
                   )
-                ]
-              : [],
-        ),
-        child: CupertinoButton(
-          padding: EdgeInsets.zero,
-          onPressed: _canSend ? _handleSend : null,
-          child: _isSending
-              ? const CircularProgressIndicator.adaptive()
-              : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      _postType.emoji,
-                      style: TextStyle(fontSize: SizeConfig.widthPercent(5)),
+                : null,
+            color: _canSend ? null : Colors.white.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(SizeConfig.widthPercent(4.5)),
+            boxShadow: _canSend
+                ? [
+                    BoxShadow(
+                      color: _accent.withOpacity(0.4),
+                      blurRadius: 20,
+                      offset: const Offset(0, 6),
                     ),
-                    SizedBox(width: SizeConfig.widthPercent(2.5)),
-                    Text(
-                      _canSend
-                          ? label
-                          : 'Write something first...',
-                      style: TextStyle(
-                        fontSize: SizeConfig.widthPercent(4),
-                        fontWeight: FontWeight.w700,
-                        color: _canSend
-                            ? Colors.white
-                            : Colors.white.withOpacity(0.25),
-                        letterSpacing: -0.2,
+                  ]
+                : [],
+          ),
+          child: CupertinoButton(
+            padding: EdgeInsets.zero,
+            onPressed: _canSend ? _handleSend : null,
+            child: _isSending
+                ? const CircularProgressIndicator.adaptive()
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        _postType.emoji,
+                        style: TextStyle(fontSize: SizeConfig.widthPercent(5)),
                       ),
-                    ),
-                  ],
-                ),
-        ),
-      );
-    });
+                      SizedBox(width: SizeConfig.widthPercent(2.5)),
+                      Text(
+                        _canSend ? label : 'Write something first...',
+                        style: TextStyle(
+                          fontSize: SizeConfig.widthPercent(4),
+                          fontWeight: FontWeight.w700,
+                          color: _canSend
+                              ? Colors.white
+                              : Colors.white.withOpacity(0.25),
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -1008,23 +1073,9 @@ class _SuccessDialog extends StatefulWidget {
 
 class _SuccessDialogState extends State<_SuccessDialog> {
   @override
-  void initState() {
-    super.initState();
-    // Auto-close after 2 seconds
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        Navigator.of(context).pop();
-        widget.onDone();
-      }
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -1044,19 +1095,13 @@ class _SuccessDialogState extends State<_SuccessDialog> {
           const SizedBox(height: 16),
           Text(
             _getTitle(),
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           Text(
             _getMessage(),
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade600,
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
@@ -1073,10 +1118,8 @@ class _SuccessDialogState extends State<_SuccessDialog> {
             widget.onDone();
           },
           child: const Text(
-            'GOT IT',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-            ),
+            'Close',
+            style: TextStyle(fontWeight: FontWeight.bold),
           ),
         ),
       ],

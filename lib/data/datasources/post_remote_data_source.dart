@@ -53,58 +53,46 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
     required int offset,
     required int limit,
   }) async {
-
-
     try {
-    final selectString = '''
+      final selectString = '''
         *,
         profiles (
           id, name, profile_image_url, is_verified, privacy_settings
         )
       ''';
 
-    var query = client.from('posts').select(selectString);
-    query = _applyFilters(query, university, postType, locationTag);
+      var query = client.from('posts').select(selectString);
+      query = _applyFilters(query, university, postType, locationTag);
 
-    final response = await query
-        .range(offset, offset + limit - 1)
-        .order('created_at', ascending: false);
+      final response = await query
+          .range(offset, offset + limit - 1)
+          .order('created_at', ascending: false);
 
-// print('DEBUG: Successfully fetched ${(response as List).length} posts');
-    return response.map((e) => PostModel.fromJson(e)).toList();
+      print('DEBUG: Successfully fetched ${(response as List).length} posts');
+      return response.map((e) => PostModel.fromJson(e)).toList();
     } on PostgrestException catch (e) {
-// print('DEBUG: PostgresException in getPosts: ${e.message}');
+      try {
+        var fallbackQuery = client.from('posts').select('*');
+        fallbackQuery = _applyFilters(fallbackQuery, university, postType, locationTag);
 
-    try {
-    var fallbackQuery = client.from('posts').select('*');
-    fallbackQuery = _applyFilters(
-    fallbackQuery,
-    university,
-    postType,
-    locationTag,
-    );
+        final fallbackRes = await fallbackQuery
+            .range(offset, offset + limit - 1)
+            .order('created_at', ascending: false);
 
-    final fallbackRes = await fallbackQuery
-        .range(offset, offset + limit - 1)
-        .order('created_at', ascending: false);
-
-    return fallbackRes.map((e) => PostModel.fromJson(e)).toList();
-    } catch (fallbackError) {
-// print('DEBUG: Filtered fallback failed: $fallbackError');
-    }
-    rethrow;
+        return fallbackRes.map((e) => PostModel.fromJson(e)).toList();
+      } catch (fallbackError) {
+        rethrow;
+      }
     } catch (e) {
-// print('DEBUG: Unexpected error in getPosts: $e');
-    rethrow;
+      rethrow;
     }
   }
 
-  /// Helper to apply common filters to any query on the 'posts' table
   PostgrestFilterBuilder<PostgrestList> _applyFilters(
       PostgrestFilterBuilder<PostgrestList> query,
       String? university,
       String? postType,
-      String? locationTag,) {
+      String? locationTag) {
     var q = query;
 
     if (university != null && university.isNotEmpty) {
@@ -124,10 +112,7 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
     q = q.eq('is_normal_post', true);
 
     q = q.or(
-      'expires_at.is.null,expires_at.gt.${DateTime
-          .now()
-          .toUtc()
-          .toIso8601String()}',
+      'expires_at.is.null,expires_at.gt.${DateTime.now().toUtc().toIso8601String()}',
     );
     return q;
   }
@@ -179,12 +164,27 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
         .select()
         .eq('user_id', user.id)
         .order('created_at', ascending: false);
+    print('DEBUG: Successfully fetched ${response.length} posts');
     return (response as List).map((e) => PostModel.fromJson(e)).toList();
   }
+
 
   @override
   Future<List<PostModel>> getUserPostById(String userId) async {
     try {
+      final currentUserId = client.auth.currentUser?.id;
+      if (currentUserId != null) {
+        final blockCheck = await client
+            .from('blocks')
+            .select('id')
+            .or('and(blocker_id.eq.$currentUserId,blocked_id.eq.$userId),and(blocker_id.eq.$userId,blocked_id.eq.$currentUserId)')
+            .maybeSingle();
+
+        if (blockCheck != null) {
+          return []; // Don't show posts if blocked
+        }
+      }
+
       final response = await client
           .from('posts')
           .select('''
@@ -213,20 +213,34 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
     }
   }
 
+  @override
   Future<List<PostModel>> getDirectPostsPaginated({
     required String recipientId,
     DateTime? before,
     int limit = 20,
   }) async {
+    final currentUserId = client.auth.currentUser?.id;
+    if (currentUserId != null) {
+      final blockCheck = await client
+          .from('blocks')
+          .select('id')
+          .or('and(blocker_id.eq.$currentUserId,blocked_id.eq.$recipientId),and(blocker_id.eq.$recipientId,blocked_id.eq.$currentUserId)')
+          .maybeSingle();
+
+      if (blockCheck != null) {
+        return [];
+      }
+    }
+
     final query = client
         .from('posts')
         .select()
         .eq('recipient_id', recipientId)
         .eq('is_normal_post', false)
         .lt(
-      'created_at',
-      before?.toIso8601String() ?? DateTime.now().toIso8601String(),
-    )
+          'created_at',
+          before?.toIso8601String() ?? DateTime.now().toIso8601String(),
+        )
         .order('created_at', ascending: false)
         .limit(limit);
 
@@ -234,6 +248,8 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
     return data.map((e) => PostModel.fromJson(e)).toList();
   }
 
+
+  @override
   Stream<List<PostModel>> watchNewDirectPosts(String recipientId) {
     return client
         .from('posts')
@@ -264,7 +280,23 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
           .eq('id', postId)
           .single();
 
-      return PostModel.fromJson(response);
+      final post = PostModel.fromJson(response);
+
+      // Manual Safety: Mutual block check
+      final currentUserId = client.auth.currentUser?.id;
+      if (currentUserId != null) {
+        final blockCheck = await client
+            .from('blocks')
+            .select('id')
+            .or('and(blocker_id.eq.$currentUserId,blocked_id.eq.${post.userId}),and(blocker_id.eq.${post.userId},blocked_id.eq.$currentUserId)')
+            .maybeSingle();
+
+        if (blockCheck != null) {
+          throw Exception('This post is unavailable.');
+        }
+      }
+
+      return post;
     } catch (e) {
 // print('DEBUG: Error fetching single post by ID: $e');
       rethrow;

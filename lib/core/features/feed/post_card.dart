@@ -14,6 +14,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/services.dart';
 
 class PostCard extends StatefulWidget {
   final PostModel post;
@@ -75,7 +76,6 @@ class PostCardState extends State<PostCard>
     super.dispose();
   }
 
-
   void showPostOptionsDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -105,7 +105,8 @@ class PostCardState extends State<PostCard>
       child: SlideTransition(
         position: _slideAnim,
         child: GestureDetector(
-          onLongPress: (){
+          onLongPress: () {
+            HapticFeedback.mediumImpact();
             showPostOptionsDialog(context);
           },
           child: Container(
@@ -155,7 +156,9 @@ class PostCardState extends State<PostCard>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                post.isAnonymous ? 'Anonymous' : post.authorName,
+                                post.isAnonymous
+                                    ? 'Anonymous'
+                                    : post.authorName,
                                 style: TextStyle(
                                   fontWeight: FontWeight.w700,
                                   fontSize: SizeConfig.widthPercent(3.8),
@@ -214,7 +217,9 @@ class PostCardState extends State<PostCard>
                 ),
                 if (post.imageUrl != null)
                   Padding(
-                    padding: EdgeInsets.only(bottom: SizeConfig.heightPercent(2)),
+                    padding: EdgeInsets.only(
+                      bottom: SizeConfig.heightPercent(2),
+                    ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(
                         SizeConfig.widthPercent(2),
@@ -243,7 +248,8 @@ class PostCardState extends State<PostCard>
                     children: [
                       BlocBuilder<LikesBloc, LikesState>(
                         builder: (context, state) {
-                          final hasLiked = state is LikesLoaded && state.hasLiked;
+                          final hasLiked =
+                              state is LikesLoaded && state.hasLiked;
                           final count = state is LikesLoaded
                               ? state.likeCount
                               : post.likeCount;
@@ -263,7 +269,8 @@ class PostCardState extends State<PostCard>
                                     final userState = context
                                         .read<UserBloc>()
                                         .state;
-                                    if (userState is! user_st.UserLoaded) return;
+                                    if (userState is! user_st.UserLoaded)
+                                      return;
 
                                     if (hasLiked) {
                                       context.read<LikesBloc>().add(

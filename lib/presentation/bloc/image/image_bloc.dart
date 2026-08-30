@@ -44,12 +44,23 @@ class ImagesBloc extends Bloc<ImagesEvent, ImagesState> {
     final List<UserImageEntity> currentImages =
     current is ImagesLoaded ? current.images : [];
 
+    // Guard: enforce max 3
+    if (currentImages.length >= 3) {
+      emit(
+        ImagesError(
+          "You can only upload a maximum of 3 images.",
+          previousImages: currentImages,
+        ),
+      );
+      return;
+    }
+
     emit(ImagesUploading(currentImages));
 
     try {
       final newImage = await _imagesRepository.uploadProfileImage(
         userId: event.userId,
-        image:  event.image,
+        image: event.image,
       );
 
       // Replace old profile image with the new one
@@ -60,10 +71,15 @@ class ImagesBloc extends Bloc<ImagesEvent, ImagesState> {
 
       emit(ImagesLoaded(updated));
     } catch (e) {
-      emit(ImagesError(e.toString(),
-          previousImages: currentImages));
+      emit(
+        ImagesError(
+          e.toString(),
+          previousImages: currentImages,
+        ),
+      );
     }
   }
+
 
   // ── Upload Gallery ────────────────────────────────────────────────────────
 

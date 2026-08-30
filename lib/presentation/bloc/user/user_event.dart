@@ -28,8 +28,6 @@ class UpdateUserRequested extends UserEvent {
   final bool isVerified;
   final int? coins;
 
-
-
   UpdateUserRequested({
     required this.name,
     required this.sex,
@@ -43,6 +41,31 @@ class UpdateUserRequested extends UserEvent {
     required this.isVerified,
     this.coins ,
   });
+}
+
+class ProfileUpdateRequested extends UserEvent {
+  final String name;
+  final String sex;
+  final String bio;
+  final String status;
+  final String residence;
+  final String university;
+  final List<String> interests;
+  final int age;
+  final PrivacySettingsEntity? privacySettings;
+
+  ProfileUpdateRequested({
+    required this.name,
+    required this.sex,
+    required this.bio,
+    required this.status,
+    required this.residence,
+    required this.university,
+    required this.interests,
+    required this.age,
+    this.privacySettings,
+  });
+
 }
 
 //WHEN LOGG OUT

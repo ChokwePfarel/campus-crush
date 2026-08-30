@@ -45,24 +45,33 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
+
+
   Future<void> _onSignUpRequested(
-    SignUpRequested event,
-    Emitter<AuthState> emit,
-  ) async {
+      SignUpRequested event,
+      Emitter<AuthState> emit,
+      ) async {
     emit(AuthLoading());
     try {
       final response =
-          await _authRepository.signUp(event.email, event.password, event.name);
+      await _authRepository.signUp(event.email, event.password, event.name);
       final user = response.user;
-      if (user != null) {
-        emit(Authenticated(user));
-      } else {
+      if (user == null) {
         emit(AuthError("Sign up failed. Please try again."));
+        return;
+      }
+      if (response.session == null) {
+        // Confirm-email is on — no session until the link is clicked
+        emit(EmailVerificationRequired(event.email));
+      } else {
+        emit(Authenticated(user));
       }
     } catch (e) {
       emit(AuthError(e.toString()));
     }
   }
+
+
 
   Future<void> _onLogoutRequested(
     LogoutRequested event,

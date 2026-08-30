@@ -4,6 +4,7 @@ import 'package:dating_app/core/utils/screen_size.dart';
 import 'package:dating_app/data/models/user_model.dart';
 import 'package:dating_app/presentation/bloc/user/user_bloc.dart';
 import 'package:dating_app/presentation/bloc/user/user_state.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dating_app/presentation/pages/other_user_profile.dart';
@@ -51,7 +52,7 @@ class UsersCard extends StatelessWidget {
                         fit: BoxFit.cover,
                         placeholder: (context, url) => Container(
                           color: Colors.grey[200],
-                          child: const Center(child: CircularProgressIndicator.adaptive()),
+                          child: const Center(child: CupertinoActivityIndicator()),
                         ),
                         errorWidget: (context, url, error) => Container(
                           color: Colors.grey[300],

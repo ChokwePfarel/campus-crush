@@ -21,6 +21,7 @@ import 'package:dating_app/presentation/pages/manage_profile.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
@@ -67,10 +68,6 @@ class _ProfileEditState extends State<ProfileEdit> {
     _ageController.addListener(_markAsDirty);
     _residenceController.addListener(_markAsDirty);
 
-    /*_nameController.addListener(() => _markAsDirty);
-    _bioController.addListener(() => _markAsDirty);
-    _ageController.addListener(() => _markAsDirty);
-    _residenceController.addListener(() => _markAsDirty);*/
 
     _connectivitySub = Connectivity().onConnectivityChanged.listen((results) {
       if (mounted) {
@@ -131,7 +128,7 @@ class _ProfileEditState extends State<ProfileEdit> {
     }
 
     context.read<UserBloc>().add(
-      UpdateUserRequested(
+      ProfileUpdateRequested(
         name: name,
         sex: _selectedSex,
         bio: bio,
@@ -141,7 +138,6 @@ class _ProfileEditState extends State<ProfileEdit> {
         interests: _interests,
         age: age,
         privacySettings: PrivacySettingsModel(isProfilePrivate: _isPrivate),
-        isVerified: widget.user.isVerified,
       ),
     );
 
@@ -202,6 +198,8 @@ class _ProfileEditState extends State<ProfileEdit> {
     );
   }
 
+
+
   bool _hasChanges = false;
 
   void _markAsDirty() {
@@ -245,9 +243,19 @@ class _ProfileEditState extends State<ProfileEdit> {
         // If action is 'CANCEL' or null, the dialog closes, and the user remains on the EditProduct screen.
       },
 
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        appBar: AppBar(
+      child: MultiBlocListener(
+        listeners: [
+          BlocListener<ImagesBloc, ImagesState>(
+            listener: (context, state) {
+              if (state is ImagesError) {
+                AppSnackBar.show(context, state.message, type: SnackBarType.error);
+              }
+            },
+          ),
+        ],
+        child: Scaffold(
+          backgroundColor: Colors.white,
+          appBar: AppBar(
           backgroundColor: Colors.white,
           leading: CupertinoButton(
             padding: EdgeInsets.zero,
@@ -367,21 +375,50 @@ class _ProfileEditState extends State<ProfileEdit> {
                               onPressed: isUploading
                                   ? null
                                   : () async {
-                                      final picker = ImagePicker();
-                                      final picked = await picker.pickImage(
-                                        source: ImageSource.gallery,
-                                        imageQuality: 80,
-                                      );
-                                      if (picked == null || !context.mounted)
-                                        return;
+                                final picker = ImagePicker();
+                                final picked = await picker.pickImage(
+                                  source: ImageSource.gallery,
+                                  imageQuality: 80,
+                                );
+                                if (picked == null || !context.mounted) return;
 
-                                      context.read<ImagesBloc>().add(
-                                        UploadProfileImage(
-                                          userId: widget.user.id,
-                                          image: File(picked.path),
-                                        ),
-                                      );
-                                    },
+                                try {
+                                  // Crop to square
+                                  final croppedFile = await ImageCropper().cropImage(
+                                    sourcePath: picked.path,
+                                    uiSettings: [
+                                      AndroidUiSettings(
+                                        toolbarTitle: 'Crop Image',
+                                        toolbarColor: AppStylee.collor,
+                                        toolbarWidgetColor: Colors.white,
+                                        initAspectRatio: CropAspectRatioPreset.square,
+                                        lockAspectRatio: true,
+                                      ),
+                                      IOSUiSettings(
+                                        title: 'Crop Image',
+                                      ),
+                                    ],
+                                    aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+                                    compressFormat: ImageCompressFormat.jpg,
+                                    compressQuality: 90,
+                                  );
+
+                                  if (croppedFile == null || !context.mounted) return;
+
+                                  context.read<ImagesBloc>().add(
+                                    UploadProfileImage(
+                                      userId: widget.user.id,
+                                      image: File(croppedFile.path),
+                                    ),
+                                  );
+                                } catch (e) {
+                                  debugPrint('Cropping error: $e');
+                                  if (context.mounted) {
+                                    AppSnackBar.show(context, 'Error processing image', type: SnackBarType.error);
+                                  }
+                                }
+                              },
+
                             ),
                           ),
                         ),
@@ -573,7 +610,8 @@ class _ProfileEditState extends State<ProfileEdit> {
           ),
         ),
       ),
-    );
+      ));
+
   }
 
   InputDecoration _inputDecoration(String hint) {

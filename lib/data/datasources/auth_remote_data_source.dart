@@ -46,6 +46,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         email: email,
         password: password,
         data: {'full_name': name},
+        emailRedirectTo: 'datingapp://verify-callback',
       );
     } catch (e) {
       throw Exception('Error signing up: $e');

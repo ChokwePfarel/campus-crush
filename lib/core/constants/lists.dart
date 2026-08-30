@@ -32,7 +32,32 @@ class DropDownOptions {
   static final List<String> sexOptions = ['Male', 'Female', 'LGBTQ'];
 
   static final List<String> universities = [
-    'University of the Western Cape (UWC)',
+    "University of Cape Town",
+    "Stellenbosch University",
+    "University of Pretoria",
+    "University of the Witwatersrand",
+    "University of KwaZulu-Natal",
+    "University of the Western Cape",
+    "Rhodes University",
+    "University of South Africa",
+    "Nelson Mandela University",
+    "North-West University",
+    "Sefako Makgatho Health Sciences University",
+    "Sol Plaatje University",
+    "University of Fort Hare",
+    "University of Johannesburg",
+    "University of Limpopo",
+    "University of Mpumalanga",
+    "University of the Free State",
+    "University of Venda",
+    "Tshwane University of Technology",
+    "Durban University of Technology",
+    "Central University of Technology",
+    "Cape Peninsula University of Technology",
+    "Mangosuthu University of Technology",
+    "Nelson Mandela University"
+        'Walter Sisulu University',
+    "University of Mpumalanga"
   ];
 
   static final List<String> availableInterests = [
@@ -56,6 +81,35 @@ class DropDownOptions {
     'Gym',
     'Coffee',
   ];
+
+static final List<String> southAfricanUniversities = [
+  "University of Cape Town",
+  "Stellenbosch University",
+  "University of Pretoria",
+  "University of the Witwatersrand",
+  "University of KwaZulu-Natal",
+  "University of the Western Cape",
+  "Rhodes University",
+  "University of South Africa",
+  "Nelson Mandela University",
+  "North-West University",
+  "Sefako Makgatho Health Sciences University",
+  "Sol Plaatje University",
+  "University of Fort Hare",
+  "University of Johannesburg",
+  "University of Limpopo",
+  "University of Mpumalanga",
+  "University of the Free State",
+  "University of Venda",
+  "Tshwane University of Technology",
+  "Durban University of Technology",
+  "Central University of Technology",
+  "Cape Peninsula University of Technology",
+  "Mangosuthu University of Technology",
+  "Nelson Mandela University"
+      'Walter Sisulu University',
+  "University of Mpumalanga"
+];
 
   static final List<String> statuses = [
     'Single',

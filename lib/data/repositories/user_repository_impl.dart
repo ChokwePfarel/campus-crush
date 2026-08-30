@@ -53,10 +53,42 @@ class UserRepositoryImpl implements UserRepository {
           : null,
       isVerified: isVerified,
       coins: coins,
-
-
     );
   }
+
+  @override
+  Future<void> profileUpdate({
+    required String name,
+    required String sex,
+    required String bio,
+    required String status,
+    required String residence,
+    required String university,
+    required List<String> interests,
+    required int age,
+    PrivacySettingsEntity? privacySettings,
+  }) async {
+    await remoteDataSource.profileUpdate(
+      name: name,
+      sex: sex,
+      bio: bio,
+      status: status,
+      residence: residence,
+      university: university,
+      interests: interests,
+      age: age,
+      privacySettings: privacySettings != null
+          ? PrivacySettingsModel(
+              isProfilePrivate: privacySettings.isProfilePrivate,
+              isSpottedVisible: privacySettings.isSpottedVisible,
+              showUniversity: privacySettings.showUniversity,
+              allowMessageRequests: privacySettings.allowMessageRequests,
+            )
+          : null,
+    );
+  }
+
+  Future<bool> checkIsProfileCompleted(String userId) async {
+    return await remoteDataSource.checkIsProfileCompleted(userId);
+  }
 }
-
-

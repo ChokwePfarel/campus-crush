@@ -10,6 +10,32 @@ import '../bloc/auth/auth_event.dart';
 import '../bloc/auth/auth_state.dart';
 import 'sign_up_page.dart';
 
+
+
+
+
+
+
+
+
+
+//TO-DO :  if (state is EmailVerificationRequired) {
+//       AppSnackBar.show(
+//         context,
+//         'Please verify your email — we sent a confirmation link to ${state.email}.',
+//         type: SnackBarType.info,
+//       );
+//     }
+
+
+
+
+
+
+
+
+
+
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -156,7 +182,8 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                               ),
                             ),
 
-                            const Spacer(),
+                            const SizedBox(height: 60),
+
 
                             /// Sign in button
                             Column(
