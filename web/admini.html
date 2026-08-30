@@ -1,33 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Moderation Dashboard · CampusFeed</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
     </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
     <style>
-        /* ─── ROOT (dark + subtle neon) ─── */
+        /* ── Purple & Black theme ─────────────────────────────────── */
         :root {
-          --bg: #09090b;
-          --sidebar: #121217;
-          --card: #18181b;
-          --border: rgba(255, 255, 255, 0.07);
-          --border-focus: rgba(200, 240, 101, 0.3);
-          --text: #fafafa;
-          --text-muted: #a1a1aa;
-          --text-dim: #52525b;
-          --accent: #c8f065;
-          --accent-hover: #a8d045;
-          --red: #ef4444;
-          --red-bg: rgba(239, 68, 68, 0.12);
-          --blue: #3b82f6;
-          --blue-bg: rgba(59, 130, 246, 0.12);
+          --bg: #0b0811;
+          --sidebar: #130f1a;
+          --card: #1a1526;
+          --border: rgba(180, 130, 255, 0.15);
+          --border-focus: rgba(180, 130, 255, 0.5);
+          --text: #f2edff;
+          --text-muted: #b3a6d6;
+          --text-dim: #6a5a8a;
+          --accent: #b380ff;
+          --accent-hover: #9966ff;
+          --red: #f26b7a;
+          --red-bg: rgba(242, 107, 122, 0.12);
+          --blue: #7c9bff;
+          --blue-bg: rgba(124, 155, 255, 0.1);
           --radius: 12px;
           --radius-sm: 8px;
+          --shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
         }
 
         * {
@@ -45,7 +46,7 @@
           overflow: hidden;
         }
 
-        /* ─── LOGIN OVERLAY ─── */
+        /* ── Login Overlay ───────────────────────────────────────── */
         #auth-section {
           position: fixed;
           inset: 0;
@@ -54,7 +55,7 @@
           align-items: center;
           justify-content: center;
           background: var(--bg);
-          background-image: radial-gradient(circle at 30% 20%, rgba(200, 240, 101, 0.06), transparent 70%);
+          background-image: radial-gradient(circle at 30% 40%, rgba(130, 70, 255, 0.12), transparent 65%);
         }
 
         .login-box {
@@ -62,26 +63,23 @@
           background: var(--sidebar);
           border: 1px solid var(--border);
           border-radius: 24px;
-          padding: 48px 40px;
+          padding: 48px;
           display: flex;
           flex-direction: column;
           gap: 24px;
-          box-shadow: 0 24px 48px rgba(0, 0, 0, 0.6);
+          box-shadow: var(--shadow);
+          backdrop-filter: blur(2px);
         }
 
         .login-box h1 {
           font-family: 'Instrument Serif', serif;
           font-style: italic;
-          font-size: 32px;
+          font-size: 34px;
           text-align: center;
+          background: linear-gradient(135deg, #c8a0ff, #8f6bff);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
           letter-spacing: -0.5px;
-        }
-
-        .login-box .sub {
-          text-align: center;
-          color: var(--text-muted);
-          font-size: 13px;
-          margin-top: -12px;
         }
 
         .field {
@@ -108,48 +106,25 @@
         }
         .field input:focus {
           border-color: var(--accent);
-          box-shadow: 0 0 0 3px rgba(200, 240, 101, 0.08);
+          box-shadow: 0 0 0 3px rgba(160, 100, 255, 0.2);
         }
 
-        .btn {
-          padding: 10px 16px;
-          border-radius: var(--radius-sm);
-          font-family: 'DM Mono', monospace;
-          font-size: 11px;
-          font-weight: 500;
-          cursor: pointer;
-          border: none;
-          transition: 0.2s;
-          text-align: center;
-        }
-        .btn-primary {
-          background: var(--accent);
-          color: #000;
-          font-weight: 600;
-        }
-        .btn-primary:hover {
-          background: var(--accent-hover);
-          transform: scale(1.01);
-        }
-        .btn-outline {
-          background: transparent;
-          border: 1px solid var(--border);
-          color: var(--text-muted);
-        }
-        .btn-outline:hover {
-          background: rgba(255, 255, 255, 0.04);
-          color: var(--text);
-        }
-        .btn-danger {
+        /* login error message */
+        .login-error {
           background: var(--red-bg);
-          color: var(--red);
+          border-left: 3px solid var(--red);
+          padding: 10px 14px;
+          border-radius: var(--radius-sm);
+          font-size: 13px;
+          color: #ffb3bd;
+          display: none;
+          margin-top: -8px;
         }
-        .btn-danger:hover {
-          background: var(--red);
-          color: #fff;
+        .login-error.show {
+          display: block;
         }
 
-        /* ─── SIDEBAR ─── */
+        /* ── Sidebar ─────────────────────────────────────────────── */
         nav {
           width: 260px;
           background: var(--sidebar);
@@ -163,10 +138,12 @@
         .nav-brand {
           font-family: 'Instrument Serif', serif;
           font-style: italic;
-          font-size: 24px;
+          font-size: 26px;
           margin-bottom: 40px;
           padding: 0 8px;
-          letter-spacing: -0.3px;
+          background: linear-gradient(135deg, #c8a0ff, #8f6bff);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
         }
 
         .nav-links {
@@ -189,17 +166,17 @@
           transition: 0.2s;
         }
         .nav-link:hover {
-          background: rgba(255, 255, 255, 0.03);
+          background: rgba(160, 100, 255, 0.08);
           color: var(--text);
         }
         .nav-link.active {
           background: var(--accent);
-          color: #000;
+          color: #0b0811;
+          font-weight: 600;
         }
         .nav-link svg {
           width: 18px;
           height: 18px;
-          flex-shrink: 0;
         }
 
         .nav-footer {
@@ -210,6 +187,7 @@
           flex-direction: column;
           gap: 12px;
         }
+
         .user-info {
           font-size: 12px;
           color: var(--text-muted);
@@ -217,11 +195,11 @@
           word-break: break-all;
         }
 
-        /* ─── MAIN ─── */
+        /* ── Main ────────────────────────────────────────────────── */
         main {
           flex: 1;
           overflow-y: auto;
-          padding: 40px 48px;
+          padding: 40px 60px;
           position: relative;
         }
 
@@ -229,12 +207,11 @@
           display: flex;
           justify-content: space-between;
           align-items: flex-end;
-          margin-bottom: 28px;
-          flex-wrap: wrap;
-          gap: 16px;
+          margin-bottom: 32px;
         }
+
         .page-title h2 {
-          font-size: 26px;
+          font-size: 28px;
           font-weight: 600;
           margin-bottom: 4px;
         }
@@ -243,7 +220,7 @@
           font-size: 14px;
         }
 
-        /* ─── CONTROLS ─── */
+        /* ── Controls ────────────────────────────────────────────── */
         .controls {
           display: flex;
           gap: 12px;
@@ -255,7 +232,7 @@
         .search-container {
           flex: 1;
           position: relative;
-          min-width: 200px;
+          min-width: 180px;
         }
         .search-container input {
           width: 100%;
@@ -265,10 +242,6 @@
           border-radius: var(--radius-sm);
           color: var(--text);
           outline: none;
-          font-size: 14px;
-        }
-        .search-container input:focus {
-          border-color: var(--border-focus);
         }
         .search-container svg {
           position: absolute;
@@ -280,17 +253,16 @@
 
         .filter-pill {
           padding: 8px 18px;
-          border-radius: 20px;
+          border-radius: 30px;
           background: var(--card);
           border: 1px solid var(--border);
-          font-size: 12px;
+          font-size: 13px;
           color: var(--text-muted);
           cursor: pointer;
           transition: 0.2s;
-          font-weight: 500;
         }
         .filter-pill:hover {
-          border-color: var(--text-dim);
+          border-color: var(--accent);
         }
         .filter-pill.active {
           background: var(--blue-bg);
@@ -298,7 +270,7 @@
           border-color: var(--blue);
         }
 
-        /* ─── CARDS (grid/list) ─── */
+        /* ── Cards ────────────────────────────────────────────────── */
         .grid-container {
           display: flex;
           flex-direction: column;
@@ -314,17 +286,18 @@
           grid-template-columns: 1fr auto;
           gap: 20px;
           transition: 0.2s;
-          animation: fadeIn 0.25s ease;
+          animation: fadeIn 0.3s ease;
         }
         .card:hover {
-          border-color: var(--text-dim);
-          transform: translateY(-1px);
+          border-color: var(--accent);
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
         }
 
         @keyframes fadeIn {
           from {
             opacity: 0;
-            transform: translateY(8px);
+            transform: translateY(10px);
           }
         }
 
@@ -335,7 +308,7 @@
           display: flex;
           align-items: center;
           gap: 10px;
-          margin-bottom: 10px;
+          margin-bottom: 12px;
           flex-wrap: wrap;
         }
         .user-name {
@@ -348,7 +321,6 @@
           padding: 2px 10px;
           border-radius: 4px;
           text-transform: uppercase;
-          letter-spacing: 0.04em;
         }
         .badge-red {
           background: var(--red-bg);
@@ -359,7 +331,7 @@
           color: var(--blue);
         }
         .badge-accent {
-          background: rgba(200, 240, 101, 0.1);
+          background: rgba(180, 130, 255, 0.15);
           color: var(--accent);
         }
 
@@ -368,7 +340,7 @@
           line-height: 1.6;
           color: var(--text);
           background: rgba(0, 0, 0, 0.25);
-          padding: 12px 14px;
+          padding: 12px;
           border-radius: var(--radius-sm);
           margin-bottom: 12px;
           border-left: 3px solid var(--accent);
@@ -392,28 +364,55 @@
           flex-direction: column;
           gap: 8px;
           justify-content: center;
-          min-width: 130px;
+          min-width: 140px;
         }
-        .card-actions .btn {
-          font-size: 10px;
-          padding: 8px 12px;
+
+        .btn {
+          padding: 10px 16px;
+          border-radius: var(--radius-sm);
+          font-family: 'DM Mono', monospace;
+          font-size: 11px;
+          font-weight: 500;
+          cursor: pointer;
+          border: none;
+          transition: 0.2s;
+          text-align: center;
+        }
+        .btn-primary {
+          background: var(--accent);
+          color: #0b0811;
+        }
+        .btn-primary:hover {
+          background: var(--accent-hover);
+          transform: scale(0.98);
+        }
+        .btn-outline {
+          background: transparent;
+          border: 1px solid var(--border);
+          color: var(--text-muted);
+        }
+        .btn-outline:hover {
+          background: rgba(160, 100, 255, 0.08);
+          color: var(--text);
+        }
+        .btn-danger {
+          background: var(--red-bg);
+          color: var(--red);
+        }
+        .btn-danger:hover {
+          background: var(--red);
+          color: #fff;
         }
 
         .empty-state {
-          padding: 60px 0;
+          padding: 80px 0;
           text-align: center;
           color: var(--text-dim);
-        }
-        .empty-state svg {
-          width: 48px;
-          height: 48px;
-          margin-bottom: 12px;
-          opacity: 0.4;
         }
 
         .skeleton {
           height: 120px;
-          background: linear-gradient(90deg, var(--card) 25%, #202024 50%, var(--card) 75%);
+          background: linear-gradient(90deg, var(--card) 25%, #2a1f3a 50%, var(--card) 75%);
           background-size: 200% 100%;
           animation: shimmer 1.5s infinite;
           border-radius: var(--radius);
@@ -427,23 +426,22 @@
           }
         }
 
-        /* ─── TOAST ─── */
+        /* Toast */
         #toast {
           position: fixed;
           bottom: 32px;
           right: 32px;
           background: var(--card);
           border: 1px solid var(--border);
-          padding: 14px 24px;
+          padding: 16px 24px;
           border-radius: var(--radius);
-          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+          box-shadow: var(--shadow);
           display: flex;
           align-items: center;
           gap: 12px;
           transform: translateY(100px);
           transition: 0.3s cubic-bezier(0.17, 0.67, 0.83, 0.67);
           z-index: 2000;
-          backdrop-filter: blur(8px);
         }
         #toast.show {
           transform: translateY(0);
@@ -452,7 +450,6 @@
           width: 8px;
           height: 8px;
           border-radius: 50%;
-          flex-shrink: 0;
         }
         .toast-success {
           background: var(--accent);
@@ -461,54 +458,87 @@
           background: var(--red);
         }
 
-        @media (max-width: 700px) {
+        /* responsive */
+        @media (max-width: 860px) {
           main {
-            padding: 24px 16px;
+            padding: 24px;
           }
           nav {
             width: 200px;
-            padding: 16px 12px;
+          }
+        }
+        @media (max-width: 640px) {
+          body {
+            flex-direction: column;
+          }
+          nav {
+            width: 100%;
+            border-right: none;
+            border-bottom: 1px solid var(--border);
+            flex-direction: row;
+            flex-wrap: wrap;
+            padding: 16px;
+          }
+          .nav-brand {
+            margin-bottom: 0;
+            margin-right: 24px;
+          }
+          .nav-links {
+            flex-direction: row;
+            flex-wrap: wrap;
+            gap: 4px;
+          }
+          .nav-footer {
+            margin-top: 0;
+            margin-left: auto;
+            border-top: none;
+            padding-top: 0;
+          }
+          main {
+            padding: 20px;
           }
           .card {
             grid-template-columns: 1fr;
-            gap: 16px;
           }
           .card-actions {
             flex-direction: row;
             flex-wrap: wrap;
             min-width: unset;
           }
-          .login-box {
-            padding: 32px 24px;
-            width: 90%;
-          }
         }
     </style>
 </head>
 <body>
 
-<!-- ─── AUTH OVERLAY ─── -->
+<!-- ── Auth Section ────────────────────────────────────────── -->
 <div id="auth-section">
     <div class="login-box">
-        <div>
+        <div class="brand">
             <h1>CampusFeed</h1>
-            <p class="sub">Moderation Console</p>
+            <p style="text-align: center; color: var(--text-muted); font-size: 13px; margin-top: 4px;">moderation · purple edition</p>
         </div>
+
         <div class="field">
             <label>Admin Email</label>
-            <input type="email" id="email" placeholder="admin@campusfeed.com" value="admin@campusfeed.com">
+            <input type="email" id="email" placeholder="admin@campusfeed.com" />
         </div>
         <div class="field">
             <label>Password</label>
-            <input type="password" id="password" placeholder="••••••••" value="admin123">
+            <input type="password" id="password" placeholder="••••••••" />
         </div>
+
+        <!-- login error message -->
+        <div class="login-error" id="login-error-msg">
+            ⚡ Invalid credentials or insufficient privileges.
+        </div>
+
         <button class="btn btn-primary" id="login-btn" onclick="login()">Sign In</button>
     </div>
 </div>
 
-<!-- ─── SIDEBAR ─── -->
+<!-- ── Sidebar ─────────────────────────────────────────────── -->
 <nav>
-    <div class="nav-brand">Moderation</div>
+    <div class="nav-brand">✦ Moderation</div>
 
     <div class="nav-links">
         <div class="nav-link active" onclick="showSection('queue')" id="link-queue">
@@ -531,22 +561,22 @@
     </div>
 </nav>
 
-<!-- ─── MAIN CONTENT ─── -->
+<!-- ── Main Dashboard ──────────────────────────────────────── -->
 <main>
-    <!-- Queue -->
+    <!-- Reports Queue -->
     <div id="section-queue">
         <div class="page-header">
             <div class="page-title">
                 <h2>Reports Queue</h2>
-                <p>Manage pending reports and maintain community safety.</p>
+                <p>Manage pending reports & maintain community safety.</p>
             </div>
-            <div class="btn btn-primary" onclick="fetchReports()">Refresh Queue</div>
+            <div class="btn btn-primary" onclick="fetchReports()">↻ Refresh</div>
         </div>
 
         <div class="controls">
             <div class="search-container">
                 <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                <input type="text" id="queue-search" placeholder="Search by content or username..." oninput="filterList('queue')">
+                <input type="text" id="queue-search" placeholder="Search by content or username..." oninput="filterList('queue')" />
             </div>
             <div class="filter-pill active" onclick="setQuickFilter(null)">All</div>
             <div class="filter-pill" onclick="setQuickFilter('spam')">Spam</div>
@@ -565,7 +595,7 @@
             </div>
             <div class="search-container" style="max-width: 400px;">
                 <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                <input type="text" id="history-search" placeholder="Search history..." oninput="filterList('history')">
+                <input type="text" id="history-search" placeholder="Search history..." oninput="filterList('history')" />
             </div>
         </div>
         <div id="history-list" class="grid-container"></div>
@@ -576,15 +606,15 @@
         <div class="page-header">
             <div class="page-title">
                 <h2>User Management</h2>
-                <p>Search and manage user statuses and verification.</p>
+                <p>Search and manage user statuses & verification.</p>
             </div>
-            <div class="btn btn-primary" onclick="fetchUsers()">Refresh Users</div>
+            <div class="btn btn-primary" onclick="fetchUsers()">↻ Refresh</div>
         </div>
 
         <div class="controls">
             <div class="search-container">
                 <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                <input type="text" id="user-search" placeholder="Search by name or ID..." oninput="filterList('users')">
+                <input type="text" id="user-search" placeholder="Search by name or ID..." oninput="filterList('users')" />
             </div>
         </div>
 
@@ -592,40 +622,54 @@
     </div>
 </main>
 
-<!-- ─── TOAST ─── -->
+<!-- Toast -->
 <div id="toast">
     <div class="toast-icon" id="toast-icon"></div>
     <span id="toast-msg"></span>
 </div>
 
 <script>
-    // ─── SUPABASE CONFIG ───
+    // ── Supabase config ────────────────────────────────────────
     const SUPABASE_URL = 'https://wdhzlfqftxytphnohpqb.supabase.co';
-    const SUPABASE_ANON_KEY =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkaHpsZnFmdHh5dHBobm9ocHFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NDk4ODQsImV4cCI6MjA4NjIyNTg4NH0.LdCWlMkVaM7FTLLB7mmdf5oQeiTQHB9gP4HaxIUUn1M';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkaHpsZnFmdHh5dHBobm9ocHFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NDk4ODQsImV4cCI6MjA4NjIyNTg4NH0.LdCWlMkVaM7FTLLB7mmdf5oQeiTQHB9gP4HaxIUUn1M';
 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // ─── STATE ───
     let reportsData = [];
     let historyData = [];
     let usersData = [];
     let currentQuickFilter = null;
 
-    // ─── AUTH ──────────────────────────────────────────────────
+    // ── Login ──────────────────────────────────────────────────
     async function login() {
-      const email = document.getElementById('email').value;
+      const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
       const btn = document.getElementById('login-btn');
+      const errorBox = document.getElementById('login-error-msg');
 
-      btn.innerText = 'Signing in…';
+      errorBox.classList.remove('show');
+      btn.innerText = 'Signing in...';
       btn.disabled = true;
 
       try {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        if (!email || !password) {
+          errorBox.innerText = '✖ Please enter email and password.';
+          errorBox.classList.add('show');
+          throw new Error('Missing credentials');
+        }
 
-        // check admin role
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) {
+          if (error.message.includes('Invalid login credentials')) {
+            errorBox.innerText = '✖ Invalid email or password. Try again.';
+          } else {
+            errorBox.innerText = '✖ ' + error.message;
+          }
+          errorBox.classList.add('show');
+          throw error;
+        }
+
+        // verify admin role
         const { data: roleData, error: roleError } = await supabase
           .from('roles')
           .select('role')
@@ -634,12 +678,18 @@
 
         if (roleError || roleData?.role !== 'admin') {
           await supabase.auth.signOut();
-          throw new Error('Access denied. Admin role required.');
+          errorBox.innerText = '⛔ Access denied. Admin role required.';
+          errorBox.classList.add('show');
+          throw new Error('Admin role required');
         }
 
         initDashboard(data.user);
       } catch (err) {
-        showToast(err.message, 'error');
+        // ensure error is shown if not already
+        if (!errorBox.classList.contains('show')) {
+          errorBox.innerText = '⚠️ ' + (err.message || 'Login failed');
+          errorBox.classList.add('show');
+        }
         btn.innerText = 'Sign In';
         btn.disabled = false;
       }
@@ -658,7 +708,7 @@
       fetchUsers();
     }
 
-    // ─── NAVIGATION ────────────────────────────────────────────
+    // ── Navigation ─────────────────────────────────────────────
     function showSection(id) {
       ['queue', 'history', 'users'].forEach(s => {
         document.getElementById(`section-${s}`).style.display = s === id ? 'block' : 'none';
@@ -666,7 +716,7 @@
       });
     }
 
-    // ─── FETCH DATA ────────────────────────────────────────────
+    // ── Data fetching ──────────────────────────────────────────
     async function fetchReports() {
       const list = document.getElementById('reports-list');
       list.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div>';
@@ -682,8 +732,8 @@
         .order('created_at', { ascending: false });
 
       if (error) { showToast('Failed to fetch reports', 'error'); return; }
-      reportsData = data;
-      renderReports(data, 'reports-list');
+      reportsData = data || [];
+      renderReports(reportsData, 'reports-list');
     }
 
     async function fetchHistory() {
@@ -698,8 +748,8 @@
         .limit(50)
         .order('reviewed_at', { ascending: false });
 
-      if (!error) { historyData = data;
-        renderReports(data, 'history-list', true); }
+      if (!error) { historyData = data || [];
+        renderReports(historyData, 'history-list', true); }
     }
 
     async function fetchUsers() {
@@ -713,15 +763,15 @@
         .limit(100);
 
       if (error) { showToast('Failed to fetch users', 'error'); return; }
-      usersData = data;
-      renderUsers(data);
+      usersData = data || [];
+      renderUsers(usersData);
     }
 
-    // ─── RENDER ─────────────────────────────────────────────────
+    // ── Rendering ──────────────────────────────────────────────
     function renderReports(reports, targetId, isHistory = false) {
       const list = document.getElementById(targetId);
       if (!reports || !reports.length) {
-        list.innerHTML = `<div class="empty-state">No reports found.</div>`;
+        list.innerHTML = `<div class="empty-state">✦ No reports found.</div>`;
         return;
       }
 
@@ -746,10 +796,10 @@
             <div class="card-actions">
               <button class="btn btn-primary" onclick="resolveReport('${r.id}', 'warn')">Issue Warning</button>
               <button class="btn btn-danger" onclick="resolveReport('${r.id}', 'delete')">Delete Post</button>
-              <button class="btn btn-outline" onclick="resolveReport('${r.id}', 'suspend')">Suspend</button>
+              <button class="btn btn-outline" onclick="resolveReport('${r.id}', 'suspend')">Suspend User</button>
               <button class="btn btn-outline" onclick="resolveReport('${r.id}', 'dismiss')">Dismiss</button>
             </div>` : `
-            <div style="font-size: 11px; color: var(--accent); font-family: 'DM Mono'; align-self: center;">RESOLVED</div>
+            <div style="font-size: 11px; color: var(--accent); font-family: 'DM Mono'; align-self: center;">✓ RESOLVED</div>
             `}
           </div>
         `).join('');
@@ -767,12 +817,12 @@
             <div class="card-content">
               <div class="card-header">
                 <span class="user-name">${u.name}</span>
-                <span class="badge ${u.profile_status === 'suspended' ? 'badge-red' : 'badge-accent'}">${u.profile_status || 'active'}</span>
-                ${u.is_verified ? '<span class="badge badge-blue">Verified</span>' : ''}
+                <span class="badge ${u.profile_status === 'suspended' ? 'badge-red' : 'badge-accent'}">${u.profile_status || 'clean'}</span>
+                ${u.is_verified ? '<span class="badge badge-blue">✓ Verified</span>' : ''}
               </div>
               <div class="card-meta">
-                <div class="meta-item">Univ: ${u.university || 'N/A'}</div>
-                <div class="meta-item">Joined: ${new Date(u.created_at).toLocaleDateString()}</div>
+                <div class="meta-item">🏛 ${u.university || 'N/A'}</div>
+                <div class="meta-item">📅 ${new Date(u.created_at).toLocaleDateString()}</div>
                 <div class="meta-item">ID: ${u.id.slice(0, 8)}…</div>
               </div>
             </div>
@@ -784,22 +834,20 @@
         `).join('');
     }
 
-    // ─── ACTIONS ─────────────────────────────────────────────────
+    // ── Actions ─────────────────────────────────────────────────
     async function resolveReport(reportId, action) {
-      if (!confirm(`Are you sure you want to perform: ${action}?`)) return;
+      if (!confirm(`Are you sure you want to perform action: ${action}?`)) return;
 
       const report = reportsData.find(r => r.id === reportId);
       const { data: { user } } = await supabase.auth.getUser();
 
       try {
-        // destructive actions
         if (action === 'delete' && report?.post_id) {
           await supabase.from('posts').delete().eq('id', report.post_id);
         } else if (action === 'suspend' && report?.reported_user_id) {
           await supabase.from('profiles').update({ profile_status: 'suspended' }).eq('id', report.reported_user_id);
         }
 
-        // call RPC to close report
         const { error } = await supabase.rpc('review_report', {
           report_id_param: reportId,
           admin_id: user.id,
@@ -807,7 +855,6 @@
         });
 
         if (error) throw error;
-
         showToast(`Action '${action}' successful.`, 'success');
         fetchReports();
         fetchHistory();
@@ -823,11 +870,10 @@
       try {
         let update = {};
         if (action === 'verify') update = { is_verified: !userObj.is_verified };
-        if (action === 'suspend') update = { profile_status: userObj.profile_status === 'suspended' ? 'active' : 'suspended' };
+        if (action === 'suspend') update = { profile_status: userObj.profile_status === 'suspended' ? 'clean' : 'suspended' };
 
         const { error } = await supabase.from('profiles').update(update).eq('id', userId);
         if (error) throw error;
-
         showToast('User updated successfully.', 'success');
         fetchUsers();
       } catch (err) {
@@ -835,28 +881,23 @@
       }
     }
 
-    // ─── FILTERS ─────────────────────────────────────────────────
+    // ── Filtering ──────────────────────────────────────────────
     function filterList(type) {
       if (type === 'queue') {
         const query = document.getElementById('queue-search').value.toLowerCase();
         const filtered = reportsData.filter(r => {
-          const matchesSearch = (r.profiles?.name?.toLowerCase().includes(query) || r.posts?.content?.toLowerCase()
-            .includes(query));
-          const matchesQuick = !currentQuickFilter || (r.reason || '').toLowerCase().includes(currentQuickFilter);
+          const matchesSearch = (r.profiles?.name?.toLowerCase().includes(query) || r.posts?.content?.toLowerCase().includes(query));
+          const matchesQuick = !currentQuickFilter || r.reason?.toLowerCase().includes(currentQuickFilter);
           return matchesSearch && matchesQuick;
         });
         renderReports(filtered, 'reports-list');
       } else if (type === 'history') {
         const query = document.getElementById('history-search').value.toLowerCase();
-        const filtered = historyData.filter(h =>
-          (h.profiles?.name?.toLowerCase().includes(query) || (h.posts?.content || '').toLowerCase().includes(query))
-        );
+        const filtered = historyData.filter(h => (h.profiles?.name?.toLowerCase().includes(query) || h.posts?.content?.toLowerCase().includes(query)));
         renderReports(filtered, 'history-list', true);
       } else if (type === 'users') {
         const query = document.getElementById('user-search').value.toLowerCase();
-        const filtered = usersData.filter(u =>
-          u.name.toLowerCase().includes(query) || u.id.toLowerCase().includes(query)
-        );
+        const filtered = usersData.filter(u => u.name?.toLowerCase().includes(query) || u.id?.toLowerCase().includes(query));
         renderUsers(filtered);
       }
     }
@@ -864,13 +905,12 @@
     function setQuickFilter(type) {
       currentQuickFilter = type;
       document.querySelectorAll('.filter-pill').forEach(p => {
-        const label = p.innerText.toLowerCase();
-        p.classList.toggle('active', label === (type || 'all'));
+        p.classList.toggle('active', p.innerText.toLowerCase() === (type || 'all'));
       });
       filterList('queue');
     }
 
-    // ─── TOAST ───────────────────────────────────────────────────
+    // ── Toast ───────────────────────────────────────────────────
     function showToast(msg, type = 'success') {
       const toast = document.getElementById('toast');
       const icon = document.getElementById('toast-icon');
@@ -878,10 +918,10 @@
       icon.className = `toast-icon toast-${type}`;
       toast.classList.add('show');
       clearTimeout(window.toastTimer);
-      window.toastTimer = setTimeout(() => toast.classList.remove('show'), 3200);
+      window.toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
     }
 
-    // ─── AUTO-LOGIN SESSION ─────────────────────────────────────
+    // ── Auto-login session ─────────────────────────────────────
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) initDashboard(session.user);
     });
