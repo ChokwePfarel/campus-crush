@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:dating_app/core/utils/screen_size.dart';
 import 'package:dating_app/core/utils/search_skeleton.dart';
 import 'package:dating_app/core/widgets/common/users_list_tile.dart';
@@ -30,13 +29,7 @@ class _SearchPageState extends State<SearchPage> {
     _scrollController.addListener(_onScroll);
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    _scrollController.dispose();
-    _debounce?.cancel();
-    super.dispose();
-  }
+
 
   void _onScroll() {
     if (_isBottom) {
@@ -85,14 +78,14 @@ class _SearchPageState extends State<SearchPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FE),
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         leading: Container(
           margin: const EdgeInsets.all(8),
           decoration: const BoxDecoration(
-            color: Color(0xFFF5F6FA),
+            color: Colors.white,
             shape: BoxShape.circle,
           ),
           child: CupertinoButton(
@@ -100,7 +93,9 @@ class _SearchPageState extends State<SearchPage> {
             onPressed: () => Navigator.of(context).pop(),
             child: const Icon(
               CupertinoIcons.chevron_left,
+
               color: Color(0xFF1A1A2E),
+
               size: 22,
             ),
           ),
@@ -110,7 +105,7 @@ class _SearchPageState extends State<SearchPage> {
           preferredSize: const Size.fromHeight(1),
           child: Container(
             height: 1,
-            color: Colors.grey[100],
+            color: Colors.grey.shade100,
           ),
         ),
       ),
@@ -151,7 +146,7 @@ class _SearchPageState extends State<SearchPage> {
                     state.message,
                     style: TextStyle(
                       fontSize: 14,
-                      color: Colors.grey[500],
+                      color: Colors.grey.shade500,
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -190,7 +185,7 @@ class _SearchPageState extends State<SearchPage> {
                     Icon(
                       Icons.search_off,
                       size: 72,
-                      color: Colors.grey[300],
+                      color: Colors.grey.shade300,
                     ),
                     const SizedBox(height: 16),
                     Text(
@@ -198,7 +193,7 @@ class _SearchPageState extends State<SearchPage> {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
-                        color: Colors.grey[700],
+                        color: Colors.grey.shade700,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -206,7 +201,7 @@ class _SearchPageState extends State<SearchPage> {
                       'Try adjusting your search terms',
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.grey[500],
+                        color: Colors.grey.shade500,
                       ),
                     ),
                   ],
@@ -247,11 +242,11 @@ class _SearchPageState extends State<SearchPage> {
     return Container(
       height: SizeConfig.heightPercent(5.5),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F6FA),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(SizeConfig.widthPercent(10)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -262,18 +257,20 @@ class _SearchPageState extends State<SearchPage> {
         onChanged: _onSearchChanged,
         style: TextStyle(
           fontSize: SizeConfig.widthPercent(4),
+
           color: const Color(0xFF1A1A2E),
+
         ),
         decoration: InputDecoration(
           hintText: 'Search by name or residence',
           hintStyle: TextStyle(
-            color: Colors.grey[400],
+            color: Colors.grey.shade400,
             fontSize: SizeConfig.widthPercent(3.5),
             fontWeight: FontWeight.w400,
           ),
           prefixIcon: Icon(
             Icons.search,
-            color: Colors.grey[400],
+            color: Colors.grey.shade400,
             size: 22,
           ),
           suffixIcon: _searchController.text.isNotEmpty
@@ -281,7 +278,7 @@ class _SearchPageState extends State<SearchPage> {
             icon: Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: Colors.grey.shade400,
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -304,5 +301,13 @@ class _SearchPageState extends State<SearchPage> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _scrollController.dispose();
+    _debounce?.cancel();
+    super.dispose();
   }
 }

@@ -7,7 +7,7 @@ class MessageEntity {
   final String text;
   final bool isRead;
   final DateTime createdAt;
-  final MessageStatus status; // New field
+  final MessageStatus status;
 
   const MessageEntity({
     required this.id,
@@ -16,7 +16,7 @@ class MessageEntity {
     required this.text,
     required this.isRead,
     required this.createdAt,
-    this.status = MessageStatus.sent, // Default to sent
+    this.status = MessageStatus.sent,
   });
 
   MessageEntity copyWith({

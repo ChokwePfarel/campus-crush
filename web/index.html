@@ -11,7 +11,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 
     <style>
-        /* ---------- RESET & ROOT (black + purple) ---------- */
         * {
           margin: 0;
           padding: 0;
@@ -47,7 +46,6 @@
           background-image: radial-gradient(circle at 20% 30%, #1e1028 0%, #0b0b0b 70%);
         }
 
-        /* ---------- CARD ---------- */
         .card {
           width: 100%;
           max-width: 460px;
@@ -60,7 +58,6 @@
           transition: 0.2s;
         }
 
-        /* ---------- ICON ---------- */
         .icon-wrap {
           width: 68px;
           height: 68px;
@@ -96,7 +93,6 @@
           opacity: 0.8;
         }
 
-        /* ---------- WARNING BOX ---------- */
         .warning-box {
           background: rgba(179, 136, 255, 0.06);
           border: 1px solid rgba(179, 136, 255, 0.18);
@@ -137,7 +133,6 @@
           text-align: center;
         }
 
-        /* ---------- FIELDS ---------- */
         .field {
           margin-bottom: 18px;
         }
@@ -194,7 +189,6 @@
           color: #d6c4f0;
         }
 
-        /* ---------- CONFIRM ROW ---------- */
         .confirm-row {
           display: flex;
           gap: 12px;
@@ -222,7 +216,6 @@
           cursor: pointer;
         }
 
-        /* ---------- DELETE BUTTON ---------- */
         .btn-delete {
           width: 100%;
           margin-top: 24px;
@@ -260,7 +253,6 @@
           color: #0b0b0b;
         }
 
-        /* ---------- STATUS / ERROR ---------- */
         .status {
           margin-top: 18px;
           padding: 14px 16px;
@@ -279,7 +271,6 @@
           backdrop-filter: blur(2px);
         }
 
-        /* ---------- SPINNER ---------- */
         .spinner {
           width: 18px;
           height: 18px;
@@ -300,7 +291,6 @@
           }
         }
 
-        /* ---------- OVERLAY / POPUP (success) ---------- */
         .overlay {
           position: fixed;
           inset: 0;
@@ -388,7 +378,6 @@
           box-shadow: 0 0 20px rgba(179, 136, 255, 0.3);
         }
 
-        /* ---------- RESPONSIVE ---------- */
         @media (max-width: 480px) {
           .card {
             padding: 24px;
@@ -462,7 +451,7 @@
 </div>
 
 <script>
-    // ---------- SUPABASE CONFIG ----------
+
     const SUPABASE_URL =
       'https://wdhzlfqftxytphnohpqb.supabase.co';
     const SUPABASE_ANON_KEY =
@@ -473,7 +462,7 @@
       SUPABASE_ANON_KEY
     );
 
-    // ---------- UI HELPERS ----------
+
     function toggleBtn() {
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
@@ -535,7 +524,7 @@
       }
     }
 
-    // ---------- DELETE ACCOUNT ----------
+
     async function deleteAccount() {
       const btn = document.getElementById('delete-btn');
       if (!btn.classList.contains('active')) return;
@@ -582,7 +571,7 @@
 
         setLoading(false);
 
-        // 4. Show success popup
+
         document.getElementById('successPopup').classList.add('active');
 
       } catch (err) {

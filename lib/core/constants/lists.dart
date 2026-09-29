@@ -28,6 +28,13 @@ extension PostTypeExt on PostType {
   }
 }
 
+const filters = [
+  {'type': null, 'label': 'All'},
+  {'type': 'crush', 'label': 'Crush'},
+  {'type': 'confession', 'label': 'Confession'},
+];
+
+
 class DropDownOptions {
   static final List<String> sexOptions = ['Male', 'Female', 'LGBTQ'];
 

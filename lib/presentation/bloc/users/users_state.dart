@@ -21,9 +21,7 @@ class UsersLoaded extends UsersState {
     bool? hasReachedMax,
   }) {
     return UsersLoaded(
-      // if users was passed in, use it
-      // if users was null (not passed) ,keep this.users
-      //only users might change hence fall back for the one that didnt
+
       users: users ?? this.users,
       hasReachedMax: hasReachedMax ?? this.hasReachedMax,
     );

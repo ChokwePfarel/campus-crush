@@ -31,8 +31,11 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
     } on PostAlreadyReportedException {
       emit(PostAlreadyReported());
     } catch (e) {
+
+      //Fixing
       // Fallback: Check if the error message contains 'duplicate key' 
       // in case the exception mapping in the data source was bypassed.
+
       if (e.toString().contains('duplicate key')) {
         emit(PostAlreadyReported());
       } else {
@@ -62,7 +65,6 @@ class BlockUserBloc extends Bloc<BlockUserEvent, BlockUserState> {
         blockerId: event.blockerId,
         blockedId: event.blockedId,
       );
-      // Clear offline cache so blocked posts disappear immediately
       await OfflineCache.clearPostsCache();
       emit(BlockUserSuccess());
     } catch (e) {

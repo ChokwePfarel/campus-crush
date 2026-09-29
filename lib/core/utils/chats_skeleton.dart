@@ -23,6 +23,7 @@ class ChatsSkeleton extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               // Text placeholders
+
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

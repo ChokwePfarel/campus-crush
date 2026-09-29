@@ -35,7 +35,6 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     });
   }
 
-  // ─── Load Messages ─────────────────────────────────────────────────────────
 
   Future<void> _onLoadMessages(
       LoadMessages event,
@@ -71,7 +70,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       final allMessages = _merge(serverMessages, stillQueued);
       emit(ChatLoaded(messages: allMessages));
 
-      // Mark conversation as read on entry
+      //    Mark conversation as read on entry
       await _chatRepository.markAsRead(event.conversationId, event.currentUserId);
 
       await _msgSubscription?.cancel();
@@ -86,7 +85,6 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     }
   }
 
-  // ─── Send Message ──────────────────────────────────────────────────────────
 
   Future<void> _onSendMessage(
       SendMessage event,
@@ -126,7 +124,6 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     }
   }
 
-  // ─── Resend Queued Messages ────────────────────────────────────────────────
 
   Future<void> _onResendQueued(
       ResendQueuedMessages event,
@@ -147,7 +144,6 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     }
   }
 
-  // ─── Update Message Status ─────────────────────────────────────────────────
 
   void _onUpdateStatus(
       UpdateMessageStatus event,
@@ -163,7 +159,6 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     emit(current.copyWith(messages: updated));
   }
 
-  // ─── Delete Message ────────────────────────────────────────────────────────
 
   Future<void> _onDeleteMessage(
       deleteMessage event,
@@ -179,12 +174,10 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     try {
       await _chatRepository.deleteMessage(event.messageId);
     } catch (e) {
-      // Revert or show error if deletion fails
-      // In this case, we just log it or keep the UI snappy
+      //
     }
   }
 
-  // ─── Message Received ──────────────────────────────────────────────────────
 
   void _onMessageReceived(
       MessageReceived event,
@@ -214,8 +207,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     updated.sort((a, b) => a.createdAt.compareTo(b.createdAt));
     emit(current.copyWith(messages: updated));
 
-    // NEW: If we are actively in this chat and receive a message from the OTHER user,
-    // mark it as read immediately so the badge count decrements in real-time.
+    //If we are actively in this chat and receive a message from the OTHER user,
+    // mark it as read immediately so the badge count decrements in real  time.
+
     if (_currentUserId != null && _conversationId != null && event.message.senderId != _currentUserId) {
        _chatRepository.markAsRead(_conversationId!, _currentUserId!);
     }

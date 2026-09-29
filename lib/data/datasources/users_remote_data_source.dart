@@ -28,12 +28,13 @@ class UsersRemoteDataSourceImpl implements UsersRemoteDataSource {
   @override
   Future<List<UserModel>> getUsers({
     required String university,
-    required String sex, // This is the current user's sex
+    required String sex,
     String? residence,
     required int offset,
     required int limit,
   }) async {
-    // 1. Determine the target sex based on the requirement
+
+    //Determineng  the target sex based on the requirement
     String targetSex;
     String currentSexLower = sex;
 
@@ -46,10 +47,10 @@ class UsersRemoteDataSourceImpl implements UsersRemoteDataSource {
         targetSex = 'Male';
       }
 
-      // 2. Build the query
+      // Query build
       var query = client.from('profiles').select().eq('university', university);
 
-      // Apply gender filter
+      // Filternig
       query = query.eq('sex', targetSex);
 
       // Exclude current user

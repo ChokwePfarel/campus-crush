@@ -5,7 +5,7 @@ class CommentEntity {
   final String userId;
   final String text;
   final DateTime createdAt;
-  final String? parentCommentId; // null if top-level
+  final String? parentCommentId; // null if top level
   final List<CommentEntity> replies; // optional, for UI convenience
 
   // ADD THESE:

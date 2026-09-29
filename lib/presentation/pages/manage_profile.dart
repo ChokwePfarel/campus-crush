@@ -35,6 +35,7 @@ class SettingsPage extends StatelessWidget {
           style: TextStyle(fontSize: 16, color: Colors.black87),
         ),
         actions: [
+
           TextButton(
             child: Text(
               'Cancel',
@@ -46,6 +47,7 @@ class SettingsPage extends StatelessWidget {
             ),
             onPressed: () => Navigator.pop(ctx),
           ),
+
           TextButton(
             child: Text(
               'Log out',
@@ -75,15 +77,15 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
         leading: Container(
           margin: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF5F6FA),
+          decoration: const BoxDecoration(
+            color: Colors.white,
             shape: BoxShape.circle,
           ),
           child: CupertinoButton(

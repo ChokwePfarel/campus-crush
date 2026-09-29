@@ -18,7 +18,7 @@ class ConversationModel extends ConversationEntity {
   factory ConversationModel.fromJson(
       Map<String, dynamic> json, String currentUserId, [int unreadCount = 0]) {
 
-    // Determine which user is the "other" one
+    // Determine which user is the "other" one.....
     final isUserOne = json['user_one_id'] == currentUserId;
 
     final otherUser = isUserOne

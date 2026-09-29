@@ -28,16 +28,12 @@ class ImagesRemoteDataSourceImpl implements ImagesRemoteDataSource {
   @override
   Future<List<UserImageModel>> getUserImages(String userId) async {
     try {
-// print('Fetching user images for user ID: $userId');
 
       final response = await client
           .from('user_images')
           .select()
           .eq('user_id', userId)
           .order('created_at', ascending: false);
-
-// print('Response: $response');
-
 
       return (response as List).map((e) => UserImageModel.fromJson(e)).toList();
 
@@ -55,7 +51,7 @@ class ImagesRemoteDataSourceImpl implements ImagesRemoteDataSource {
     required File image,
   }) async {
     try {
-      // Step 1 — delete existing profile image if one exists
+      // delete existing profile image if one exists
       final existing = await client
           .from('user_images')
           .select()
@@ -68,7 +64,7 @@ class ImagesRemoteDataSourceImpl implements ImagesRemoteDataSource {
         await client.from('user_images').delete().eq('id', existing['id']);
       }
 
-      // Step 2 — upload new profile image
+      //  upload new profile image
       final path =
           '$userId/profile_${DateTime.now().millisecondsSinceEpoch}.jpg';
 
@@ -78,7 +74,7 @@ class ImagesRemoteDataSourceImpl implements ImagesRemoteDataSource {
 
       final url = client.storage.from(_bucket).getPublicUrl(path);
 
-      // Step 3 — save metadata to table
+      // save metadata to table
       final response = await client
           .from('user_images')
           .insert({
@@ -90,7 +86,7 @@ class ImagesRemoteDataSourceImpl implements ImagesRemoteDataSource {
           .select()
           .single();
 
-      // Step 4 — update profile_image_url on profiles table
+      // update profile_image_url on profiles table
       await client
           .from('profiles')
           .update({'profile_image_url': url})
@@ -118,12 +114,12 @@ class ImagesRemoteDataSourceImpl implements ImagesRemoteDataSource {
       final path =
           '$userId/gallery_${DateTime.now().millisecondsSinceEpoch}.jpg';
 
-      // Upload to storage
+      //Upload to storage
       await client.storage.from(_bucket).upload(path, image);
 
       final url = client.storage.from(_bucket).getPublicUrl(path);
 
-      // Insert into user_images table
+      //Insert into user_images table
       final response = await client
           .from('user_images')
           .insert({
@@ -137,16 +133,11 @@ class ImagesRemoteDataSourceImpl implements ImagesRemoteDataSource {
 
       return UserImageModel.fromJson(response);
     } on PostgrestException catch (e) {
-      // Supabase/PostgREST-specific error
-      debugPrint('PostgrestException: ${e.message}');
-      debugPrint('Code: ${e.code}, Details: ${e.details}, Hint: ${e.hint}');
+
     } on StorageException catch (e) {
-      // Supabase storage-specific error
-      debugPrint('StorageException: ${e.message}');
+
     } catch (e, stack) {
-      // Any other unexpected error
-      debugPrint('Unexpected error: $e');
-      debugPrint('Stack trace: $stack');
+
     }
     throw Exception('Failed to upload image');
   }
@@ -156,7 +147,8 @@ class ImagesRemoteDataSourceImpl implements ImagesRemoteDataSource {
     required String imageId,
     required String path,
   }) async {
-    // Delete from storage first
+
+    //Delete from storage first
     await client.storage.from(_bucket).remove([path]);
 
     // Then delete metadata row

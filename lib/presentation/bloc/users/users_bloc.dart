@@ -54,7 +54,6 @@ class UsersBloc extends Bloc<UsersEvent, UsersState> {
           hasReachedMax: users.length < _limit,
         ));
       } else {
-        // Pagination for non-initial loads
         final users = await _usersRepository.getUsers(
           university: event.university,
           sex: event.sex,
@@ -71,7 +70,6 @@ class UsersBloc extends Bloc<UsersEvent, UsersState> {
               ));
       }
     } catch (e) {
-      // If we already have cache data in state, keep it and stay silent
       if (state is! UsersLoaded) {
         emit(UsersError(e.toString()));
       }

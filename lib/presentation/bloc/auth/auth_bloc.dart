@@ -93,7 +93,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     try {
       await _authRepository.sendPasswordResetEmail(event.email);
-      emit(Unauthenticated()); // Or a specific state like PasswordResetEmailSent
+      emit(Unauthenticated());
     } catch (e) {
       emit(AuthError(e.toString()));
     }

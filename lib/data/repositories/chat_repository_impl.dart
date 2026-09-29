@@ -109,7 +109,6 @@ class ChatRepositoryImpl implements ChatRepository {
 
   ChatRepositoryImpl(this._dataSource);
 
-  // ─── Conversations ─────────────────────────────────────────────────────────
 
   @override
   Future<List<ConversationEntity>> getConversations(String userId) async {

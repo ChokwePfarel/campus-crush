@@ -11,7 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+
 
 String _timeAgo(DateTime? dt) {
   if (dt == null) return '';
@@ -23,7 +23,6 @@ String _timeAgo(DateTime? dt) {
   return '${dt.day}/${dt.month}';
 }
 
-// ─── InboxPage ────────────────────────────────────────────────────────────────
 
 class InboxPage extends StatefulWidget {
   final String currentUserId;
@@ -40,7 +39,7 @@ class InboxPage extends StatefulWidget {
 class _InboxPageState extends State<InboxPage>
     with SingleTickerProviderStateMixin {
   final _searchCtrl = TextEditingController();
-  String _query = '';
+  final String _query = '';
 
   late final _fadeCtrl = AnimationController(
     vsync: this,
@@ -114,10 +113,6 @@ class _InboxPageState extends State<InboxPage>
                   if (state is ConversationsLoaded) {
                     return _buildList(state.conversations);
                   }
-
-                  // Fallback for ConversationsInitial or ConversationReady
-                  // This ensures that when a new chat is started, we still see 
-                  // the skeleton and AppBar while the background reload happens.
                   return const SliverFillRemaining(
                     child: ChatsSkeleton(),
                   );
@@ -130,7 +125,7 @@ class _InboxPageState extends State<InboxPage>
     );
   }
 
-  // ── AppBar ─────────────────────────────────────────────────────────────────
+  // ------------------------------------------------------------------ AppBar
 
   SliverAppBar _buildAppBar() {
     return SliverAppBar(
@@ -148,12 +143,12 @@ class _InboxPageState extends State<InboxPage>
       ),
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(0.5),
-        child: Container(height: 0.5, color: const Color(0xFFEEEEF4)),
+        child: Container(height: 0.5, color: Colors.white),
       ),
     );
   }
 
-  // ── List ───────────────────────────────────────────────────────────────────
+  //---------------------------------------------------------------------- List
 
   Widget _buildList(List<ConversationEntity> all) {
     final filtered = _filter(all);
@@ -193,15 +188,14 @@ class _InboxPageState extends State<InboxPage>
     );
   }
 
-  // ── Empty ──────────────────────────────────────────────────────────────────
+  // ----------------------------------------------------------------------Empty
 
   Widget _buildEmpty() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text('💬', style: TextStyle(fontSize: 52)),
-          const SizedBox(height: 16),
+
           const Text(
             'No messages yet',
             style: TextStyle(
@@ -226,7 +220,7 @@ class _InboxPageState extends State<InboxPage>
   }
 }
 
-// ─── Conversation Tile ────────────────────────────────────────────────────────
+// ------------------------------------------------------------ Conversation Tile
 
 class _ConversationTile extends StatefulWidget {
   final ConversationEntity conversation;
@@ -286,7 +280,7 @@ class _ConversationTileState extends State<_ConversationTile>
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Row(
               children: [
-                // ── Avatar ─────────────────────────────────────────────────
+
                 Stack(
                   children: [
                     Container(
@@ -335,7 +329,7 @@ class _ConversationTileState extends State<_ConversationTile>
                 ),
                 const SizedBox(width: 14),
 
-                // ── Content ────────────────────────────────────────────────
+                //--------------------------------------------------------------
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -382,9 +376,11 @@ class _ConversationTileState extends State<_ConversationTile>
                           ),
                         ],
                       ),
+
                       const SizedBox(height: 4),
+
                       Text(
-                        conv.lastMessage ?? 'Say hello 👋',
+                        conv.lastMessage ?? 'Say hello ',
                         style: TextStyle(
                           fontSize: 13,
                           color: conv.lastMessage != null
@@ -404,7 +400,7 @@ class _ConversationTileState extends State<_ConversationTile>
                 const Icon(
                   CupertinoIcons.chevron_right,
                   size: 14,
-                  color: Color(0xFFCCCCDD),
+                  color: Colors.white,
                 ),
               ],
             ),

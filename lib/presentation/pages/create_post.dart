@@ -8,7 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-// ─── Main Screen ─────────────────────────────────────────────────────────────
+import '../../core/features/create_post/createProfileUtils.dart';
+
 
 class CreatePostScreen extends StatefulWidget {
   const CreatePostScreen({super.key});
@@ -19,7 +20,7 @@ class CreatePostScreen extends StatefulWidget {
 
 class _CreatePostScreenState extends State<CreatePostScreen>
     with TickerProviderStateMixin {
-  // ── state ──────────────────────────────────────────────────────────────────
+
   PostType _postType = PostType.general;
   bool _isAnonymous = false;
   bool _isPosting = false;
@@ -48,7 +49,6 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     super.dispose();
   }
 
-  // ── helpers ────────────────────────────────────────────────────────────────
 
   bool get _canPost {
     final hasContent = _contentCtrl.text.trim().isNotEmpty;
@@ -62,7 +62,6 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 
   Color get _textColor => _darkBg ? Colors.white : const Color(0xFF1A1A2E);
 
-  // ── actions ────────────────────────────────────────────────────────────────
 
   void _selectPostType(PostType type) {
     HapticFeedback.selectionClick();
@@ -91,6 +90,8 @@ class _CreatePostScreenState extends State<CreatePostScreen>
 
     setState(() => _isPosting = true);
 
+
+    ///TODO CHECK THIS CODE, FUNTIONALTY
     // Spotted posts usually expire after 24 hours
    ///Without .toUtc(), the stored time will be 2 hours ahead of local time (SAST),
     /// which is actually 4 hours ahead of UTC — so posts would expire 4 hours after
@@ -121,7 +122,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => _LocationPickerSheet(
+      builder: (_) => LocationPickerSheet(
         selected: _locationTag,
         onSelected: (tag) {
           setState(() => _locationTag = tag);
@@ -135,7 +136,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (_) => _BgColorPickerSheet(
+      builder: (_) => BgColorPickerSheet(
         selected: _bgColor,
         onSelected: (color) {
           _selectBgColor(color);
@@ -145,13 +146,12 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     );
   }
 
-  // ── build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     SizeConfig.init(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7FB),
+      backgroundColor: Colors.white,
       body: FadeTransition(
         opacity: _fadeAnim,
         child: Column(
@@ -186,7 +186,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     );
   }
 
-  // ── AppBar ─────────────────────────────────────────────────────────────────
+
 
   Widget _buildAppBar() {
     return Container(
@@ -218,7 +218,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
           AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             decoration: BoxDecoration(
-              color: _canPost ? _accentColor : const Color(0xFFE0E0E0),
+              color: _canPost ? _accentColor :  Colors.white,
               borderRadius: BorderRadius.circular(SizeConfig.widthPercent(5)),
             ),
             child: TextButton(
@@ -255,7 +255,6 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     );
   }
 
-  // ── Post Type Picker ───────────────────────────────────────────────────────
 
   Widget _buildPostTypePicker() {
     return Column(
@@ -266,7 +265,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
           style: TextStyle(
             fontSize: SizeConfig.widthPercent(3.2),
             fontWeight: FontWeight.w600,
-            color: const Color(0xFF8E8E9A),
+            color: Colors.grey,
             letterSpacing: 0.5,
           ),
         ),
@@ -286,13 +285,13 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                     color: selected ? type.color : Colors.white,
                     borderRadius: BorderRadius.circular(SizeConfig.widthPercent(3)),
                     border: Border.all(
-                      color: selected ? type.color : const Color(0xFFE8E8F0),
+                      color: selected ? type.color : Colors.white,
                       width: 1.5,
                     ),
                     boxShadow: selected
                         ? [
                             BoxShadow(
-                              color: type.color.withOpacity(0.3),
+                              color: type.color.withValues(alpha: 0.3),
                               blurRadius: 8,
                               offset: const Offset(0, 4),
                             )
@@ -324,7 +323,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     );
   }
 
-  // ── Content Card ───────────────────────────────────────────────────────────
+  //----------------------------------------------- Content Card
 
   Widget _buildContentCard() {
     return AnimatedContainer(
@@ -358,12 +357,12 @@ class _CreatePostScreenState extends State<CreatePostScreen>
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: _isAnonymous
-                        ? const Color(0xFF8E8E9A)
-                        : _accentColor.withOpacity(0.15),
+                        ? Colors.grey
+                        : _accentColor.withValues(alpha: 0.15),
                     border: Border.all(
                       color: _isAnonymous
-                          ? Colors.white.withOpacity(0.15)
-                          : _accentColor.withOpacity(0.4),
+                          ? Colors.white.withValues(alpha: 0.15)
+                          : _accentColor.withValues(alpha: 0.4),
                       width: 1.5,
                     ),
                   ),
@@ -446,8 +445,10 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     );
   }
 
-  // ── Location Selector ──────────────────────────────────────────────────────
+  // -------------------------------------------------------- Location Selector
 
+
+  //COde checked and works
   Widget _buildLocationSelector() {
     return GestureDetector(
       onTap: _showLocationPicker,
@@ -473,9 +474,11 @@ class _CreatePostScreenState extends State<CreatePostScreen>
             Container(
               padding: EdgeInsets.all(SizeConfig.widthPercent(2)),
               decoration: BoxDecoration(
-                color: const Color(0xFF2EC4B6).withOpacity(0.12),
+                color: const Color(0xFF2EC4B6).withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
               ),
+
+              //Ill need an icons here
               child: Text('📍',
                   style: TextStyle(fontSize: SizeConfig.widthPercent(4.5))),
             ),
@@ -518,7 +521,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     );
   }
 
-  // ── Options Row ────────────────────────────────────────────────────────────
+
 
   Widget _buildOptionsRow() {
     return Row(
@@ -610,7 +613,7 @@ class _CreatePostScreenState extends State<CreatePostScreen>
     );
   }
 
-  // ── Post Button ────────────────────────────────────────────────────────────
+  // --------------------------------------------------------------- Post Button
 
   Widget _buildPostButton() {
     return AnimatedContainer(
@@ -620,17 +623,17 @@ class _CreatePostScreenState extends State<CreatePostScreen>
       decoration: BoxDecoration(
         gradient: _canPost
             ? LinearGradient(
-                colors: [_accentColor, _accentColor.withOpacity(0.8)],
+                colors: [_accentColor, _accentColor.withValues(alpha: 0.8)],
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
               )
             : null,
-        color: _canPost ? null : const Color(0xFFE8E8F0),
+        color: _canPost ? null : Colors.white,
         borderRadius: BorderRadius.circular(SizeConfig.widthPercent(4)),
         boxShadow: _canPost
             ? [
                 BoxShadow(
-                  color: _accentColor.withOpacity(0.35),
+                  color: _accentColor.withValues(alpha: 0.35),
                   blurRadius: 16,
                   offset: const Offset(0, 6),
                 )
@@ -681,249 +684,3 @@ class _CreatePostScreenState extends State<CreatePostScreen>
   }
 }
 
-// ─── Location Picker Bottom Sheet ────────────────────────────────────────────
-
-class _LocationPickerSheet extends StatelessWidget {
-  final String? selected;
-  final ValueChanged<String> onSelected;
-
-  const _LocationPickerSheet({
-    required this.selected,
-    required this.onSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final grouped = LocationTags.grouped;
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7F7FB),
-        borderRadius: BorderRadius.vertical(
-            top: Radius.circular(SizeConfig.widthPercent(6))),
-      ),
-      constraints: BoxConstraints(
-        maxHeight: SizeConfig.heightPercent(75),
-      ),
-      child: Column(
-        children: [
-          // Handle
-          Center(
-            child: Container(
-              margin: EdgeInsets.only(
-                  top: SizeConfig.heightPercent(1.5),
-                  bottom: SizeConfig.heightPercent(1)),
-              width: SizeConfig.widthPercent(9),
-              height: 4,
-              decoration: BoxDecoration(
-                color: const Color(0xFFDDDDE8),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.fromLTRB(
-                SizeConfig.widthPercent(5),
-                SizeConfig.heightPercent(0.5),
-                SizeConfig.widthPercent(5),
-                SizeConfig.heightPercent(1.5)),
-            child: Row(
-              children: [
-                Text('📍',
-                    style: TextStyle(fontSize: SizeConfig.widthPercent(5.5))),
-                SizedBox(width: SizeConfig.widthPercent(2.5)),
-                Text(
-                  'Where are you right now?',
-                  style: TextStyle(
-                    fontSize: SizeConfig.widthPercent(4.5),
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1A1A2E),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1, color: Color(0xFFE8E8F0)),
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.only(bottom: SizeConfig.heightPercent(3)),
-              children: grouped.entries.map((entry) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.fromLTRB(
-                          SizeConfig.widthPercent(5),
-                          SizeConfig.heightPercent(2.5),
-                          SizeConfig.widthPercent(5),
-                          SizeConfig.heightPercent(1)),
-                      child: Text(
-                        entry.key,
-                        style: TextStyle(
-                          fontSize: SizeConfig.widthPercent(3),
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF8E8E9A),
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                    ),
-                    ...entry.value.map((tag) {
-                      final isSelected = selected == tag['label'];
-                      return GestureDetector(
-                        onTap: () => onSelected(tag['label']!),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 150),
-                          margin: EdgeInsets.symmetric(
-                              horizontal: SizeConfig.widthPercent(4),
-                              vertical: SizeConfig.heightPercent(0.4)),
-                          padding: EdgeInsets.symmetric(
-                              horizontal: SizeConfig.widthPercent(4),
-                              vertical: SizeConfig.heightPercent(1.5)),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? const Color(0xFF2EC4B6).withOpacity(0.1)
-                                : Colors.white,
-                            borderRadius: BorderRadius.circular(
-                                SizeConfig.widthPercent(3.5)),
-                            border: Border.all(
-                              color: isSelected
-                                  ? const Color(0xFF2EC4B6)
-                                  : Colors.transparent,
-                              width: 1.5,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Text(tag['icon']!,
-                                  style: TextStyle(
-                                      fontSize: SizeConfig.widthPercent(5))),
-                              SizedBox(width: SizeConfig.widthPercent(3)),
-                              Text(
-                                tag['label']!,
-                                style: TextStyle(
-                                  fontSize: SizeConfig.widthPercent(3.8),
-                                  fontWeight: isSelected
-                                      ? FontWeight.w700
-                                      : FontWeight.w500,
-                                  color: isSelected
-                                      ? const Color(0xFF2EC4B6)
-                                      : const Color(0xFF1A1A2E),
-                                ),
-                              ),
-                              const Spacer(),
-                              if (isSelected)
-                                Icon(
-                                  Icons.check_circle_rounded,
-                                  color: const Color(0xFF2EC4B6),
-                                  size: SizeConfig.widthPercent(5),
-                                ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }),
-                  ],
-                );
-              }).toList(),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Background Colour Picker Sheet ──────────────────────────────────────────
-
-class _BgColorPickerSheet extends StatelessWidget {
-  final Color? selected;
-  final ValueChanged<Color?> onSelected;
-
-  const _BgColorPickerSheet({
-    required this.selected,
-    required this.onSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.fromLTRB(
-          SizeConfig.widthPercent(5),
-          SizeConfig.heightPercent(2),
-          SizeConfig.widthPercent(5),
-          SizeConfig.heightPercent(4)),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: SizeConfig.widthPercent(9),
-              height: 4,
-              decoration: BoxDecoration(
-                color: const Color(0xFFDDDDE8),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          SizedBox(height: SizeConfig.heightPercent(2)),
-          Text(
-            'Card Background',
-            style: TextStyle(
-              fontSize: SizeConfig.widthPercent(4.5),
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF1A1A2E),
-            ),
-          ),
-          SizedBox(height: SizeConfig.heightPercent(2)),
-          Wrap(
-            spacing: SizeConfig.widthPercent(3),
-            runSpacing: SizeConfig.widthPercent(3),
-            children: postBgColors.map((color) {
-              final isSelected = color == selected;
-              final isNone = color == null;
-              return GestureDetector(
-                onTap: () => onSelected(color),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  width: SizeConfig.widthPercent(12),
-                  height: SizeConfig.widthPercent(12),
-                  decoration: BoxDecoration(
-                    color: isNone ? Colors.white : color,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isSelected
-                          ? const Color(0xFF1A1A2E)
-                          : const Color(0xFFE8E8F0),
-                      width: isSelected ? 2.5 : 1.5,
-                    ),
-                  ),
-                  child: isNone
-                      ? Center(
-                          child: Icon(
-                            Icons.block_rounded,
-                            size: SizeConfig.widthPercent(5),
-                            color: const Color(0xFFB0B0C0),
-                          ),
-                        )
-                      : isSelected
-                          ? Center(
-                              child: Icon(
-                                Icons.check_rounded,
-                                size: SizeConfig.widthPercent(5),
-                                color: Colors.black54,
-                              ),
-                            )
-                          : null,
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-}

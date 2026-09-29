@@ -18,8 +18,7 @@ class NotificationPage extends StatefulWidget {
 }
 
 class _NotificationPageState extends State<NotificationPage> {
-  // NotificationPage initState — fetches persisted data
-  // lib/presentation/pages/Notification_Page.dart
+
 
   @override
   void initState() {
@@ -57,22 +56,21 @@ class _NotificationPageState extends State<NotificationPage> {
       ),
       body: BlocBuilder<NotificationBloc, NotificationState>(
         builder: (context, state) {
-          // ── Loading ──────────────────────────────────────────
           if (state is NotificationLoading) {
             return const Center(child: CupertinoActivityIndicator());
           }
 
-          // ── Error ────────────────────────────────────────────
+
           if (state is NotificationError) {
             return Center(child: Text(state.message));
           }
 
-          // ── Get notifications from state ─────────────────────
+          // ------------------------------------------Get notifications from state
           final notifications = state is NotificationLoaded
               ? state.notifications
               : <NotificationEntity>[];
 
-          // ── Empty ────────────────────────────────────────────
+
           if (notifications.isEmpty) {
             return const Center(
               child: Column(
@@ -93,12 +91,12 @@ class _NotificationPageState extends State<NotificationPage> {
             );
           }
 
-          // ── List ─────────────────────────────────────────────
+          //--------------------------------------------------------------List
           return ListView.separated(
             padding: const EdgeInsets.symmetric(vertical: 8),
             itemCount: notifications.length,
             separatorBuilder: (_, __) =>
-                Divider(height: 1, color: Colors.grey[200]),
+                Divider(height: 1, color: Colors.grey.shade200),
             itemBuilder: (context, index) {
               final notification = notifications[index];
               return _NotificationItem(

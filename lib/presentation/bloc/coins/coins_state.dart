@@ -42,7 +42,7 @@ class CoinsSpent extends CoinsState {
 
 class NotEnoughCoins extends CoinsState {
   final CoinsEntity coins;
-  final String reason; // 'direct_post' | 'reveal'
+  final String reason; // 'direct_post' or 'reveal'
   NotEnoughCoins({required this.coins, required this.reason});
 }
 

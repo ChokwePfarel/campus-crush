@@ -16,7 +16,6 @@ class ImagesBloc extends Bloc<ImagesEvent, ImagesState> {
     on<DeleteImage>(_onDeleteImage);
   }
 
-  // ── Load ──────────────────────────────────────────────────────────────────
 
   Future<void> _onLoadUserImages(
       LoadUserImages event,
@@ -34,7 +33,6 @@ class ImagesBloc extends Bloc<ImagesEvent, ImagesState> {
     }
   }
 
-  // ── Upload Profile ────────────────────────────────────────────────────────
 
   Future<void> _onUploadProfileImage(
       UploadProfileImage event,
@@ -44,7 +42,6 @@ class ImagesBloc extends Bloc<ImagesEvent, ImagesState> {
     final List<UserImageEntity> currentImages =
     current is ImagesLoaded ? current.images : [];
 
-    // Guard: enforce max 3
     if (currentImages.length >= 3) {
       emit(
         ImagesError(
@@ -63,7 +60,8 @@ class ImagesBloc extends Bloc<ImagesEvent, ImagesState> {
         image: event.image,
       );
 
-      // Replace old profile image with the new one
+      // Replace old profile image with the new one..
+
       final updated = [
         ...currentImages.where((i) => i.isGallery),
         newImage,
@@ -80,8 +78,6 @@ class ImagesBloc extends Bloc<ImagesEvent, ImagesState> {
     }
   }
 
-
-  // ── Upload Gallery ────────────────────────────────────────────────────────
 
   Future<void> _onUploadGalleryImage(
       UploadGalleryImage event,
@@ -106,7 +102,6 @@ class ImagesBloc extends Bloc<ImagesEvent, ImagesState> {
     }
   }
 
-  // ── Delete ────────────────────────────────────────────────────────────────
 
   Future<void> _onDeleteImage(
       DeleteImage event,
@@ -115,7 +110,8 @@ class ImagesBloc extends Bloc<ImagesEvent, ImagesState> {
     final current = state;
     if (current is! ImagesLoaded) return;
 
-    // Optimistic update
+    // Optimistic update..
+
     final optimistic =
     current.images.where((i) => i.id != event.imageId).toList();
     emit(current.copyWith(images: optimistic));
@@ -126,7 +122,6 @@ class ImagesBloc extends Bloc<ImagesEvent, ImagesState> {
         path:    event.path,
       );
     } catch (e) {
-      // Revert on failure
       emit(current);
       emit(ImagesError(e.toString()));
     }

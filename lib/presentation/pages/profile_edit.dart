@@ -9,14 +9,11 @@ import 'package:dating_app/core/widgets/confirmDialog.dart';
 import 'package:dating_app/core/widgets/dropdown.dart';
 import 'package:dating_app/data/models/privacy_settings_model.dart';
 import 'package:dating_app/data/models/user_model.dart';
-import 'package:dating_app/presentation/bloc/auth/auth_bloc.dart';
-import 'package:dating_app/presentation/bloc/auth/auth_event.dart';
 import 'package:dating_app/presentation/bloc/image/image_bloc.dart';
 import 'package:dating_app/presentation/bloc/image/image_event.dart';
 import 'package:dating_app/presentation/bloc/image/image_sate.dart';
 import 'package:dating_app/presentation/bloc/user/user_bloc.dart';
 import 'package:dating_app/presentation/bloc/user/user_event.dart';
-import 'package:dating_app/presentation/pages/login_page.dart';
 import 'package:dating_app/presentation/pages/manage_profile.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -226,8 +223,8 @@ class _ProfileEditState extends State<ProfileEdit> {
         final action = await showUnsavedChangesDialog(
           context: context,
           onSave: () => _saveProfile(),
-          titleStyle: TextStyle(fontWeight: FontWeight.bold),
-          buttonStyle: TextStyle(fontWeight: FontWeight.bold),
+          titleStyle: const TextStyle(fontWeight: FontWeight.bold),
+          buttonStyle: const TextStyle(fontWeight: FontWeight.bold),
         );
 
         // 2. Act based on the user's choice from the dialog
@@ -237,7 +234,7 @@ class _ProfileEditState extends State<ProfileEdit> {
           // User chose to discard -> Manually pop the current screen (goes to MyProducts)
           Navigator.of(context).pop();
         } else if (action == 'SAVE') {
-          // User chose to save -> Call the save function which uses pushReplacement
+          // User chose to save --> Call the save function which uses pushReplacement
           _saveProfile();
         }
         // If action is 'CANCEL' or null, the dialog closes, and the user remains on the EditProduct screen.
@@ -282,8 +279,6 @@ class _ProfileEditState extends State<ProfileEdit> {
               }
             },
 
-
-
             //
             child: const Icon(
               CupertinoIcons.chevron_left,
@@ -303,7 +298,7 @@ class _ProfileEditState extends State<ProfileEdit> {
                       MaterialPageRoute(builder: (context) => SettingsPage())
                   );
                 },
-                icon: Icon(Icons.settings, color: Colors.black),
+                icon: const Icon(Icons.settings, color: Colors.black),
 
             ),
           ],

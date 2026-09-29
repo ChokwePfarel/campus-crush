@@ -67,7 +67,7 @@ class _SpottedPageState extends State<SpottedPage> {
           isInitial: true,
         )),
       child: Scaffold(
-        backgroundColor: const Color(0xFFF7F7FB),
+        backgroundColor: Colors.white,
         appBar: AppBar(
           backgroundColor: Colors.white,
           elevation: 0,

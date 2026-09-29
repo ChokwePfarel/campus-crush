@@ -71,7 +71,7 @@ class CommentMock {
       repliersName: 'Bob Smith',
       postId: '1',
       userId: 'u2',
-      text: 'I know exactly who you mean! She is literally so nice 😭',
+      text: 'I know exactly who you mean! She is literally so nice ',
       createdAt: DateTime.now().subtract(const Duration(minutes: 5)),
     ),
     CommentModel(
@@ -115,7 +115,7 @@ class PostMock {
       id: '2',
       userId: 'u2',
       authorName: 'Bob Smith',
-      content: 'Red hoodie, white Air Forces, carrying a black JanSport. Come say hi if you see me 👀',
+      content: 'Red hoodie, white Air Forces, carrying a black JanSport. Come say hi if you see me ',
       university: 'University of the Western Cape',
       postType: 'spotted',
       createdAt: DateTime.now().subtract(const Duration(minutes: 34)),
@@ -147,7 +147,7 @@ class SpottedMock {
       id: 's1',
       userId: 'u1',
       authorName: 'Alice Johnson',
-      content: 'Red hoodie, white Air Forces, black JanSport. Come say hi 👋',
+      content: 'Red hoodie, white Air Forces, black JanSport. Come say hi ',
       postType: 'spotted',
       createdAt: DateTime.now().subtract(const Duration(minutes: 5)),
       expiresAt: DateTime.now().add(const Duration(hours: 2)),
@@ -161,7 +161,7 @@ class SpottedMock {
       id: 's2',
       userId: 'u2',
       authorName: 'Bob Smith',
-      content: 'Olive cargo pants, white crop, gold hoops ✨',
+      content: 'Olive cargo pants, white crop, gold hoops ',
       postType: 'spotted',
       createdAt: DateTime.now().subtract(const Duration(minutes: 18)),
       expiresAt: DateTime.now().add(const Duration(hours: 1, minutes: 40)),
@@ -190,7 +190,7 @@ class MockCurrentUser {
     residence: 'Faranani Res',
     status: 'Undergraduate',
     major: 'Psychology',
-    bio: 'Third year Psych student 🧠 | UWC forever 💛 | Iced coffee addict ☕',
+    bio: 'Third year Psych student  | UWC forever  | Iced coffee addict ',
     profileImageUrl: 'https://i.pravatar.cc/300?u=ayanda',
     imageUrls: [
       'https://i.pravatar.cc/300?u=ayanda1',
@@ -248,17 +248,17 @@ class CommentsMock {
  static final List<CommentModel> demoComments = [
     CommentModel(
       id: 'c1', repliersName: 'Ayanda D.', postId: '1', userId: 'u1',
-      text: 'This is so relatable 😭 I feel this on a spiritual level',
+      text: 'This is so relatable  I feel this on a spiritual level',
       createdAt: DateTime.now().subtract(const Duration(minutes: 3)),
     ),
     CommentModel(
       id: 'c2', repliersName: 'Anonymous', postId: '1', userId: 'u2',
-      text: 'Just go talk to them!! Life is short 🙏',
+      text: 'Just go talk to them!! Life is short ',
       createdAt: DateTime.now().subtract(const Duration(minutes: 18)),
       replies: [
         CommentModel(
           id: 'c2r1', repliersName: 'Lerato M.', postId: 'p1', userId: 'u3',
-          text: 'Easier said than done lol 😅',
+          text: 'Easier said than done lol ',
           createdAt: DateTime.now().subtract(const Duration(minutes: 10)),
           parentCommentId: 'c2',
         ),
@@ -272,12 +272,12 @@ class CommentsMock {
     ),
     CommentModel(
       id: 'c3', repliersName: 'Sipho K.', postId: '1', userId: 'u5',
-      text: 'UWC love stories hit different 💛',
+      text: 'UWC love stories hit different ',
       createdAt: DateTime.now().subtract(const Duration(hours: 1)),
     ),
     CommentModel(
       id: 'c4', repliersName: 'Anonymous', postId: '1', userId: 'u6',
-      text: 'Could this be about me? 👀',
+      text: 'Could this be about me? ',
       createdAt: DateTime.now().subtract(const Duration(hours: 2)),
     ),
   ];

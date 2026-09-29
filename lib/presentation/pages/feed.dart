@@ -27,15 +27,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dating_app/core/utils/comment_skeleton.dart';
 
-// ─── Filter bar data ──────────────────────────────────────────────────────────
-
-const _filters = [
-  {'type': null, 'label': 'All'},
-  {'type': 'crush', 'label': 'Crush'},
-  {'type': 'confession', 'label': 'Confession'},
-];
-
-// ─── Feed Screen ──────────────────────────────────────────────────────────────
+import '../../core/constants/lists.dart';
 
 class FeedScreen extends StatefulWidget {
   final String currentUserId;
@@ -131,17 +123,9 @@ class _FeedScreenState extends State<FeedScreen>
     setState(() => _activeFilter = type);
   }
 
-  @override
-  void dispose() {
-    _scrollCtrl.removeListener(_scrollListener);
-    _scrollCtrl.dispose();
-    _connectivitySub?.cancel();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
-    // Important: Call super.build(context) when using AutomaticKeepAliveClientMixin
     super.build(context);
 
     SizeConfig.init(context);
@@ -216,11 +200,6 @@ class _FeedScreenState extends State<FeedScreen>
                                 state.hasReachedMax,
                               );
                             }
-
-                            // If we are in a transient state (Deleted, OneLoaded)
-                            // while the Feed is still visible, don't show the skeleton
-                            // if we can avoid it. But usually, BlocBuilder will
-                            // hold the last state that passed buildWhen.
                             return const FeedSkeleton();
                           },
                         ),
@@ -313,7 +292,7 @@ class _FeedScreenState extends State<FeedScreen>
             context,
             MaterialPageRoute(builder: (_) => const MyPostsPage()),
           ),
-          icon: Icon(Icons.history, color: Colors.white),
+          icon: const Icon(Icons.history, color: Colors.white),
         ),
       ],
     );
@@ -324,7 +303,7 @@ class _FeedScreenState extends State<FeedScreen>
       color: Colors.black,
       child: Row(
         children: [
-          ..._filters.map((f) {
+          ...filters.map((f) {
             final type = f['type'];
             final isActive = _activeFilter == type;
             final color = type != null
@@ -366,7 +345,7 @@ class _FeedScreenState extends State<FeedScreen>
             );
           }).toList(),
 
-          // Add icon button at the end of the row
+
           GestureDetector(
             onTap: () => Navigator.push(
               context,
@@ -382,7 +361,7 @@ class _FeedScreenState extends State<FeedScreen>
                 horizontal: SizeConfig.widthPercent(3),
                 vertical: SizeConfig.heightPercent(1),
               ),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: Colors.white,
                 shape: BoxShape.circle,
               ),
@@ -400,21 +379,30 @@ class _FeedScreenState extends State<FeedScreen>
       physics: const AlwaysScrollableScrollPhysics(),
       child: SizedBox(
         height: MediaQuery.of(context).size.height * 0.6,
-        child: Center(
+        child: const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
 
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
+
               Text(
                 'No posts yet',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _scrollCtrl.removeListener(_scrollListener);
+    _scrollCtrl.dispose();
+    _connectivitySub?.cancel();
+    super.dispose();
   }
 
 }

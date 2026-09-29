@@ -21,7 +21,6 @@ class DirectPostsBloc extends Bloc<DirectPostsEvent, DirectPostsState> {
     on<RefreshDirectPosts>(_onRefresh);
   }
 
-  // ── Initial load ────────────────────────────────────────────────────────
 
   Future<void> _onLoad(
       LoadDirectPosts event,
@@ -40,14 +39,13 @@ class DirectPostsBloc extends Bloc<DirectPostsEvent, DirectPostsState> {
         hasMore: posts.length == _pageSize,
       ));
 
-      // Start real-time subscription for new incoming posts
+      // Start real time subscription for new incoming posts
       _startRealtime(event.recipientId);
     } catch (e) {
       emit(DirectPostsError(e.toString()));
     }
   }
 
-  // ── Load more (pagination) ────────────────────────────────────────────────
 
   Future<void> _onLoadMore(
       LoadMoreDirectPosts event,
@@ -81,7 +79,6 @@ class DirectPostsBloc extends Bloc<DirectPostsEvent, DirectPostsState> {
     }
   }
 
-  // ── New real-time post received ────────────────────────────────────────────
 
   void _onNewPostReceived(
       NewDirectPostReceived event,
@@ -103,6 +100,7 @@ class DirectPostsBloc extends Bloc<DirectPostsEvent, DirectPostsState> {
 
     // Reset hasNewPost flag after a short delay
     // so UI can animate the badge and clear it
+
     Future.delayed(const Duration(seconds: 3), () {
       if (state is DirectPostsLoaded) {
         emit((state as DirectPostsLoaded).copyWith(hasNewPost: false));
@@ -110,7 +108,6 @@ class DirectPostsBloc extends Bloc<DirectPostsEvent, DirectPostsState> {
     });
   }
 
-  // ── Refresh ────────────────────────────────────────────────────────────────
 
   Future<void> _onRefresh(
       RefreshDirectPosts event,
@@ -124,7 +121,8 @@ class DirectPostsBloc extends Bloc<DirectPostsEvent, DirectPostsState> {
     add(LoadDirectPosts(event.recipientId));
   }
 
-  // ── Real-time subscription ─────────────────────────────────────────────────
+
+  //Real time subscriptionn
 
   void _startRealtime(String recipientId) {
     _realtimeSubscription?.cancel();
@@ -138,8 +136,8 @@ class DirectPostsBloc extends Bloc<DirectPostsEvent, DirectPostsState> {
     });
   }
 
-  // ── Cleanup ────────────────────────────────────────────────────────────────
-
+///------------------------------Clea ing
+  ///
   @override
   Future<void> close() {
     _realtimeSubscription?.cancel();

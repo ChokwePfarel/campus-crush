@@ -98,11 +98,14 @@ class ReportsRemoteDataSourceImp implements ReportsRemoteDataSource {
 
   @override
   Future<List<String>> getBlockedUserIds(String userId) async {
+
     // Get users I blocked
     final blockedByMe = await client
         .from('blocks')
         .select('blocked_id')
         .eq('blocker_id', userId);
+
+
 
     // Get users who blocked me
     final whoBlockedMe = await client

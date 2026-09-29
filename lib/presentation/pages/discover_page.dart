@@ -4,9 +4,6 @@ import 'package:dating_app/core/utils/screen_size.dart';
 import 'package:dating_app/core/utils/users_skeleton.dart';
 import 'package:dating_app/core/utils/warning_bar.dart';
 import 'package:dating_app/domain/repositories/users_repository.dart';
-
-import 'package:dating_app/presentation/bloc/notification/notificationBloc.dart';
-import 'package:dating_app/presentation/bloc/notification/notification_event.dart';
 import 'package:dating_app/presentation/bloc/user/user_bloc.dart';
 import 'package:dating_app/presentation/bloc/user/user_event.dart';
 import 'package:dating_app/presentation/bloc/user/user_state.dart';
@@ -50,8 +47,9 @@ class _DiscoverPageState extends State<DiscoverPage> {
 
     // Initial check
     Connectivity().checkConnectivity().then((results) {
-      if (mounted)
+      if (mounted) {
         setState(() => _isOffline = results.first == ConnectivityResult.none);
+      }
     });
 
     // Listen for changes
@@ -71,8 +69,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
         _currentSex = userState.user.sex;
         _triggerLoad(context, isInitial: true);
       } else {
-        // Not loaded yet — BlocListener will handle it when UserLoaded arrives
-        // but make sure the subscription is running
+
         context.read<UserBloc>().add(LoadUserSubscription());
       }
     });
@@ -110,16 +107,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
   }
 
 
-
-  @override
-  void dispose() {
-    _scrollController.removeListener(_scrollListener);
-    _scrollController.dispose();
-    _connectivitySubscription?.cancel();
-    _debounce?.cancel();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     SizeConfig.init(context);
@@ -127,8 +114,9 @@ class _DiscoverPageState extends State<DiscoverPage> {
     return BlocBuilder<UserBloc, UserState>(
       builder: (builderCtx, userState) {
         String profileImg = '';
-        if (userState is UserLoaded)
+        if (userState is UserLoaded) {
           profileImg = userState.user.profileImageUrl;
+        }
         final String profileStatus = userState is UserLoaded
             ? userState.user.profileStatus
             : '';
@@ -361,7 +349,17 @@ class _DiscoverPageState extends State<DiscoverPage> {
     if (profileStatus == 'warned') {
       return const WarningBar();
     } else {
-      return SizedBox.shrink();
+      return const SizedBox.shrink();
     }
   }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_scrollListener);
+    _scrollController.dispose();
+    _connectivitySubscription?.cancel();
+    _debounce?.cancel();
+    super.dispose();
+  }
+
 }

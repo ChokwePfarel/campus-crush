@@ -18,7 +18,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-// ─── Bubble position model ────────────────────────────────────────────────────
+
+///
+/// DISABLED FOR NOW , CODE NEEDS TO BE CHECKED FOR CORRECTNESS
+///
+
+
+// -------------------------------------------------Bubble position model
 
 class _BubbleData {
   final PostModel post;

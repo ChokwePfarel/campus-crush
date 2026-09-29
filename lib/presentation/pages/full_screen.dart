@@ -38,7 +38,7 @@ class _FullScreenPageState extends State<FullScreenPage> {
       body: Stack(
         children: [
 
-          //Swipeable images
+          //Swipeable images here
           PageView.builder(
             controller: _controller,
             itemCount: widget.images.length,
@@ -59,7 +59,7 @@ class _FullScreenPageState extends State<FullScreenPage> {
             },
           ),
 
-          // 🔙 Back button
+
           Positioned(
             top: 40,
             left: 16,
@@ -69,7 +69,6 @@ class _FullScreenPageState extends State<FullScreenPage> {
             ),
           ),
 
-          // Image index indicator
           Positioned(
             bottom: 30,
             left: 0,

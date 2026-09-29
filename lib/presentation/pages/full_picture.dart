@@ -28,7 +28,7 @@ class FullPicture extends StatelessWidget {
           progressIndicatorBuilder: (context, url, downloadProgress) => Center(
             child: CircularProgressIndicator.adaptive(value: downloadProgress.progress),
           ),
-          errorWidget: (context, url, error) => Column(
+          errorWidget: (context, url, error) => const Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.error_outline, size: 50, color: Colors.grey),

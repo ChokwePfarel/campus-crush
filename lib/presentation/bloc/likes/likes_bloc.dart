@@ -21,7 +21,9 @@ class LikesBloc extends Bloc<LikesEvent, LikesState> {
       InitializeLikes event,
       Emitter<LikesState> emit,
       ) async {
-    // Show the PostModel count immediately — no loading flicker
+
+    // Show the PostModel count immediately  .Avoiding flickering
+
     emit(LikesLoaded(hasLiked: false, likeCount: event.initialCount));
 
     try {
@@ -31,8 +33,8 @@ class LikesBloc extends Bloc<LikesEvent, LikesState> {
       );
       final current = state as LikesLoaded;
       emit(current.copyWith(hasLiked: hasLiked));
-    } catch (_) {
-      // Non-fatal — count is still shown, heart just defaults to unliked
+    } catch (e) {
+ //
     }
   }
 
@@ -52,9 +54,10 @@ class LikesBloc extends Bloc<LikesEvent, LikesState> {
         userId: event.userId,
         likedByName: event.likedByName,
       );
-      // Supabase trigger handles like_count on the DB — no extra call needed
+
+
     } catch (e) {
-      // Revert
+
       emit(current.copyWith(hasLiked: false, likeCount: current.likeCount));
     }
   }

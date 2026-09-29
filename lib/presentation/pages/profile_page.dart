@@ -5,7 +5,6 @@ import 'package:dating_app/core/utils/screen_size.dart';
 import 'package:dating_app/core/utils/snackbar.dart';
 import 'package:dating_app/data/models/user_model.dart';
 import 'package:dating_app/domain/entities/image_entity.dart';
-import 'package:dating_app/presentation/bloc/conectivity/conectivityBloc.dart';
 import 'package:dating_app/presentation/bloc/image/image_bloc.dart';
 import 'package:dating_app/presentation/bloc/image/image_event.dart';
 import 'package:dating_app/presentation/bloc/image/image_sate.dart';
@@ -43,7 +42,6 @@ class _ProfilePageState extends State<ProfilePage> {
         setState(() => _isOffline = offline);
       }
     });
-
     // Ensure fresh user data is loaded when page opens
     context.read<UserBloc>().add(LoadUserSubscription());
   }
@@ -112,8 +110,8 @@ class _ProfilePageState extends State<ProfilePage> {
               backgroundColor: Colors.white,
               leading: Container(
                 margin: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF5F6FA),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
                   shape: BoxShape.circle,
                 ),
                 child: CupertinoButton(
@@ -121,7 +119,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   onPressed: () => Navigator.of(context).pop(),
                   child: const Icon(
                     CupertinoIcons.chevron_left,
-                    color: Color(0xFF1A1A2E),
+                    color: Color(0xFF1A1A2E), ///
                     size: 22,
                   ),
                 ),
@@ -162,8 +160,11 @@ class _ProfilePageState extends State<ProfilePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SizedBox(height: SizeConfig.heightPercent(2)),
+
                     _buildProfileHeader(user, color),
+
                     SizedBox(height: SizeConfig.heightPercent(2.5)),
+
                     Text(
                       "${user.name}, ${user.age}",
                       style: TextStyle(
@@ -171,6 +172,8 @@ class _ProfilePageState extends State<ProfilePage> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+
+
                     Text(
                       user.status,
                       style: TextStyle(
@@ -179,6 +182,8 @@ class _ProfilePageState extends State<ProfilePage> {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
+
+
                     Text(
                       'Residence: ${user.residence}',
                       style: TextStyle(

@@ -125,22 +125,28 @@ class PostBloc extends Bloc<PostEvent, PostState> {
     try {
       await _postRepository.deletePost(event.postId);
 
-      // 1. Notify observers (snackbars/haptics)
+      //  Notify observers (snackbars or haptics)
       emit(PostDeleted(event.postId));
 
-      // 2. Restore state so Feed isn't stuck in "PostDeleted"
+      // Restore state so Feed isn't stuck in "PostDeleted"
       if (currentState is PostsLoaded) {
         final updatedPosts =
             currentState.post.where((p) => p.id != event.postId).toList();
         emit(currentState.copyWith(post: updatedPosts));
       } else {
+
+        //Fixing the feed
+
         // If not in a list state, force a refresh to be safe
-        // This is important for the FeedScreen if it was backgrounded
+        // This is important for the FeedScreen if it was backgrounded..
         // and its state is not PostsLoaded for some reason.
+
         add(LoadPosts(isInitial: true));
       }
     } catch (e) {
-      // Restore previous state on error if it was a list
+
+      // Restore previous state on error if it was a list..
+
       if (currentState is PostsLoaded) {
         emit(currentState);
       }

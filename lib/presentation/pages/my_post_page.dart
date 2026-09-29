@@ -39,12 +39,6 @@ class _MyPostsPageState extends State<MyPostsPage> {
     }
   }
 
-  int _totalLikes(List<PostModel> posts) =>
-      posts.fold(0, (sum, p) => sum + (_liveLikeCounts[p.id] ?? p.likeCount));
-
-  int _totalComments(List<PostModel> posts) =>
-      posts.fold(0, (sum, p) => sum + p.commentCount);
-
 
   Future<void> _confirmDelete(BuildContext context, PostModel post) async {
     HapticFeedback.mediumImpact();
@@ -81,10 +75,11 @@ class _MyPostsPageState extends State<MyPostsPage> {
     );
 
     if (confirmed == true && mounted) {
+
       // OPTIMISTIC UPDATE: Add to deleting set to hide from UI immediately
       setState(() => _deletingIds.add(post.id));
 
-      // Dispatch background deletion
+      // DELETE in back
       context.read<PostBloc>().add(DeletePostRequested(postId: post.id));
     }
   }
@@ -193,7 +188,7 @@ class _MyPostsPageState extends State<MyPostsPage> {
           CurrentUserPostBloc(context.read<CurrentUserPostRepository>())
             ..add(LoadUserPosts()),
       child: Scaffold(
-        backgroundColor: const Color(0xFFF4F4F8),
+        backgroundColor: Colors.white,
         body: BlocListener<PostBloc, PostState>(
           listener: (context, state) {
             if (state is PostDeleted) {
@@ -222,7 +217,9 @@ class _MyPostsPageState extends State<MyPostsPage> {
           },
           child: BlocBuilder<CurrentUserPostBloc, UserPostState>(
             builder: (context, state) {
+
               // Filter posts here to exclude those being deleted
+
               List<PostModel> visiblePosts = [];
               if (state is UserPostLoaded) {
                 visiblePosts = state.posts
@@ -253,7 +250,7 @@ class _MyPostsPageState extends State<MyPostsPage> {
       ),
     );
   }
-
+  //---------------------------------------------------------------------------
   SliverAppBar _buildAppBar() {
     return SliverAppBar(
       backgroundColor: Colors.white,

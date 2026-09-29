@@ -1,5 +1,3 @@
-
-
 import 'package:dating_app/core/constants/lists.dart';
 import 'package:dating_app/core/utils/purple.dart';
 import 'package:dating_app/core/utils/snackbar.dart';
@@ -32,7 +30,6 @@ class _SignUpPageState extends State<SignUpPage> {
   bool _agreedToPolicy = false;
   bool _obscurePassword = true;
 
-  // Mapping of universities to their expected email domains
   final Map<String, String> _universityDomains = {
     'University of the Western Cape (UWC)': '@myuwc.ac.za',
     'University of Cape Town (UCT)': '@myuct.ac.za',
@@ -42,8 +39,6 @@ class _SignUpPageState extends State<SignUpPage> {
     'University of Pretoria': '@tuks.co.za',
     'University of KwaZulu-Natal': '@stu.ukzn.ac.za',
     'Rhodes University': '@ru.ac.za',
-
-    //Additional universities
     'Nelson Mandela University': '@mandela.ac.za',
     'University of Limpopo': '@ul.ac.za',
     'University of Fort Hare': '@ufh.ac.za',
@@ -59,18 +54,12 @@ class _SignUpPageState extends State<SignUpPage> {
     'Vaal University of Technology (VUT)': '@vut.ac.za',
   };
 
-
   @override
   void initState() {
     super.initState();
   }
 
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -137,7 +126,9 @@ class _SignUpPageState extends State<SignUpPage> {
                           return 'Invalid email';
                         }
 
-                        final isValid = _universityDomains.values.any((domain) => val.endsWith(domain));
+                        final isValid = _universityDomains.values.any(
+                          (domain) => val.endsWith(domain),
+                        );
                         if (!isValid) {
                           return 'Please use your official student email';
                         }
@@ -153,7 +144,9 @@ class _SignUpPageState extends State<SignUpPage> {
                       obscure: _obscurePassword,
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                          _obscurePassword
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
                           color: PurplePalette.placeholder,
                           size: 20,
                         ),
@@ -209,9 +202,7 @@ class _SignUpPageState extends State<SignUpPage> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppStylee.primaryColor,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  16,
-                                ),
+                                borderRadius: BorderRadius.circular(16),
                               ),
                               elevation: 0,
                             ),
@@ -251,11 +242,16 @@ class _SignUpPageState extends State<SignUpPage> {
 
                     const SizedBox(height: 16),
 
-                    Row(
+                    const Row(
                       children: [
-                        const Expanded(child: Divider(color: PurplePalette.fieldBorder, thickness: 1)),
+                        Expanded(
+                          child: Divider(
+                            color: PurplePalette.fieldBorder,
+                            thickness: 1,
+                          ),
+                        ),
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          padding: EdgeInsets.symmetric(horizontal: 14),
                           child: Text(
                             'or',
                             style: TextStyle(
@@ -264,7 +260,12 @@ class _SignUpPageState extends State<SignUpPage> {
                             ),
                           ),
                         ),
-                        const Expanded(child: Divider(color: PurplePalette.fieldBorder, thickness: 1)),
+                        Expanded(
+                          child: Divider(
+                            color: PurplePalette.fieldBorder,
+                            thickness: 1,
+                          ),
+                        ),
                       ],
                     ),
 
@@ -304,17 +305,6 @@ class _SignUpPageState extends State<SignUpPage> {
   }
 
 
-  Widget _label(String text) => Padding(
-    padding: const EdgeInsets.only(bottom: 8, left: 4),
-    child: Text(
-      text,
-      style: const TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w700,
-        color: PurplePalette.deep,
-      ),
-    ),
-  );
 
   Widget _pillField({
     required TextEditingController controller,
@@ -341,7 +331,10 @@ class _SignUpPageState extends State<SignUpPage> {
         suffixIcon: suffixIcon,
         filled: true,
         fillColor: PurplePalette.fieldBg,
-        contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 14,
+          horizontal: 16,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(
@@ -373,5 +366,12 @@ class _SignUpPageState extends State<SignUpPage> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 }

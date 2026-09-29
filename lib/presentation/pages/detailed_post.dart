@@ -64,9 +64,7 @@ class _DetailedPostViewState extends State<_DetailedPostView> {
   @override
   void initState() {
     super.initState();
-    // ✅ Fetch post first
     context.read<PostBloc>().add(GetOnePostById(postId: widget.postId));
-    // ✅ Load comments
     context.read<CommentsBloc>().add(LoadComments(widget.postId));
   }
 
@@ -86,7 +84,6 @@ class _DetailedPostViewState extends State<_DetailedPostView> {
       context.read<CommentsBloc>().add(
         AddComment(
           postId: widget.postId,
-          // Use widget.postId directly
           userId: userState.user.id,
           repliersName: userState.user.name,
           text: text,
@@ -128,17 +125,15 @@ class _DetailedPostViewState extends State<_DetailedPostView> {
         ),
         body: BlocBuilder<PostBloc, PostState>(
           builder: (context, postState) {
-            // ── Loading Post ───────────────────────────────────
+
             if (postState is LoadingPosts || postState is PostInitial) {
               return const Center(child: CupertinoActivityIndicator());
             }
 
-            // ── Error ────────────────────────────────────────
             if (postState is PostError) {
               return Center(child: Text('Error: ${postState.message}'));
             }
 
-            // ── Loaded ───────────────────────────────────────
             if (postState is OnePostLoaded) {
               final post = postState.post;
 
@@ -196,7 +191,7 @@ class _DetailedPostViewState extends State<_DetailedPostView> {
         if (state is LoadingComments) {
           return SliverList(
             delegate: SliverChildBuilderDelegate(
-              (_, __) => const Padding(
+              (_,__) => const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: CommentSkeletonItem(),
               ),
@@ -226,7 +221,7 @@ class _DetailedPostViewState extends State<_DetailedPostView> {
               .where((c) => c.parentCommentId == null)
               .toList();
 
-          // Sort latest comments to the top
+          // Sort latest comments to the top....
           topLevel.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
           return SliverPadding(
@@ -276,7 +271,7 @@ class _DetailedPostViewState extends State<_DetailedPostView> {
 
   Widget _buildInputBar() {
     return Container(
-      padding: EdgeInsets.only(
+      padding: const EdgeInsets.only(
         bottom: 10,
         left: 16,
         right: 16,
@@ -284,7 +279,7 @@ class _DetailedPostViewState extends State<_DetailedPostView> {
       ),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(top: BorderSide(color: Colors.grey[200]!)),
+        border: Border(top: BorderSide(color: Colors.grey.shade200)),
       ),
       child: Row(
         children: [
@@ -332,7 +327,7 @@ class _CommentItem extends StatelessWidget {
   void _goToProfile(BuildContext context) {
     if (comment.repliersName == 'Anonymous') return;
     
-    // Don't navigate if it's the current user (optional, usually they go to their own profile page instead)
+    // Dont navigate if it's the current user..
     if (comment.userId == currentUserId) return;
 
     Navigator.push(
@@ -398,7 +393,9 @@ class _CommentItem extends StatelessWidget {
                               ),
                             ),
                           ),
+
                           const SizedBox(height: 2),
+
                           Text(
                             comment.text,
                             style: const TextStyle(
@@ -420,7 +417,9 @@ class _CommentItem extends StatelessWidget {
                               color: Colors.grey.shade600,
                             ),
                           ),
+
                           const SizedBox(width: 16),
+
                           GestureDetector(
                             onTap: () => onReply(comment),
                             child: const Text(

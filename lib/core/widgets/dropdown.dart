@@ -25,13 +25,11 @@ class CustomDropdown<T> extends StatelessWidget {
       builder: (context, constraints) {
         return ConstrainedBox(
           constraints: BoxConstraints(maxWidth: constraints.maxWidth),
-          // 1. Wrap with a Theme to customize the dropdown menu's SHAPE
           child: Theme(
             data: Theme.of(context).copyWith(
-              // Use DropdownMenuTheme to set the border radius via MenuStyle
+
               dropdownMenuTheme: DropdownMenuThemeData(
                 menuStyle: MenuStyle(
-                  // This applies the rounded corners to the floating menu box
                   shape: WidgetStatePropertyAll<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppStylee.connerRadius),
@@ -43,9 +41,7 @@ class CustomDropdown<T> extends StatelessWidget {
             child: DropdownButtonFormField<T>(
               isExpanded: true,
               initialValue: value,
-              // 2. Use dropdownColor to set the background color
               dropdownColor: Colors.white,
-              // 3. Keep the elevation to make it look "floating"
               elevation: 8,
               decoration: InputDecoration(
                 labelText: labelText,

@@ -7,13 +7,11 @@ class AdService {
   AdService._();
   static final AdService instance = AdService._();
 
-  // Corrected type: RewardedInterstitialAd
   RewardedInterstitialAd? _rewardedAd;
   bool _isLoading = false;
 
-  // ── Ad Unit IDs ────────────────────────────────────────────────────────────
   static const String _androidAdUnitId = 'ca-app-pub-8085940948919628/5893674322';
-  static const String _iosAdUnitId = ""; // Add your iOS ID here
+  static const String _iosAdUnitId = "";
 
   static String get _adUnitId {
     if (defaultTargetPlatform == TargetPlatform.android) {
@@ -27,7 +25,6 @@ class AdService {
   bool get isReady => _rewardedAd != null;
   bool get isLoading => _isLoading;
 
-  // ── Load ───────────────────────────────────────────────────────────────────
 
   Future<void> loadRewardedAd() async {
     if (_isLoading || _rewardedAd != null) return;
@@ -41,12 +38,12 @@ class AdService {
         onAdLoaded: (ad) {
           _rewardedAd = ad;
           _isLoading = false;
-          debugPrint('✅ Rewarded Interstitial ad loaded');
+          debugPrint('Rewarded Interstitial ad loaded');
         },
         onAdFailedToLoad: (error) {
           _rewardedAd = null;
           _isLoading = false;
-          debugPrint('❌ Rewarded Interstitial ad failed to load: ${error.message}');
+          debugPrint('Rewarded Interstitial ad failed to load: ${error.message}');
         },
       ),
     );
@@ -72,6 +69,7 @@ class AdService {
         ad.dispose();
         _rewardedAd = null;
         onDismissed?.call();
+
         // Preload next ad immediately
         loadRewardedAd();
         if (!completer.isCompleted) completer.complete(true);
@@ -87,7 +85,6 @@ class AdService {
 
     _rewardedAd!.show(
       onUserEarnedReward: (_, reward) {
-        debugPrint('🎉 User earned reward: ${reward.amount} ${reward.type}');
         onRewarded();
       },
     );
@@ -95,7 +92,6 @@ class AdService {
     return completer.future;
   }
 
-  // ── Dispose ────────────────────────────────────────────────────────────────
 
   void dispose() {
     _rewardedAd?.dispose();

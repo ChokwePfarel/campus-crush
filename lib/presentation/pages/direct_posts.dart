@@ -116,7 +116,7 @@ class _DirectPostsPageState extends State<DirectPostsPage>
         'No internet connection',
         type: SnackBarType.warning,
       );
-      return; // stops here
+      return;
     }
 
     if (!post.isAnonymous) {
@@ -124,7 +124,7 @@ class _DirectPostsPageState extends State<DirectPostsPage>
       return;
     }
 
-    // It's anonymous. First check if we've already revealed it.
+    // It is anonymous. First check if we have already revealed it.
     _pendingPostId = post.id;
     _pendingProfileUserId = post.userId;
     _isCheckingReveal = true;
@@ -147,7 +147,7 @@ class _DirectPostsPageState extends State<DirectPostsPage>
         type: SnackBarType.warning,
       );
 
-      return; // stops here
+      return;
     }
 
     final coinsState = context
@@ -283,7 +283,7 @@ class _DirectPostsPageState extends State<DirectPostsPage>
       ),
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(0.5),
-        child: Container(height: 0.5, color: const Color(0xFFEEEEF4)),
+        child: Container(height: 0.5, color: Colors.white),
       ),
 
       actions: [
@@ -530,22 +530,25 @@ class _DirectPostCard extends StatelessWidget {
                       ),
                       Text(
                         'Sent you a ${post.postType.label}',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                     ],
                   ),
                 ),
                 Text(
                   DateUtilsHelper.timeAgo(post.createdAt),
-                  style: TextStyle(fontSize: 11, color: Colors.grey),
+                  style: const TextStyle(fontSize: 11, color: Colors.grey),
                 ),
               ],
             ),
+
             const SizedBox(height: 12),
+
             Text(
               post.content,
               style: const TextStyle(fontSize: 15, height: 1.4),
             ),
+
             const Divider(height: 32),
 
             Row(
@@ -576,16 +579,16 @@ class _DirectPostCard extends StatelessWidget {
                   child: CupertinoButton(
                     padding: EdgeInsets.zero,
                     onPressed: onReplyTap,
-                    child: Row(
+                    child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.reply_outlined,
                           size: 16,
                           color: Colors.blue,
                         ),
-                        const SizedBox(width: 6),
-                        const Text(
+                        SizedBox(width: 6),
+                        Text(
                           'Reply',
                           style: TextStyle(
                             fontSize: 13,

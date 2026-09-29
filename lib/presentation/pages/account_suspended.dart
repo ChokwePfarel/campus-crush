@@ -26,11 +26,7 @@ class _SuspendedPageState extends State<SuspendedPage> {
                 color: Colors.red.shade50,
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                Icons.block,
-                size: 80,
-                color: Colors.red.shade700,
-              ),
+              child: Icon(Icons.block, size: 80, color: Colors.red.shade700),
             ),
 
             const SizedBox(height: 32),
@@ -83,12 +79,9 @@ class _SuspendedPageState extends State<SuspendedPage> {
                       height: 1.5,
                     ),
                   ),
-
                 ],
               ),
             ),
-
-
           ],
         ),
       ),

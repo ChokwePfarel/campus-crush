@@ -161,6 +161,9 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
       }
 
       final response = await client.from('profiles').upsert(updates).select();
+
+
+
     } catch (e) {
       rethrow;
     }
@@ -190,7 +193,6 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
   }
 
   Future<UserWarning> getUserWarning() async {
-    print('Getting warning for user ${client.auth.currentUser!.id}');
 
     final response = await client
         .from('warnings')
@@ -216,15 +218,16 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
           .eq('id', userId)
           .maybeSingle(); // Use maybeSingle() instead of single()
 
-      // If response is null, the record doesn't exist (New user)
+      // If response is null, the record doesn't exist (New user)..
+
       if (response == null) {
         return false;
       }
 
       return response['is_profile_completed'] as bool;
-      print("Profile status: ${response['is_profile_completed']}");
+
     } catch (e) {
-      print("Error checking profile: $e");
+
       return false; // Default to false to be safe
     }
   }

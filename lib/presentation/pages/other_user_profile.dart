@@ -67,12 +67,7 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> {
     );
   }
 
-  @override
-  void dispose() {
-    _connectivitySub?.cancel();
 
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -118,7 +113,7 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> {
           body: BlocBuilder<OtherUserBloc, OtherUserState>(
             builder: (context, state) {
               if (state is OtherUserLoading) {
-                return OtherUserSkeleton();
+                return const OtherUserSkeleton();
               }
 
               if (state is OtherUserError) {
@@ -172,6 +167,7 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> {
 
                                 child: Container(
                                   height: SizeConfig.heightPercent(50),
+
                                   width: double.infinity,
                                   decoration: BoxDecoration(
                                     image: DecorationImage(
@@ -198,7 +194,7 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> {
                                       end: Alignment.topCenter,
                                       colors: [
                                         Colors.white,
-                                        Colors.white.withOpacity(0),
+                                        Colors.white.withValues(alpha: 0),
                                       ],
                                     ),
                                   ),
@@ -247,11 +243,13 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> {
                                     user.university,
                                     style: TextStyle(
                                       fontSize: SizeConfig.widthPercent(3.5),
-                                      color: Colors.grey[600],
+                                      color: Colors.grey.shade600,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
+
                                 SizedBox(height: SizeConfig.heightPercent(2)),
+
                                 Container(
                                   padding: EdgeInsets.symmetric(
                                     horizontal: SizeConfig.widthPercent(3),
@@ -272,7 +270,9 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> {
                                     ),
                                   ),
                                 ),
+
                                 SizedBox(height: SizeConfig.heightPercent(3)),
+
                                 const Text(
                                   'About Me',
                                   style: TextStyle(
@@ -280,7 +280,9 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> {
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
+
                                 SizedBox(height: SizeConfig.heightPercent(1)),
+
                                 Text(
                                   user.bio.isNotEmpty
                                       ? user.bio
@@ -299,7 +301,9 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> {
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
+
                                 SizedBox(height: SizeConfig.heightPercent(1.5)),
+
                                 Wrap(
                                   spacing: SizeConfig.widthPercent(2),
                                   runSpacing: SizeConfig.widthPercent(2),
@@ -319,7 +323,9 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> {
                                     );
                                   }).toList(),
                                 ),
+
                                 SizedBox(height: SizeConfig.heightPercent(3)),
+
                                 BlocBuilder<ImagesBloc, ImagesState>(
                                   builder: (context, imageState) {
                                     if (imageState is ImagesLoading ||
@@ -331,8 +337,9 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> {
                                     final images = imageState is ImagesLoaded
                                         ? imageState.galleryImages
                                         : [];
-                                    if (images.isEmpty)
+                                    if (images.isEmpty) {
                                       return const SizedBox.shrink();
+                                    }
                                     return Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
@@ -407,7 +414,7 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> {
                       top: MediaQuery.of(context).padding.top + 10,
                       right: SizeConfig.widthPercent(5),
                       child: CircleAvatar(
-                        backgroundColor: Colors.white.withOpacity(0.3),
+                        backgroundColor: Colors.white.withValues(alpha: 0.3),
                         child: IconButton(
                           icon: const Icon(
                             Icons.block,
@@ -505,7 +512,7 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> {
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 10,
               offset: const Offset(0, 5),
             ),
@@ -514,5 +521,12 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> {
         child: Icon(icon, color: color, size: iconSize),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _connectivitySub?.cancel();
+
+    super.dispose();
   }
 }

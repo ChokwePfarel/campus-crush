@@ -510,7 +510,7 @@
 </head>
 <body>
 
-<!-- ── Auth Section ────────────────────────────────────────── -->
+<!-- Auth Section  -->
 <div id="auth-section">
     <div class="login-box">
         <div class="brand">
@@ -536,7 +536,7 @@
     </div>
 </div>
 
-<!-- ── Sidebar ─────────────────────────────────────────────── -->
+<!--  Sidebar -->
 <nav>
     <div class="nav-brand">✦ Moderation</div>
 
@@ -561,7 +561,7 @@
     </div>
 </nav>
 
-<!-- ── Main Dashboard ──────────────────────────────────────── -->
+<!-- Main Dashboard -->
 <main>
     <!-- Reports Queue -->
     <div id="section-queue">
@@ -629,7 +629,7 @@
 </div>
 
 <script>
-    // ── Supabase config ────────────────────────────────────────
+
     const SUPABASE_URL = 'https://wdhzlfqftxytphnohpqb.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkaHpsZnFmdHh5dHBobm9ocHFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NDk4ODQsImV4cCI6MjA4NjIyNTg4NH0.LdCWlMkVaM7FTLLB7mmdf5oQeiTQHB9gP4HaxIUUn1M';
 
@@ -640,7 +640,7 @@
     let usersData = [];
     let currentQuickFilter = null;
 
-    // ── Login ──────────────────────────────────────────────────
+
     async function login() {
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
@@ -669,7 +669,6 @@
           throw error;
         }
 
-        // verify admin role
         const { data: roleData, error: roleError } = await supabaseClient
           .from('roles')
           .select('role')
@@ -678,14 +677,13 @@
 
         if (roleError || roleData?.role !== 'admin') {
           await supabaseClient.auth.signOut();
-          errorBox.innerText = '⛔ Access denied. Admin role required.';
+          errorBox.innerText = 'Access denied. Admin role required.';
           errorBox.classList.add('show');
           throw new Error('Admin role required');
         }
 
         initDashboard(data.user);
       } catch (err) {
-        // ensure error is shown if not already
         if (!errorBox.classList.contains('show')) {
           errorBox.innerText = '⚠️ ' + (err.message || 'Login failed');
           errorBox.classList.add('show');
@@ -708,7 +706,7 @@
       fetchUsers();
     }
 
-    // ── Navigation ─────────────────────────────────────────────
+
     function showSection(id) {
       ['queue', 'history', 'users'].forEach(s => {
         document.getElementById(`section-${s}`).style.display = s === id ? 'block' : 'none';
@@ -716,7 +714,6 @@
       });
     }
 
-    // ── Data fetching ──────────────────────────────────────────
     async function fetchReports() {
       const list = document.getElementById('reports-list');
       list.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div>';
@@ -767,7 +764,6 @@
       renderUsers(usersData);
     }
 
-    // ── Rendering ──────────────────────────────────────────────
     function renderReports(reports, targetId, isHistory = false) {
       const list = document.getElementById(targetId);
       if (!reports || !reports.length) {
@@ -821,8 +817,8 @@
                 ${u.is_verified ? '<span class="badge badge-blue">✓ Verified</span>' : ''}
               </div>
               <div class="card-meta">
-                <div class="meta-item">🏛 ${u.university || 'N/A'}</div>
-                <div class="meta-item">📅 ${new Date(u.created_at).toLocaleDateString()}</div>
+                <div class="meta-item"> ${u.university || 'N/A'}</div>
+                <div class="meta-item"> ${new Date(u.created_at).toLocaleDateString()}</div>
                 <div class="meta-item">ID: ${u.id.slice(0, 8)}…</div>
               </div>
             </div>
@@ -834,7 +830,6 @@
         `).join('');
     }
 
-    // ── Actions ─────────────────────────────────────────────────
     async function resolveReport(reportId, action) {
       if (!confirm(`Are you sure you want to perform action: ${action}?`)) return;
 
@@ -881,7 +876,6 @@
       }
     }
 
-    // ── Filtering ──────────────────────────────────────────────
     function filterList(type) {
       if (type === 'queue') {
         const query = document.getElementById('queue-search').value.toLowerCase();
@@ -910,7 +904,6 @@
       filterList('queue');
     }
 
-    // ── Toast ───────────────────────────────────────────────────
     function showToast(msg, type = 'success') {
       const toast = document.getElementById('toast');
       const icon = document.getElementById('toast-icon');
@@ -921,7 +914,6 @@
       window.toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
     }
 
-    // ── Auto-login session ─────────────────────────────────────
     supabaseClient.auth.getSession().then(({ data: { session } }) => {
       if (session) initDashboard(session.user);
     });

@@ -80,7 +80,7 @@ class _RequestPasswordResetState extends State<RequestPasswordReset> {
                 controller: _emailController,
                 decoration: InputDecoration(
                   hintText: 'Email',
-                  prefixIcon: Icon(
+                  prefixIcon: const Icon(
                     Icons.email_outlined,
                     size: 18,
                     color: PurplePalette.placeholder,
@@ -116,7 +116,7 @@ class _RequestPasswordResetState extends State<RequestPasswordReset> {
                     _sendPasswordReset(_emailController.text.trim());
                   },
                   child: _isSending
-                      ? CircularProgressIndicator.adaptive()
+                      ? const CircularProgressIndicator.adaptive()
                       : const Text(
                           'Request Password Reset',
                           style: TextStyle(

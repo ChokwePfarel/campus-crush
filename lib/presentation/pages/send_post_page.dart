@@ -14,98 +14,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-// ─── Post type ────────────────────────────────────────────────────────────────
+import '../../core/constants/extension.dart';
+
 
 enum DirectPostType { crush, compliment, confession, question }
-
-extension DirectPostTypeExt on DirectPostType {
-  String get emoji {
-    switch (this) {
-      case DirectPostType.crush:
-        return '💘';
-      case DirectPostType.compliment:
-        return '✨';
-      case DirectPostType.confession:
-        return '🤫';
-      case DirectPostType.question:
-        return '💭';
-    }
-  }
-
-  String get label {
-    switch (this) {
-      case DirectPostType.crush:
-        return 'Crush';
-      case DirectPostType.compliment:
-        return 'Compliment';
-      case DirectPostType.confession:
-        return 'Confession';
-      case DirectPostType.question:
-        return 'Question';
-    }
-  }
-
-  String get hint {
-    switch (this) {
-      case DirectPostType.crush:
-        return 'Tell them how you feel... 💘';
-      case DirectPostType.compliment:
-        return 'Say something kind ✨';
-      case DirectPostType.confession:
-        return 'Get it off your chest 🤫';
-      case DirectPostType.question:
-        return 'Ask them something 💭';
-    }
-  }
-
-  Color get color {
-    switch (this) {
-      case DirectPostType.crush:
-        return const Color(0xFFB5193A);
-      case DirectPostType.compliment:
-        return const Color(0xFF3730A3);
-      case DirectPostType.confession:
-        return const Color(0xFFB45309);
-      case DirectPostType.question:
-        return const Color(0xFF0F766E);
-    }
-  }
-
-  List<String> get suggestions {
-    switch (this) {
-      case DirectPostType.crush:
-        return [
-          'I smile every time I see you 😊',
-          'You\'ve been on my mind a lot lately',
-          'I get nervous whenever you\'re around',
-          'I wish I had the courage to talk to you',
-        ];
-      case DirectPostType.compliment:
-        return [
-          'Your energy in class is contagious ✨',
-          'You always look amazing 🔥',
-          'You seem like a genuinely good person',
-          'Your laugh is everything 😄',
-        ];
-      case DirectPostType.confession:
-        return [
-          'I\'ve been watching your stories for months',
-          'I almost spoke to you so many times',
-          'You intimidate me in the best way',
-          'I look for you whenever I\'m on campus',
-        ];
-      case DirectPostType.question:
-        return [
-          'Would you ever grab coffee with a stranger? ☕',
-          'Do you come to the library often?',
-          'What\'s your go-to study spot?',
-          'Are you as interesting as you look?',
-        ];
-    }
-  }
-}
-
-// ─── Main Page ────────────────────────────────────────────────────────────────
 
 class SendPostPage extends StatefulWidget {
   final UserModel recipient;
@@ -256,8 +168,8 @@ class _SendPostPageState extends State<SendPostPage>
   void _watchAd() {
     final userState = context.read<UserBloc>().state;
     if (userState is user_st.UserLoaded) {
-      // We set _isSending to true so that when CoinsEarned is received,
-      // it automatically proceeds with _handleSend().
+      // set _isSending to true so that when CoinsEarned is received,
+
       setState(() => _isSending = true);
       context.read<CoinsBloc>().add(WatchAdRequested(userState.user.id));
     }
@@ -272,8 +184,8 @@ class _SendPostPageState extends State<SendPostPage>
         isAnonymous: _isAnonymous,
         recipientName: widget.recipient.name.split(' ').first,
         onDone: () {
-          Navigator.of(context).pop(); // close dialog
-          Navigator.of(context).pop(); // close page
+          Navigator.of(context).pop();
+          Navigator.of(context).pop();
         },
       ),
     );
@@ -322,7 +234,7 @@ class _SendPostPageState extends State<SendPostPage>
             }
 
             if (state is CoinsEarned) {
-              setState(() => _isSending = false); // ← ADD THIS LINE
+              setState(() => _isSending = false);
               if (_isSending) _handleSend();
             }
 
@@ -346,7 +258,7 @@ class _SendPostPageState extends State<SendPostPage>
         ),
       ],
       child: Scaffold(
-        backgroundColor: const Color(0xFF0D0D1A),
+        backgroundColor: Colors.black,
         body: FadeTransition(
           opacity: _entranceFade,
           child: SlideTransition(
@@ -483,7 +395,7 @@ class _SendPostPageState extends State<SendPostPage>
     );
   }
 
-  // ── Recipient Card ──────────────────────────────────────────────────────────
+  // -------------------------------------------------------------Recipient Card
 
   Widget _buildRecipientCard() {
     final bool hasValidImage =
@@ -614,7 +526,7 @@ class _SendPostPageState extends State<SendPostPage>
     );
   }
 
-  // ── Type Picker ─────────────────────────────────────────────────────────────
+  // ----------------------------------------------------------------- Type Picker
 
   Widget _buildTypePicker() {
     return Column(
@@ -652,7 +564,7 @@ class _SendPostPageState extends State<SendPostPage>
                     border: Border.all(
                       color: selected
                           ? type.color.withOpacity(0.6)
-                          : Colors.white.withOpacity(0.08),
+                          : Colors.white.withValues(alpha: 0.08),
                       width: 1.5,
                     ),
                   ),
@@ -670,7 +582,7 @@ class _SendPostPageState extends State<SendPostPage>
                           fontWeight: FontWeight.w700,
                           color: selected
                               ? type.color
-                              : Colors.white.withOpacity(0.35),
+                              : Colors.white.withValues(alpha: 0.35),
                         ),
                       ),
                     ],
@@ -684,18 +596,18 @@ class _SendPostPageState extends State<SendPostPage>
     );
   }
 
-  // ── Composer Card ───────────────────────────────────────────────────────────
+  //---------------------------------------------------------------Composer card
 
   Widget _buildComposerCard() {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.06),
+        color: Colors.white.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: _canSend
-              ? _accent.withOpacity(0.4)
-              : Colors.white.withOpacity(0.08),
+              ? _accent.withValues(alpha: 0.4)
+              : Colors.white.withValues(alpha: 0.08),
           width: 1.5,
         ),
       ),
@@ -717,12 +629,12 @@ class _SendPostPageState extends State<SendPostPage>
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: _isAnonymous
-                        ? Colors.white.withOpacity(0.1)
-                        : _accent.withOpacity(0.15),
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : _accent.withValues(alpha: 0.15),
                     border: Border.all(
                       color: _isAnonymous
-                          ? Colors.white.withOpacity(0.15)
-                          : _accent.withOpacity(0.4),
+                          ? Colors.white.withValues(alpha: 0.15)
+                          : _accent.withValues(alpha: 0.4),
                       width: 1.5,
                     ),
                   ),
@@ -752,8 +664,8 @@ class _SendPostPageState extends State<SendPostPage>
                       style: TextStyle(
                         fontSize: SizeConfig.widthPercent(2.8),
                         color: _isAnonymous
-                            ? Colors.white.withOpacity(0.4)
-                            : _accent.withOpacity(0.8),
+                            ? Colors.white.withValues(alpha: 0.4)
+                            : _accent.withValues(alpha: 0.8),
                       ),
                     ),
                   ],
@@ -765,7 +677,7 @@ class _SendPostPageState extends State<SendPostPage>
                     vertical: SizeConfig.heightPercent(0.5),
                   ),
                   decoration: BoxDecoration(
-                    color: _accent.withOpacity(0.12),
+                    color: _accent.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(
                       SizeConfig.widthPercent(2),
                     ),
@@ -804,12 +716,12 @@ class _SendPostPageState extends State<SendPostPage>
               decoration: InputDecoration(
                 hintText: _postType.hint,
                 hintStyle: TextStyle(
-                  color: Colors.white.withOpacity(0.25),
+                  color: Colors.white.withValues(alpha: 0.25),
                   fontSize: SizeConfig.widthPercent(4),
                 ),
                 border: InputBorder.none,
                 counterStyle: TextStyle(
-                  color: Colors.white.withOpacity(0.25),
+                  color: Colors.white.withValues(alpha: 0.25),
                   fontSize: SizeConfig.widthPercent(3),
                 ),
               ),
@@ -820,7 +732,6 @@ class _SendPostPageState extends State<SendPostPage>
     );
   }
 
-  // ── Suggestions ─────────────────────────────────────────────────────────────
 
   Widget _buildSuggestions() {
     return Column(
@@ -847,11 +758,11 @@ class _SendPostPageState extends State<SendPostPage>
                 vertical: SizeConfig.heightPercent(1.5),
               ),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.04),
+                color: Colors.white.withValues(alpha: 0.04),
                 borderRadius: BorderRadius.circular(
                   SizeConfig.widthPercent(3.5),
                 ),
-                border: Border.all(color: Colors.white.withOpacity(0.07)),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
               ),
               child: Row(
                 children: [
@@ -860,7 +771,7 @@ class _SendPostPageState extends State<SendPostPage>
                       s,
                       style: TextStyle(
                         fontSize: SizeConfig.widthPercent(3.5),
-                        color: Colors.white.withOpacity(0.6),
+                        color: Colors.white.withValues(alpha: 0.6),
                         height: 1.4,
                       ),
                     ),
@@ -869,7 +780,7 @@ class _SendPostPageState extends State<SendPostPage>
                   Icon(
                     CupertinoIcons.arrow_up_left,
                     size: SizeConfig.widthPercent(3.5),
-                    color: Colors.white.withOpacity(0.25),
+                    color: Colors.white.withValues(alpha: 0.25),
                   ),
                 ],
               ),
@@ -880,7 +791,7 @@ class _SendPostPageState extends State<SendPostPage>
     );
   }
 
-  // ── Anonymous Toggle ─────────────────────────────────────────────────────────
+  //------------------------------------------------------------ Anonymous Toggle
 
   Widget _buildAnonymousToggle() {
     return GestureDetector(
@@ -890,13 +801,13 @@ class _SendPostPageState extends State<SendPostPage>
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: _isAnonymous
-              ? Colors.white.withOpacity(0.06)
-              : _accent.withOpacity(0.1),
+              ? Colors.white.withValues(alpha: 0.06)
+              : _accent.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: _isAnonymous
-                ? Colors.white.withOpacity(0.1)
-                : _accent.withOpacity(0.35),
+                ? Colors.white.withValues(alpha: 0.1)
+                : _accent.withValues(alpha: 0.35),
             width: 1.5,
           ),
         ),
@@ -908,14 +819,16 @@ class _SendPostPageState extends State<SendPostPage>
               height: SizeConfig.widthPercent(11),
               decoration: BoxDecoration(
                 color: _isAnonymous
-                    ? Colors.white.withOpacity(0.08)
-                    : _accent.withOpacity(0.15),
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : _accent.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(
                   SizeConfig.widthPercent(3.5),
                 ),
               ),
               child: Center(
                 child: Text(
+
+                  //I need to generate icons
                   _isAnonymous ? '🎭' : '👤',
                   style: TextStyle(fontSize: SizeConfig.widthPercent(5.5)),
                 ),
@@ -943,7 +856,7 @@ class _SendPostPageState extends State<SendPostPage>
                         : '${widget.recipient.name.split(' ').first} will see your name and photo',
                     style: TextStyle(
                       fontSize: SizeConfig.widthPercent(3),
-                      color: Colors.white.withOpacity(0.45),
+                      color: Colors.white.withValues(alpha: 0.45),
                       height: 1.3,
                     ),
                   ),
@@ -956,7 +869,7 @@ class _SendPostPageState extends State<SendPostPage>
               width: SizeConfig.widthPercent(12),
               height: SizeConfig.heightPercent(3.5),
               decoration: BoxDecoration(
-                color: _isAnonymous ? Colors.white.withOpacity(0.15) : _accent,
+                color: _isAnonymous ? Colors.white.withValues(alpha: 0.15) : _accent,
                 borderRadius: BorderRadius.circular(14),
               ),
               child: AnimatedAlign(
@@ -982,7 +895,7 @@ class _SendPostPageState extends State<SendPostPage>
     );
   }
 
-  // ── Send Button ─────────────────────────────────────────────────────────────
+
 
   Widget _buildSendButton() {
     return BlocBuilder<CoinsBloc, CoinsState>(
@@ -1002,17 +915,17 @@ class _SendPostPageState extends State<SendPostPage>
           decoration: BoxDecoration(
             gradient: _canSend
                 ? LinearGradient(
-                    colors: [_accent, _accent.withOpacity(0.7)],
+                    colors: [_accent, _accent.withValues(alpha: 0.7)],
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
                   )
                 : null,
-            color: _canSend ? null : Colors.white.withOpacity(0.08),
+            color: _canSend ? null : Colors.white.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(SizeConfig.widthPercent(4.5)),
             boxShadow: _canSend
                 ? [
                     BoxShadow(
-                      color: _accent.withOpacity(0.4),
+                      color: _accent.withValues(alpha: 0.4),
                       blurRadius: 20,
                       offset: const Offset(0, 6),
                     ),
@@ -1052,7 +965,7 @@ class _SendPostPageState extends State<SendPostPage>
   }
 }
 
-// ─── Success Dialog ───────────────────────────────────────────────────────────
+//--------------------------------------------------------------------Success Dialog
 
 class _SuccessDialog extends StatefulWidget {
   final DirectPostType postType;
@@ -1080,7 +993,7 @@ class _SuccessDialogState extends State<_SuccessDialog> {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Animated checkmark (optional)
+          // Animated checkmark
           Container(
             decoration: BoxDecoration(
               color: Colors.green.shade50,

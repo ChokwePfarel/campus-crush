@@ -23,7 +23,6 @@ class CoinsBloc extends Bloc<CoinsEvent, CoinsState> {
     on<AdWatchFailed>(_onAdWatchFailed);
   }
 
-  // ── Load ──────────────────────────────────────────────────────────────────
 
   Future<void> _onLoad(
       LoadCoins event,
@@ -38,7 +37,6 @@ class CoinsBloc extends Bloc<CoinsEvent, CoinsState> {
     }
   }
 
-  // ── Earn from ad ──────────────────────────────────────────────────────────
 
   Future<void> _onEarnFromAd(
       EarnCoinsFromAd event,
@@ -97,7 +95,6 @@ class CoinsBloc extends Bloc<CoinsEvent, CoinsState> {
   }
 
 
-// ── Track free direct post ────────────────────────────────────────────────
 
   Future<void> _onTrackFreeDirectPost(
       TrackFreeDirectPost event,
@@ -123,7 +120,6 @@ class CoinsBloc extends Bloc<CoinsEvent, CoinsState> {
     }
   }
 
-  // ── Spend on reveal ───────────────────────────────────────────────────────
 
   Future<void> _onSpendOnReveal(
       SpendCoinsOnReveal event,
@@ -154,7 +150,6 @@ class CoinsBloc extends Bloc<CoinsEvent, CoinsState> {
     }
   }
 
-  // ── Check has revealed ────────────────────────────────────────────────────
 
   Future<void> _onCheckHasRevealed(
       CheckHasRevealed event,
@@ -175,7 +170,6 @@ class CoinsBloc extends Bloc<CoinsEvent, CoinsState> {
     }
   }
 
-  // ── Watch ad requested ────────────────────────────────────────────────────
 
   Future<void> _onWatchAdRequested(
       WatchAdRequested event,
@@ -191,7 +185,8 @@ class CoinsBloc extends Bloc<CoinsEvent, CoinsState> {
       return;
     }
 
-    // Guard — ad not loaded yet
+    /// Guard  ad not loaded yet
+
     if (!AdService.instance.isReady) {
       emit(AdNotReady(current.coins));
       // Try loading for next time
@@ -217,7 +212,7 @@ class CoinsBloc extends Bloc<CoinsEvent, CoinsState> {
     );
   }
 
-// ── Ad watch completed ────────────────────────────────────────────────────
+//------------------------------------------------------------Ad watch completed
 
   Future<void> _onAdWatchCompleted(
       AdWatchCompleted event,
@@ -243,7 +238,6 @@ class CoinsBloc extends Bloc<CoinsEvent, CoinsState> {
     }
   }
 
-// ── Ad watch failed ────────────────────────────────────────────────────────
 
   void _onAdWatchFailed(
       AdWatchFailed event,

@@ -37,7 +37,7 @@ class CommentsRemoteDataSourceImpl implements CommentsRemoteDataSource {
         .map((e) => CommentModel.fromJson(e))
         .toList();
 
-    // Separate top-level and replies
+    // Separate top  level and replies
     final topLevel = allComments
         .where((c) => c.parentCommentId == null)
         .toList();

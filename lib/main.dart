@@ -64,12 +64,6 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {
-  // overrides the global 'print' function
-  void print(dynamic object) {
-    if (kDebugMode) {
-      debugPrint(object.toString());
-    }
-  }
 
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -86,7 +80,7 @@ Future<void> main() async {
 
   await HiveInit.init();
 
-  // Load the .env file
+
   await dotenv.load(fileName: ".env");
 
   try {
@@ -248,18 +242,15 @@ class _MyAppState extends State<MyApp> {
     _setupAuthStateListener();
   }
 
-  /// One-time utility to promote a specific user to admin using the 'roles' table.
-
-
   Future<void> _initDeepLinks() async {
     _appLinks = AppLinks();
 
-    // 1. Handle link when the app is already running in the background
+    // 1 - Handle link when the app is already running in the background
     _appLinks.uriLinkStream.listen((uri) {
       _handleIncomingLink(uri);
     });
 
-    // 2. Handle link when the app is launched from a terminated state
+    // 2 -Handle link when the app is launched from a terminated state
     final initialUri = await _appLinks.getInitialLink();
     if (initialUri != null) {
       _handleIncomingLink(initialUri);
@@ -267,9 +258,8 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _handleIncomingLink(Uri uri) {
-    // Supabase sends the reset token as a hash fragment (e.g., #access_token=...)
+    // Supabase sends the reset token as a hash fragment (e.g ; #access_token=...)
     if (uri.fragment.contains('access_token')) {
-      print("Detected Auth token in fragment: ${uri.fragment}");
     }
   }
 
@@ -280,24 +270,21 @@ class _MyAppState extends State<MyApp> {
 
       final _UserRepository = context.read<UserRepository>();
 
-      // 1. Existing Password Reset Logic
+
       if (event == AuthChangeEvent.passwordRecovery) {
         _navigatorKey.currentState?.push(
           MaterialPageRoute(builder: (_) => const ResetPasswordPage()),
         );
       }
-      // 2. New Verification/Sign-in Logic
+      // Verification/Sign-in Logic
       else if (event == AuthChangeEvent.signedIn && session != null) {
-        print("User signed in: ${session.user}");
-        
-        // Start watching notifications for the new user
+
+        //Start watching notifications for the new user
         context.read<NotificationBloc>().add(WatchNotifications(session.user.id));
 
         final isCompleted = await _UserRepository.checkIsProfileCompleted(session.user.id);
-        print("Is profile completed: $isCompleted");
 
         if (!isCompleted) {
-          print("Pushing to CreateAccountProfilePage");
           _navigatorKey.currentState?.pushAndRemoveUntil(
             MaterialPageRoute(builder: (_) => const CreateAccountProfilePage()),
                 (route) => false,
@@ -309,7 +296,7 @@ class _MyAppState extends State<MyApp> {
           );
         }
       }
-      // 3. Optional: Add SignOut logic here if needed
+      //Might use this,
       else if (event == AuthChangeEvent.signedOut) {
         _navigatorKey.currentState?.pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const LoginPage()),

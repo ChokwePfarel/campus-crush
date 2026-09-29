@@ -151,22 +151,18 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
 
   @override
   Future<void> deletePost(String postId) async {
-    print('DEBUG: 🗑️ Starting deletion for post: $postId');
 
-    // 1. Find all comments first to clean up comment-linked data
+    // Find all comments first to clean up comment-linked data
     List<String> commentIds = [];
     try {
       final res =
           await client.from('comments').select('id').eq('post_id', postId);
       commentIds = (res as List).map((c) => c['id'].toString()).toList();
-      print('DEBUG: Found ${commentIds.length} comments to clean up');
     } catch (e) {
-      print('DEBUG: Error fetching comment IDs: $e');
     }
 
-    // 2. Notifications
+    //Notifications
     try {
-      print('DEBUG: Deleting notifications linked to post...');
       await client.from('notifications').delete().eq('post_id', postId);
 
       if (commentIds.isNotEmpty) {
@@ -177,22 +173,17 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
             .filter('comment_id', 'in', commentIds);
       }
     } catch (e) {
-      print('DEBUG: ❌ Notification Cleanup Failed: $e');
     }
 
     // 3. Engagement & Reports
     try {
-      print('DEBUG: Deleting reports...');
       await client.from('reports').delete().eq('post_id', postId);
-      print('DEBUG: Deleting anonymous reveals...');
       await client.from('anonymous_reveals').delete().eq('post_id', postId);
-      print('DEBUG: Deleting likes...');
       await client.from('likes').delete().eq('post_id', postId);
     } catch (e) {
-      print('DEBUG: ❌ Engagement Cleanup Failed: $e');
     }
 
-    // 4. Comments
+    //Comments
     try {
       if (commentIds.isNotEmpty) {
         print('DEBUG: Deleting nested replies...');
@@ -206,16 +197,12 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
         await client.from('comments').delete().eq('post_id', postId);
       }
     } catch (e) {
-      print('DEBUG: ❌ Comment Cleanup Failed: $e');
     }
 
     // 5. The Post itself
     try {
-      print('DEBUG: Final step: Deleting the post itself...');
       await client.from('posts').delete().eq('id', postId);
-      print('DEBUG: ✅ Post $postId deleted successfully');
     } catch (e) {
-      print('DEBUG: 🛑 CRITICAL ERROR deleting post: $e');
       rethrow;
     }
   }
@@ -247,7 +234,7 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
             .maybeSingle();
 
         if (blockCheck != null) {
-          return []; // Don't show posts if blocked
+          return []; //Do not show posts if blocked
         }
       }
 

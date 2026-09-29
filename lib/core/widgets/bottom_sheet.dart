@@ -10,7 +10,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-// ─── Show helper ─────────────────────────────────────────────────────────────
 
 void showCommentsSheet({
   required BuildContext context,
@@ -34,7 +33,6 @@ void showCommentsSheet({
   );
 }
 
-// ─── CommentsSheet ────────────────────────────────────────────────────────────
 
 class CommentsSheet extends StatefulWidget {
   final String postId;
@@ -227,7 +225,7 @@ class _CommentTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isAnonymous = comment.repliersName == 'Anonymous';
-    final isTopLevel = comment.parentCommentId == null; // ← Only top-level comments can be replied to
+    final isTopLevel = comment.parentCommentId == null; //Only top level comments can be replied to
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

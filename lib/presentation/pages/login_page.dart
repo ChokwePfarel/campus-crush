@@ -10,32 +10,6 @@ import '../bloc/auth/auth_event.dart';
 import '../bloc/auth/auth_state.dart';
 import 'sign_up_page.dart';
 
-
-
-
-
-
-
-
-
-
-//TO-DO :  if (state is EmailVerificationRequired) {
-//       AppSnackBar.show(
-//         context,
-//         'Please verify your email — we sent a confirmation link to ${state.email}.',
-//         type: SnackBarType.info,
-//       );
-//     }
-
-
-
-
-
-
-
-
-
-
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -114,8 +88,8 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                           children: [
                             const SizedBox(height: 120),
 
-                            /// Title
-                            Text(
+                            // Title
+                            const Text(
                               'Campus Crush',
                               style: TextStyle(
                                 fontFamily: 'DancingScript',
@@ -127,7 +101,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
 
                             const SizedBox(height: 40),
 
-                            /// Email
+                            // Email
                             _inputField(
                               controller: _emailController,
                               hint: 'Email address',
@@ -137,7 +111,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
 
                             const SizedBox(height: 14),
 
-                            /// Password
+                            //Password
                             _inputField(
                               controller: _passwordController,
                               hint: 'Password',
@@ -159,7 +133,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
 
                             const SizedBox(height: 8),
 
-                            /// Forgot password
+                            //Forgot password
                             Align(
                               alignment: Alignment.centerRight,
                               child: TextButton(
@@ -185,7 +159,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                             const SizedBox(height: 60),
 
 
-                            /// Sign in button
+                            // Sign in button
                             Column(
                               children: [
                                 // Sign in button
@@ -245,7 +219,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                 const SizedBox(height: 16),
 
                                 // OR divider
-                                Row(
+                                const Row(
                                   children: [
                                     Expanded(
                                       child: Divider(
@@ -254,7 +228,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                       ),
                                     ),
                                     Padding(
-                                      padding: const EdgeInsets.symmetric(
+                                      padding: EdgeInsets.symmetric(
                                         horizontal: 14,
                                       ),
                                       child: Text(

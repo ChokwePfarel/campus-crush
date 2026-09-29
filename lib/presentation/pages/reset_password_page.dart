@@ -105,7 +105,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                           _resetPassword(_passwordController.text.trim());
                         },
                         child: _isSending
-                            ? CircularProgressIndicator.adaptive()
+                            ? const CircularProgressIndicator.adaptive()
                             : const Text(
                                 'Reset Password',
                                 style: TextStyle(

@@ -75,7 +75,10 @@ class ConversationsBloc extends Bloc<ConversationsEvent, ConversationsState> {
     Emitter<ConversationsState> emit,
   ) async {
     try {
+
+
       // We don't emit Loading here anymore to avoid breaking the background list state
+
       final conversation = await _chatRepository.getOrCreateConversation(
         currentUserId: event.currentUserId,
         otherUserId: event.otherUserId,
@@ -84,7 +87,7 @@ class ConversationsBloc extends Bloc<ConversationsEvent, ConversationsState> {
       // First, signal the UI to navigate
       emit(ConversationReady(conversation));
       
-      // Then, immediately restore the list state so the Inbox stays functional
+      // Then, immediately restore the list state so the Inbox stays functional.
       add(LoadConversations(event.currentUserId));
 
     } catch (e) {
@@ -103,7 +106,8 @@ class ConversationsBloc extends Bloc<ConversationsEvent, ConversationsState> {
     final List<ConversationEntity> updatedList = current.conversations.map((c) {
       if (c.id == event.conversation.id) {
         found = true;
-        // If this conversation is currently open, force unread count to 0
+
+        // If this conversation is currently open, force unread count to 0....
         if (c.id == _activeConversationId) {
           final conv = event.conversation;
           return ConversationModel(
@@ -201,7 +205,7 @@ class ConversationsBloc extends Bloc<ConversationsEvent, ConversationsState> {
     if (_activeConversationId != null) {
       final current = state;
       if (current is ConversationsLoaded) {
-        final userId = current.conversations.first.userOneId; // Any valid ID works for event
+        final userId = current.conversations.first.userOneId;
         add(MarkConversationAsRead(
           conversationId: _activeConversationId!,
           currentUserId: userId,
