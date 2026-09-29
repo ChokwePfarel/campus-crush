@@ -20,7 +20,7 @@ class FeedSkeleton extends StatelessWidget {
                 child: Shimmer(
                   duration: const Duration(seconds: 2),
                   interval: const Duration(milliseconds: 500),
-                  color: Colors.grey.shade300,
+                  color: Colors.grey.shade800,
                   colorOpacity: 0.3,
                   enabled: true,
                   child: Container(

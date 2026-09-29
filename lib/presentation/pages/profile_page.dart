@@ -110,12 +110,20 @@ class _ProfilePageState extends State<ProfilePage> {
             backgroundColor: Colors.white,
             appBar: AppBar(
               backgroundColor: Colors.white,
-              leading: CupertinoButton(
-                padding: EdgeInsets.zero,
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Icon(
-                  CupertinoIcons.chevron_left,
-                  color: Color(0xFF1A1A2E),
+              leading: Container(
+                margin: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5F6FA),
+                  shape: BoxShape.circle,
+                ),
+                child: CupertinoButton(
+                  padding: EdgeInsets.zero,
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Icon(
+                    CupertinoIcons.chevron_left,
+                    color: Color(0xFF1A1A2E),
+                    size: 22,
+                  ),
                 ),
               ),
               elevation: 0,

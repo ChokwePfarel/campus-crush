@@ -24,9 +24,20 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     try {
       emit(NotificationLoading(showRedDot: currentDot));
       final notifications = await _repository.getNotifications(event.userId);
-      final hasUnread = notifications.any((n) => !n.isRead);
-      debugPrint('DEBUG: ✅ NotificationBloc: Loaded ${notifications.length} notifications. Unread: $hasUnread');
-      emit(NotificationLoaded(notifications, showRedDot: hasUnread));
+
+      // Filter duplicates by id and commentId
+      final seenIds = <String>{};
+      final seenCommentIds = <String>{};
+      final uniqueNotifications = notifications.where((n) {
+        final isNewId = seenIds.add(n.id);
+        // If commentId is not empty, ensure it's unique. Otherwise just rely on ID.
+        final isNewComment = n.commentId.isEmpty || seenCommentIds.add(n.commentId);
+        return isNewId && isNewComment;
+      }).toList();
+
+      final hasUnread = uniqueNotifications.any((n) => !n.isRead);
+      debugPrint('DEBUG: ✅ NotificationBloc: Loaded ${uniqueNotifications.length} notifications. Unread: $hasUnread');
+      emit(NotificationLoaded(uniqueNotifications, showRedDot: hasUnread));
     } catch (e) {
       debugPrint('DEBUG: ❌ NotificationBloc Error (Load): $e');
       emit(NotificationError(e.toString(), showRedDot: currentDot));
@@ -42,17 +53,26 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     return emit.forEach<List<NotificationEntity>>(
       _repository.watchNotifications(event.userId),
       onData: (notifications) {
-        final hasUnread = notifications.any((n) => !n.isRead);
-        debugPrint('DEBUG: 🔔 NotificationBloc: Real-time update! Total: ${notifications.length}, Unread: $hasUnread');
-        
+        // Filter duplicates by id and commentId
+        final seenIds = <String>{};
+        final seenCommentIds = <String>{};
+        final uniqueNotifications = notifications.where((n) {
+          final isNewId = seenIds.add(n.id);
+          final isNewComment = n.commentId.isEmpty || seenCommentIds.add(n.commentId);
+          return isNewId && isNewComment;
+        }).toList();
+
+        final hasUnread = uniqueNotifications.any((n) => !n.isRead);
+        debugPrint('DEBUG: 🔔 NotificationBloc: Real-time update! Total: ${uniqueNotifications.length}, Unread: $hasUnread');
+
         final current = state;
         if (current is NotificationLoaded) {
           return current.copyWith(
-            notifications: notifications,
+            notifications: uniqueNotifications,
             showRedDot: hasUnread,
           );
         }
-        return NotificationLoaded(notifications, showRedDot: hasUnread);
+        return NotificationLoaded(uniqueNotifications, showRedDot: hasUnread);
       },
       onError: (error, stackTrace) {
         debugPrint('DEBUG: ❌ NotificationBloc Error (Watch): $error');
@@ -69,9 +89,17 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     Emitter<NotificationState> emit,
   ) async {
     debugPrint('DEBUG: 🧹 NotificationBloc: Marking all as read for ${event.userId}');
+    
+    final current = state;
+    if (current is NotificationLoaded) {
+      // Optimistically clear the red dot and update local items
+      final updated = current.notifications.map((n) => n.copyWith(isRead: true)).toList();
+      emit(current.copyWith(notifications: updated, showRedDot: false));
+    }
+
     try {
       await _repository.markAllAsRead(event.userId);
-      // Realtime stream will catch the update and reset the dot automatically
+      // Realtime stream will catch the actual update from DB
     } catch (e) {
       debugPrint('DEBUG: ❌ NotificationBloc Error (MarkRead): $e');
       emit(NotificationError(e.toString(), showRedDot: state.showRedDot));

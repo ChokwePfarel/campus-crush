@@ -57,6 +57,7 @@ import 'package:dating_app/presentation/pages/splash_screen.dart';
 import 'package:dating_app/presentation/pages/reset_password_page.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -71,6 +72,13 @@ Future<void> main() async {
   }
 
   WidgetsFlutterBinding.ensureInitialized();
+
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    systemNavigationBarColor: Colors.transparent,
+    statusBarColor: Colors.transparent,
+    systemNavigationBarIconBrightness: Brightness.dark,
+  ));
 
   await MobileAds.instance.initialize();
 
@@ -281,6 +289,10 @@ class _MyAppState extends State<MyApp> {
       // 2. New Verification/Sign-in Logic
       else if (event == AuthChangeEvent.signedIn && session != null) {
         print("User signed in: ${session.user}");
+        
+        // Start watching notifications for the new user
+        context.read<NotificationBloc>().add(WatchNotifications(session.user.id));
+
         final isCompleted = await _UserRepository.checkIsProfileCompleted(session.user.id);
         print("Is profile completed: $isCompleted");
 

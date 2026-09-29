@@ -38,5 +38,9 @@ class PostError extends PostState {
   final String message;
 
   PostError(this.message);
+}
 
+class PostDeleted extends PostState {
+  final String postId;
+  PostDeleted(this.postId);
 }

@@ -120,189 +120,194 @@ class PostCardState extends State<PostCard>
                 ),
               ],
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: EdgeInsets.all(SizeConfig.widthPercent(4)),
-                  child: GestureDetector(
-                    onTap: () {
-                      if (widget.isOffline) return;
-                      if (post.isAnonymous) return;
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              OtherUserProfilePage(userId: post.userId),
-                        ),
-                      );
-                    },
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          backgroundColor: const Color(
-                            0xFF2EC4B6,
-                          ).withOpacity(0.1),
-                          backgroundImage:
-                              (post.profileImageUrl != null &&
-                                  post.profileImageUrl!.startsWith('http') &&
-                                  !post.isAnonymous)
-                              ? NetworkImage(post.profileImageUrl!)
-                              : const AssetImage('assets/profile_picture.png'),
-                        ),
-                        SizedBox(width: SizeConfig.widthPercent(2.5)),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                post.isAnonymous
-                                    ? 'Anonymous'
-                                    : post.authorName,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: SizeConfig.widthPercent(3.8),
-                                  color: _textColor,
-                                ),
-                              ),
-                              Text(
-                                DateUtilsHelper.timeAgo(post.createdAt),
-                                style: TextStyle(
-                                  fontSize: SizeConfig.widthPercent(2.8),
-                                  color: _subtextColor,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: SizeConfig.widthPercent(2),
-                            vertical: SizeConfig.heightPercent(0.4),
-                          ),
-                          decoration: BoxDecoration(
-                            color: accent.withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(
-                              SizeConfig.widthPercent(1.5),
+            child:
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.all(SizeConfig.widthPercent(4)),
+                      child: GestureDetector(
+                        onTap: () {
+                          if (widget.isOffline) return;
+                          if (post.isAnonymous) return;
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  OtherUserProfilePage(userId: post.userId),
                             ),
-                          ),
-                          child: Text(
-                            post.postType.label,
-                            style: TextStyle(
-                              fontSize: SizeConfig.widthPercent(2.5),
-                              fontWeight: FontWeight.w700,
-                              color: accent,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    SizeConfig.widthPercent(4),
-                    0,
-                    SizeConfig.widthPercent(4),
-                    SizeConfig.heightPercent(2),
-                  ),
-                  child: Text(
-                    post.content,
-                    style: TextStyle(
-                      fontSize: SizeConfig.widthPercent(4),
-                      height: 1.5,
-                      color: _textColor,
-                    ),
-                  ),
-                ),
-                if (post.imageUrl != null)
-                  Padding(
-                    padding: EdgeInsets.only(
-                      bottom: SizeConfig.heightPercent(2),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(
-                        SizeConfig.widthPercent(2),
-                      ),
-                      child: CachedNetworkImage(
-                        imageUrl: post.imageUrl!,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => Container(
-                          height: 200,
-                          color: Colors.grey[200],
-                          child: const Center(
-                            child: CircularProgressIndicator.adaptive(),
-                          ),
-                        ),
-                        errorWidget: (context, url, error) =>
-                            const SizedBox.shrink(),
-                      ),
-                    ),
-                  ),
-                Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: SizeConfig.widthPercent(2),
-                    vertical: SizeConfig.heightPercent(1),
-                  ),
-                  child: Row(
-                    children: [
-                      BlocBuilder<LikesBloc, LikesState>(
-                        builder: (context, state) {
-                          final hasLiked =
-                              state is LikesLoaded && state.hasLiked;
-                          final count = state is LikesLoaded
-                              ? state.likeCount
-                              : post.likeCount;
-
-                          return ActionButton(
-                            icon: hasLiked
-                                ? Icons.favorite
-                                : Icons.favorite_border,
-                            label: count.toString(),
-                            color: hasLiked
-                                ? Colors.pink
-                                : (widget.isOffline ? Colors.grey : _textColor),
-                            onTap: widget.isOffline
-                                ? () {}
-                                : () {
-                                    HapticFeedback.lightImpact();
-                                    final userState = context
-                                        .read<UserBloc>()
-                                        .state;
-                                    if (userState is! user_st.UserLoaded)
-                                      return;
-
-                                    if (hasLiked) {
-                                      context.read<LikesBloc>().add(
-                                        UnlikePost(
-                                          postId: post.id,
-                                          userId: userState.user.id,
-                                        ),
-                                      );
-                                    } else {
-                                      context.read<LikesBloc>().add(
-                                        LikePost(
-                                          postId: post.id,
-                                          userId: userState.user.id,
-                                          likedByName: userState.user.name,
-                                        ),
-                                      );
-                                    }
-                                  },
                           );
                         },
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              backgroundColor: const Color(
+                                0xFF2EC4B6,
+                              ).withOpacity(0.1),
+                              backgroundImage:
+                                  (post.profileImageUrl != null &&
+                                      post.profileImageUrl!.startsWith('http') &&
+                                      !post.isAnonymous)
+                                  ? NetworkImage(post.profileImageUrl!)
+                                  : const AssetImage('assets/profile_picture.png'),
+                            ),
+                            SizedBox(width: SizeConfig.widthPercent(2.5)),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    post.isAnonymous
+                                        ? 'Anonymous'
+                                        : post.authorName,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: SizeConfig.widthPercent(3.8),
+                                      color: _textColor,
+                                    ),
+                                  ),
+                                  Text(
+                                    DateUtilsHelper.timeAgo(post.createdAt),
+                                    style: TextStyle(
+                                      fontSize: SizeConfig.widthPercent(2.8),
+                                      color: _subtextColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: SizeConfig.widthPercent(2),
+                                vertical: SizeConfig.heightPercent(0.4),
+                              ),
+                              decoration: BoxDecoration(
+                                color: accent.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(
+                                  SizeConfig.widthPercent(1.5),
+                                ),
+                              ),
+                              child: Text(
+                                post.postType.label,
+                                style: TextStyle(
+                                  fontSize: SizeConfig.widthPercent(2.5),
+                                  fontWeight: FontWeight.w700,
+                                  color: accent,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      ActionButton(
-                        icon: CupertinoIcons.chat_bubble,
-                        label: post.commentCount.toString(),
-                        color: widget.isOffline ? Colors.grey : _textColor,
-                        onTap: widget.isOffline ? () {} : widget.onComment,
+                    ),
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        SizeConfig.widthPercent(4),
+                        0,
+                        SizeConfig.widthPercent(4),
+                        SizeConfig.heightPercent(2),
                       ),
-                    ],
-                  ),
+                      child: Text(
+                        post.content,
+                        style: TextStyle(
+                          fontSize: SizeConfig.widthPercent(4),
+                          height: 1.5,
+                          color: _textColor,
+                        ),
+                      ),
+                    ),
+                    if (post.imageUrl != null)
+                      Padding(
+                        padding: EdgeInsets.only(
+                          bottom: SizeConfig.heightPercent(2),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(
+                            SizeConfig.widthPercent(2),
+                          ),
+                          child: CachedNetworkImage(
+                            imageUrl: post.imageUrl!,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Container(
+                              height: 200,
+                              color: Colors.grey[200],
+                              child: const Center(
+                                child: CircularProgressIndicator.adaptive(),
+                              ),
+                            ),
+                            errorWidget: (context, url, error) =>
+                                const SizedBox.shrink(),
+                          ),
+                        ),
+                      ),
+
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: SizeConfig.widthPercent(2),
+                        vertical: SizeConfig.heightPercent(1),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          BlocBuilder<LikesBloc, LikesState>(
+                            builder: (context, state) {
+                              final hasLiked =
+                                  state is LikesLoaded && state.hasLiked;
+                              final count = state is LikesLoaded
+                                  ? state.likeCount
+                                  : post.likeCount;
+
+                              return ActionButton(
+                                icon: hasLiked
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
+                                label: count.toString(),
+                                color: hasLiked
+                                    ? Colors.pink
+                                    : (widget.isOffline ? Colors.grey : _textColor),
+                                onTap: widget.isOffline
+                                    ? () {}
+                                    : () {
+                                  HapticFeedback.lightImpact();
+                                  final userState = context
+                                      .read<UserBloc>()
+                                      .state;
+                                  if (userState is! user_st.UserLoaded)
+                                    return;
+
+                                  if (hasLiked) {
+                                    context.read<LikesBloc>().add(
+                                      UnlikePost(
+                                        postId: post.id,
+                                        userId: userState.user.id,
+                                      ),
+                                    );
+                                  } else {
+                                    context.read<LikesBloc>().add(
+                                      LikePost(
+                                        postId: post.id,
+                                        userId: userState.user.id,
+                                        likedByName: userState.user.name,
+                                      ),
+                                    );
+                                  }
+                                },
+                              );
+                            },
+                          ),
+                          ActionButton(
+                            icon: CupertinoIcons.chat_bubble,
+                            label: post.commentCount.toString(),
+                            color: widget.isOffline ? Colors.grey : _textColor,
+                            onTap: widget.isOffline ? () {} : widget.onComment,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+
+
           ),
         ),
       ),

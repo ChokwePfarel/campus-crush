@@ -26,10 +26,10 @@ class _NotificationPageState extends State<NotificationPage> {
     super.initState();
     final userState = context.read<UserBloc>().state;
     if (userState is user_st.UserLoaded) {
-      // Trigger a manual load to ensure we have the list immediately
-      context.read<NotificationBloc>().add(
-        LoadNotifications(userState.user.id),
-      );
+      final bloc = context.read<NotificationBloc>();
+      bloc.add(LoadNotifications(userState.user.id));
+      // Mark all as read when entering the page to clear the badge
+      bloc.add(MarkNotificationsRead(userState.user.id));
     }
   }
 

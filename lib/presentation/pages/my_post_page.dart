@@ -13,7 +13,9 @@ import 'package:dating_app/presentation/bloc/likes/LikesState.dart';
 import 'package:dating_app/presentation/bloc/likes/likes_bloc.dart';
 import 'package:dating_app/presentation/bloc/posts/posts_bloc.dart';
 import 'package:dating_app/presentation/bloc/posts/posts_event.dart';
+import 'package:dating_app/presentation/bloc/posts/posts_state.dart';
 
+import 'package:dating_app/core/utils/snackbar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -58,16 +60,18 @@ class _MyPostsPageState extends State<MyPostsPage> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child:  const Text(
+            onPressed: () {
+              HapticFeedback.selectionClick();
+              Navigator.pop(context, true);
+            },
+            child: const Text(
               'Delete',
               style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
             ),
           ),
           TextButton(
-
             onPressed: () => Navigator.pop(context, false),
-            child:  const Text(
+            child: const Text(
               'Cancel',
               style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
             ),
@@ -190,33 +194,61 @@ class _MyPostsPageState extends State<MyPostsPage> {
             ..add(LoadUserPosts()),
       child: Scaffold(
         backgroundColor: const Color(0xFFF4F4F8),
-        body: BlocBuilder<CurrentUserPostBloc, UserPostState>(
-          builder: (context, state) {
-            // Filter posts here to exclude those being deleted
-            List<PostModel> visiblePosts = [];
-            if (state is UserPostLoaded) {
-              visiblePosts = state.posts
-                  .where((p) => !_deletingIds.contains(p.id))
-                  .toList();
+        body: BlocListener<PostBloc, PostState>(
+          listener: (context, state) {
+            if (state is PostDeleted) {
+              HapticFeedback.lightImpact();
+              AppSnackBar.show(
+                context,
+                'Post deleted successfully',
+                type: SnackBarType.success,
+              );
+              // Clean up local state
+              setState(() => _deletingIds.remove(state.postId));
+              // Update the actual Bloc list
+              context
+                  .read<CurrentUserPostBloc>()
+                  .add(RemovePostLocally(state.postId));
+            } else if (state is PostError) {
+              HapticFeedback.vibrate();
+              AppSnackBar.show(
+                context,
+                'Failed to delete post: ${state.message}',
+                type: SnackBarType.error,
+              );
+              // If we were deleting a post, restore it in UI
+              setState(() => _deletingIds.clear());
             }
-            return CustomScrollView(
-              slivers: [
-                _buildAppBar(),
-                if (state is UserPostLoaded) ...[
-                  _buildPostList(visiblePosts, currentUserId),
-                ] else if (state is UserPostLoading)
-                  const SliverFillRemaining(
-                    child: Center(child: CircularProgressIndicator.adaptive()),
-                  )
-                else if (state is UserPostError)
-                  SliverFillRemaining(child: Center(child: Text(state.message)))
-                else
-                  const SliverFillRemaining(
-                    child: Center(child: Text("No posts found")),
-                  ),
-              ],
-            );
           },
+          child: BlocBuilder<CurrentUserPostBloc, UserPostState>(
+            builder: (context, state) {
+              // Filter posts here to exclude those being deleted
+              List<PostModel> visiblePosts = [];
+              if (state is UserPostLoaded) {
+                visiblePosts = state.posts
+                    .where((p) => !_deletingIds.contains(p.id))
+                    .toList();
+              }
+              return CustomScrollView(
+                slivers: [
+                  _buildAppBar(),
+                  if (state is UserPostLoaded) ...[
+                    _buildPostList(visiblePosts, currentUserId),
+                  ] else if (state is UserPostLoading)
+                    const SliverFillRemaining(
+                      child: Center(child: CircularProgressIndicator.adaptive()),
+                    )
+                  else if (state is UserPostError)
+                    SliverFillRemaining(
+                        child: Center(child: Text(state.message)))
+                  else
+                    const SliverFillRemaining(
+                      child: Center(child: Text("No posts found")),
+                    ),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );

@@ -22,7 +22,9 @@ import 'package:dating_app/presentation/pages/other_user_profile.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class DetailedPost extends StatefulWidget {
+import '../../domain/repositories/posts_repository.dart';
+
+class DetailedPost extends StatelessWidget {
   final String postId;
   final String currentUserId;
 
@@ -33,10 +35,28 @@ class DetailedPost extends StatefulWidget {
   });
 
   @override
-  State<DetailedPost> createState() => _DetailedPostState();
+  Widget build(BuildContext context) {
+    return _DetailedPostView(
+      postId: postId,
+      currentUserId: currentUserId,
+    );
+  }
 }
 
-class _DetailedPostState extends State<DetailedPost> {
+class _DetailedPostView extends StatefulWidget {
+  final String postId;
+  final String currentUserId;
+
+  const _DetailedPostView({
+    required this.currentUserId,
+    required this.postId,
+  });
+
+  @override
+  State<_DetailedPostView> createState() => _DetailedPostViewState();
+}
+
+class _DetailedPostViewState extends State<_DetailedPostView> {
   final _inputCtrl = TextEditingController();
   final _focusNode = FocusNode();
   CommentEntity? _replyingTo;
@@ -87,18 +107,23 @@ class _DetailedPostState extends State<DetailedPost> {
       child: Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
-          backgroundColor: Colors.black,
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
           elevation: 0,
           leading: IconButton(
             icon: const Icon(
               Icons.arrow_back_ios_new_rounded,
-              color: Colors.white,
+              color: Colors.black,
             ),
             onPressed: () => Navigator.pop(context),
           ),
           title: const Text(
             'Post',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          ),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(1),
+            child: Divider(height: 1, color: Colors.grey.shade200),
           ),
         ),
         body: BlocBuilder<PostBloc, PostState>(
@@ -201,12 +226,16 @@ class _DetailedPostState extends State<DetailedPost> {
               .where((c) => c.parentCommentId == null)
               .toList();
 
+          // Sort latest comments to the top
+          topLevel.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
           return SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             sliver: SliverList(
               delegate: SliverChildBuilderDelegate(
                 (_, i) => _CommentItem(
                   comment: topLevel[i],
+                  currentUserId: widget.currentUserId,
                   onReply: (c) {
                     setState(() => _replyingTo = c);
                     _focusNode.requestFocus();
@@ -291,9 +320,28 @@ class _DetailedPostState extends State<DetailedPost> {
 
 class _CommentItem extends StatelessWidget {
   final CommentEntity comment;
+  final String currentUserId;
   final void Function(CommentEntity) onReply;
 
-  const _CommentItem({required this.comment, required this.onReply});
+  const _CommentItem({
+    required this.comment,
+    required this.currentUserId,
+    required this.onReply,
+  });
+
+  void _goToProfile(BuildContext context) {
+    if (comment.repliersName == 'Anonymous') return;
+    
+    // Don't navigate if it's the current user (optional, usually they go to their own profile page instead)
+    if (comment.userId == currentUserId) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => OtherUserProfilePage(userId: comment.userId),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -303,54 +351,89 @@ class _CommentItem extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          padding: const EdgeInsets.symmetric(vertical: 6.0),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: isAnonymous
-                    ? Colors.grey.shade200
-                    : Colors.purple.shade50,
-                child: Text(isAnonymous ? '🎭' : comment.repliersName[0]),
+              GestureDetector(
+                onTap: () => _goToProfile(context),
+                child: CircleAvatar(
+                  radius: 18,
+                  backgroundColor: isAnonymous
+                      ? Colors.grey.shade200
+                      : Colors.purple.shade50,
+                  child: Text(
+                    isAnonymous ? '🎭' : comment.repliersName[0].toUpperCase(),
+                    style: TextStyle(
+                      color: isAnonymous ? Colors.grey : Colors.purple,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      comment.repliersName,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(comment.text, style: const TextStyle(fontSize: 14)),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Text(
-                          DateUtilsHelper.timeAgo(comment.createdAt),
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        GestureDetector(
-                          onTap: () => onReply(comment),
-                          child: const Text(
-                            'Reply',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF6C63FF),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          GestureDetector(
+                            onTap: () => _goToProfile(context),
+                            child: Text(
+                              comment.repliersName,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 13,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 2),
+                          Text(
+                            comment.text,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8, top: 4),
+                      child: Row(
+                        children: [
+                          Text(
+                            DateUtilsHelper.timeAgo(comment.createdAt),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          GestureDetector(
+                            onTap: () => onReply(comment),
+                            child: const Text(
+                              'Reply',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF6C63FF),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -360,10 +443,14 @@ class _CommentItem extends StatelessWidget {
         ),
         if (comment.replies.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.only(left: 48),
+            padding: const EdgeInsets.only(left: 28),
             child: Column(
               children: comment.replies
-                  .map((r) => _CommentItem(comment: r, onReply: onReply))
+                  .map((r) => _CommentItem(
+                        comment: r,
+                        currentUserId: currentUserId,
+                        onReply: onReply,
+                      ))
                   .toList(),
             ),
           ),

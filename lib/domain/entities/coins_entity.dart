@@ -18,7 +18,7 @@ class CoinsEntity {
   static const int coinsPerAd         = 10;
   static const int directPostCost     = 5;
   static const int anonymousRevealCost = 20;
-  static const int freeDirectPosts    = 2;
+  static const int freeDirectPosts    = 1;
 
   bool get canWatchAd {
     final today = DateTime.now();

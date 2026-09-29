@@ -67,25 +67,26 @@ class PostBloc extends Bloc<PostEvent, PostState> {
           emit(PostError(e.toString()));
         }
       }
-    } else    try {
-      final posts = await _postRepository.getPosts(
-        university: event.university,
-        postType: event.postType,
-        locationTag: event.locationTag,
-        offset: currentState.post.length,
-        limit: _limit,
-      );
+    } else {
+      try {
+        final posts = await _postRepository.getPosts(
+          university: event.university,
+          postType: event.postType,
+          locationTag: event.locationTag,
+          offset: currentState.post.length,
+          limit: _limit,
+        );
 
-      emit(posts.isEmpty
-          ? currentState.copyWith(hasReachedMax: true)
-          : PostsLoaded(
-              post: currentState.post + posts,
-              hasReachedMax: posts.length < _limit,
-            ));
-    } catch (e) {
-      emit(currentState.copyWith(hasReachedMax: false));
+        emit(posts.isEmpty
+            ? currentState.copyWith(hasReachedMax: true)
+            : PostsLoaded(
+                post: currentState.post + posts,
+                hasReachedMax: posts.length < _limit,
+              ));
+      } catch (e) {
+        emit(currentState.copyWith(hasReachedMax: false));
+      }
     }
-
   }
 
   Future<void> _onCreatePost(
@@ -120,14 +121,29 @@ class PostBloc extends Bloc<PostEvent, PostState> {
     DeletePostRequested event,
     Emitter<PostState> emit,
   ) async {
+    final currentState = state;
     try {
       await _postRepository.deletePost(event.postId);
-      if (state is PostsLoaded) {
-        final currentPosts = (state as PostsLoaded).post;
-        final updatedPosts = currentPosts.where((p) => p.id != event.postId).toList();
-        emit((state as PostsLoaded).copyWith(post: updatedPosts));
+
+      // 1. Notify observers (snackbars/haptics)
+      emit(PostDeleted(event.postId));
+
+      // 2. Restore state so Feed isn't stuck in "PostDeleted"
+      if (currentState is PostsLoaded) {
+        final updatedPosts =
+            currentState.post.where((p) => p.id != event.postId).toList();
+        emit(currentState.copyWith(post: updatedPosts));
+      } else {
+        // If not in a list state, force a refresh to be safe
+        // This is important for the FeedScreen if it was backgrounded
+        // and its state is not PostsLoaded for some reason.
+        add(LoadPosts(isInitial: true));
       }
     } catch (e) {
+      // Restore previous state on error if it was a list
+      if (currentState is PostsLoaded) {
+        emit(currentState);
+      }
       emit(PostError(e.toString()));
     }
   }

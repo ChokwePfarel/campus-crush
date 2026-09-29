@@ -25,11 +25,7 @@ class _OnboardingPageState extends State<BoardingPage> {
       "desc":
           "Send posts directly to your crush or share with everyone. Confessions, questions, or crush posts, anonymously or not.",
     },
-    {
-      "title": "Spotted on Campus",
-      "desc":
-          "Describe what you're wearing and your location. Others nearby can find you in real time on the radar.",
-    },
+
   ];
 
   void _nextPage() {
@@ -84,17 +80,16 @@ class _OnboardingPageState extends State<BoardingPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      if (index == 2)
-                        Image.asset("assets/onboarding3.png",
+                      if (index == 0)
+                        Image.asset("assets/onboarding2.png",
                           height: 300,
                           width: double.infinity,
                           fit: BoxFit.cover,
                         )
                       else
                         Image.asset(
-                          index == 0
-                              ? "assets/onboarding2.png"
-                              : "assets/onboarding1.png",
+
+                              "assets/onboarding1.png",
                           height: 300,
                           width: double.infinity,
                           fit: BoxFit.cover,
@@ -105,7 +100,7 @@ class _OnboardingPageState extends State<BoardingPage> {
                       Text(
                         pages[index]["title"]!,
                         textAlign: TextAlign.start,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
                           color: Colors.black,

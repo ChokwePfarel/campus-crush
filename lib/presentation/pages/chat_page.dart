@@ -115,8 +115,9 @@ class _ChatPageState extends State<ChatPage> {
           }
         },
         child: Scaffold(
-          backgroundColor: const Color(0xFFF7F7FB),
-          body: Column(
+          backgroundColor: const Color(0xFFF5F6FA),
+
+        body: Column(
             children: [
               _buildAppBar(otherUserId),
               Expanded(child: _buildMessageList()),
@@ -148,13 +149,20 @@ class _ChatPageState extends State<ChatPage> {
       child: Row(
         children: [
           // Back button
-          CupertinoButton(
-            padding: EdgeInsets.zero,
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Icon(
-              CupertinoIcons.chevron_left,
-              color: Color(0xFF1A1A2E),
-              size: 22,
+          Container(
+            margin: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F6FA),
+              shape: BoxShape.circle,
+            ),
+            child: CupertinoButton(
+              padding: EdgeInsets.zero,
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Icon(
+                CupertinoIcons.chevron_left,
+                color: Color(0xFF1A1A2E),
+                size: 22,
+              ),
             ),
           ),
 

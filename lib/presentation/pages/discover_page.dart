@@ -46,10 +46,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
   void initState() {
     super.initState();
 
-    context.read<NotificationBloc>().add(
-      LoadNotifications(widget.currentUserId),
-    );
-
     _scrollController.addListener(_scrollListener);
 
     // Initial check

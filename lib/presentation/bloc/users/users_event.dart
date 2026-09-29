@@ -20,3 +20,5 @@ class SearchUsers extends UsersEvent {
     this.isInitial = true,
   });
 }
+
+class ClearSearch extends UsersEvent {}

@@ -140,7 +140,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
         builder: (context, state) {
           if (state is LoadingComments) {
 
-            return CommentSkeletonItem();
+            return const CommentSkeletonItem();
           }
           if (state is ErrorComments) {
             return Center(child: Text(state.message));

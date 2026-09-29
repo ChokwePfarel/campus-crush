@@ -47,4 +47,29 @@ class NotificationModel extends NotificationEntity {
     'is_read': isRead,
     'created_at': createdAt.toIso8601String(),
   };
+
+  @override
+  NotificationModel copyWith({
+    String? id,
+    String? userId,
+    String? triggeredByName,
+    String? postId,
+    String? commentId,
+    String? commentText,
+    bool? isReply,
+    bool? isRead,
+    DateTime? createdAt,
+  }) {
+    return NotificationModel(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      triggeredByName: triggeredByName ?? this.triggeredByName,
+      postId: postId ?? this.postId,
+      commentId: commentId ?? this.commentId,
+      commentText: commentText ?? this.commentText,
+      isReply: isReply ?? this.isReply,
+      isRead: isRead ?? this.isRead,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
 }

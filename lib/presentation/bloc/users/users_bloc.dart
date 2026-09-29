@@ -12,6 +12,7 @@ class UsersBloc extends Bloc<UsersEvent, UsersState> {
   UsersBloc(this._usersRepository) : super(UsersInitial()) {
     on<LoadUsers>(_onLoadUsers);
     on<SearchUsers>(_onSearchUsers);
+    on<ClearSearch>((event, emit) => emit(UsersInitial()));
   }
 
   Future<void> _onLoadUsers(

@@ -1075,6 +1075,7 @@ class _SuccessDialogState extends State<_SuccessDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1104,11 +1105,7 @@ class _SuccessDialogState extends State<_SuccessDialog> {
             style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 16),
-          LinearProgressIndicator(
-            backgroundColor: Colors.grey.shade200,
-            valueColor: AlwaysStoppedAnimation(Colors.green.shade400),
-          ),
+
         ],
       ),
       actions: [
@@ -1119,7 +1116,7 @@ class _SuccessDialogState extends State<_SuccessDialog> {
           },
           child: const Text(
             'Close',
-            style: TextStyle(fontWeight: FontWeight.bold),
+            style: TextStyle(fontWeight: FontWeight.bold,color: Colors.blue),
           ),
         ),
       ],

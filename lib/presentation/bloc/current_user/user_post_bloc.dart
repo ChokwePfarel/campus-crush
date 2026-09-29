@@ -9,6 +9,7 @@ class CurrentUserPostBloc extends Bloc<UserPostEvent, UserPostState> {
 
   CurrentUserPostBloc(this._currentUserPostRepository) : super(InitialUserPostState()) {
     on<LoadUserPosts>(_onLoadUserPosts);
+    on<RemovePostLocally>(_onRemovePostLocally);
   }
 
   Future<void> _onLoadUserPosts(
@@ -21,6 +22,18 @@ class CurrentUserPostBloc extends Bloc<UserPostEvent, UserPostState> {
       emit(UserPostLoaded(posts: posts));
     } catch (e) {
       emit(UserPostError(message: e.toString()));
+    }
+  }
+
+  void _onRemovePostLocally(
+    RemovePostLocally event,
+    Emitter<UserPostState> emit,
+  ) {
+    if (state is UserPostLoaded) {
+      final currentPosts = (state as UserPostLoaded).posts;
+      final updatedPosts =
+          currentPosts.where((p) => p.id != event.postId).toList();
+      emit(UserPostLoaded(posts: updatedPosts));
     }
   }
 }

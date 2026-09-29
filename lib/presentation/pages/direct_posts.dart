@@ -291,7 +291,7 @@ class _DirectPostsPageState extends State<DirectPostsPage>
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => NotificationPage()),
+              MaterialPageRoute(builder: (context) => const NotificationPage()),
             );
           },
           icon: BlocBuilder<NotificationBloc, NotificationState>(
